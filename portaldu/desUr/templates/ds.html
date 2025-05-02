@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
+<title>Obras Públicas</title>
+{% endblock %}
+
+{% block body %}
+{% include 'nav.html' %}
+
+<form method="post">
+  {% csrf_token %}
+  <div class="main" id="main">
+    <div class="titulo"><h1>Datos de la solicitud</h1></div>
+
+    <div class="left">
+      <div class="form">
+        <label for="dir" class="text">Dirección del servicio:</label>
+        <input type="text" id="dir" class="input" name="dir" placeholder="Dirección del servicio" />
+        <br />
+
+        <div class="plus">
+          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}?contexto='soli">
+            <span class="addicon">
+              <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
+            </span>
+            <span class="txt">Añadir ubicación</span>
+          </button>
+        </div>
+        <br />
+
+        <label for="desc" class="text">Descripción del servicio:</label>
+        <br />
+        <textarea class="tArea" id="desc" name="desc" placeholder="Descripción del servicio"></textarea>
+        <br />
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="form">
+        <div class="plus">
+          <button type="button" class="addbtn" id="docs">
+            <span class="addicon">
+              <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
+            </span>
+            <span class="txt">Documentación</span>
+          </button>
+        </div>
+        <br />
+
+        <label for="info" class="text">Información adicional:</label>
+        <br />
+        <textarea class="tArea" id="info" name="info" placeholder="Información adicional"></textarea>
+        <br />
+
+        <div class="checkbox-wrapper-46">
+          <input type="checkbox" name="check" id="cbx-46" class="inp-cbx" />
+          <label for="cbx-46" class="cbx">
+            <span>
+              <svg viewBox="0 0 12 10" height="10px" width="12px">
+                <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+              </svg>
+            </span>
+            <span>Declaración bajo protesta</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="lBtn">
+      <button type="button" class="back bbtn" id="back" data-url="{% url 'data' %}">Regresar</button>
+    </div>
+
+    <div class="rBtn">
+      <button type="summit" class="next nbtn" id="next">Siguiente</button>
+    </div>
+
+    <div class="cBtn">
+      <button type="button" class="cancel cbtn" id="cancel"
+        onclick="document.querySelector('.popup').classList.add('active');">
+        Cancelar
+      </button>
+      <div class="popup">
+        {% include 'adv.html' %}
+      </div>
+    </div>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block footer %}
+
+  <script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+{% endblock %}

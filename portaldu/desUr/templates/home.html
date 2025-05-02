@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <link rel="stylesheet" href="{% static 'styles/sHome.css' %}?v=1">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.min.js" integrity="sha384-VQqxDN0EQCkWoxt/0vsQvZswzTHUVOImccYmSyhJTp7kGtPed0Qcx8rK9h9YEgx+" crossorigin="anonymous"></script>
+    <title>Desarrollo Urbano</title>
+{% endblock %}
+
+
+{% block body %}
+    {% include 'nav.html' %}
+    <div class="cont" id="cont">
+        <div class="btn" id="btn">
+            <button onclick="next()" type="button" class="btn btn-primary btn-lg">Iniciar</button>
+            <script>
+                function next(){
+                    window.location.href = "{% url 'data' %}"
+                }
+            </script>
+        </div>
+        <div class="vid" id="vid">
+            <video src="{% static 'videos/fondo.mp4' %}" autoplay muted loop></video>
+        </div>
+    </div>
+
+
+{% endblock %}

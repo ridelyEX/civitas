@@ -1,0 +1,25 @@
+{% load static %}
+
+<head>
+<link rel="stylesheet" href="{% static 'styles/adv.css' %}?v=1" />
+</head>
+
+
+<body>
+<div class="adv-main" id="adv">
+    <p><b><strong>¿Desea cancelar la solicitud?</strong></b></p>
+    
+    <div class="adv-Ibottom">
+        <div class="adv-lBtn">
+            <button type="button" class="adv-next adv-nbtn" id="sibtn" data-url="{% url 'home' %}">Sí</button>
+        </div>
+        <div class="adv-rBtn">
+            <button type="button" class="back bbtn" id="back" onclick="document.querySelector('.popup').classList.remove('active')">No</button>
+        </div>
+    </div>
+</div>
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+</body>
+
+
+

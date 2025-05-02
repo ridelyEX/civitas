@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/map.css' %}?v=1" />
+
+{% endblock %}
+
+
+{% block body %}
+
+<div class="mainMap">
+    <div class="searchCont">  
+      <form method="get">
+        <div class="buscar">
+          <label for="nombre" class="text">Nombre:</label>
+          <input
+            type="text"
+            class="input"
+            id="mapa"
+            name="mapa"
+            placeholder="Dirección"
+          />
+          </div>
+        </div>
+        <div class="map">
+          {{ map|safe }}
+        </div>
+
+        <div class="Ibottom">
+          {% if contexto == 'data' %}
+          <div class="lBtn">
+            <button 
+            type="button" 
+            class="back bbtn" 
+            id="close" 
+            data-url="{% url 'data' %}" 
+            >Cerrar</button>
+            {% else %}
+            <button 
+            type="button" 
+            class="back bbtn" 
+            id="close" 
+            data-url="{% url 'soli' %}" 
+            >Cerrar</button>
+            {% endif %}
+          </div>
+          <div class="rBtn">
+            {% if contexto == 'data' %}
+            <button type="submit" class="next nbtn" id="next" data-url="{% url 'data' %}" >Seleccionar</button>
+            {% else %}
+            <button type="submit" class="next nbtn" id="next" data-url="{% url 'soli' %}" >Seleccionar</button>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,43 @@
+html, body{
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.cont{
+    display: flex;
+    height: 100%;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.cont button{
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 32px;
+    border: 2px solid rgb(0, 0, 78);
+    opacity: 0.5;
+    background-color: rgba(41, 87, 236, 0.863);
+    transition-duration: 0.4s;
+    padding: 23px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.cont button:hover{
+    background-color: rgba(41, 87, 236, 0.863);
+    opacity: 1;
+    color: white;
+}
+
+.cont video{
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    opacity: 0.90;
+}

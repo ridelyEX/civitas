@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href ="{% static 'styles/form.css' %}?v=1">
+<title>Obras Públicas</title>
+{% endblock %}
+
+{% block body %}
+{% include 'nav.html' %}
+    <div class="main" id="main">
+        <div class="titulo"><h1><b>Documento generado</b></h1></div><br>
+        <div class="soli">
+            <p><strong>Solicitud</strong></p>
+            <button type="button" class="down">
+                <span>
+                    <img src="{% static 'images/download.png' %}" alt="dwnld" class="down">
+                </span>
+            </button>
+        </div>
+    </div>
+    <div class="bottom">
+        <div class="lBtn">
+            <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' %}">Regresar</button>
+        </div>
+        <div class="rBtn">
+            <button onclick="next()" type="button" class="next nbtn" id="next">Siguiente</button>
+            <script>
+                function next(){
+                    window.location.href = "{% url 'nada' %}"
+                }
+            </script>
+        </div>
+        <div class="cBtn">
+            <button type="button" class="cancel cbtn" id="cancel" 
+            onclick="document.querySelector('.popup').classList.add('active');"
+            >Cancelar</button>
+            <div class="popup">
+                {% include 'adv.html' %}
+            </div>
+        </div>
+    </div>
+
+    
+{% endblock %}
+
+{% block footer %}
+
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+{% endblock %}

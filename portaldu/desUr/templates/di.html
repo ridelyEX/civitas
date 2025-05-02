@@ -1,0 +1,137 @@
+{% extends 'base.html' %} {% load static %} {% block head %}
+<link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
+<title>Obras Públicas</title>
+{% endblock %} {% block body %} {% include 'nav.html' %}
+<form method="post">
+  {% csrf_token %}
+  <div class="main">
+    <div class="titulo">
+      <h1><b>Datos del interesado</b></h1>
+    </div>
+    <div class="left">
+      <div class="form">
+        <label for="nombre" class="text">Nombre:</label>
+        <input
+          type="text"
+          class="input"
+          id="nombre"
+          name="nombre"
+          placeholder="Nombre"
+        />
+
+        <label for="pApe" class="text">Apellido paterno:</label>
+        <input
+          type="text"
+          id="pApe"
+          class="input"
+          name="pApe"
+          placeholder="Apellido paterno"
+        />
+
+        <label for="mApe" class="text">Apellido materno:</label>
+        <input
+          type="text"
+          id="mApe"
+          class="input"
+          name="mApe"
+          placeholder="Apellido materno"
+        />
+
+        <label for="bDay" class="text">Fecha de nacimiento:</label>
+        <input
+          type="date"
+          id="bDay"
+          class="input"
+          name="bDay"
+          min="1920-12-31"
+        /><br />
+
+        <label for="asunto" class="text">Asunto:</label>
+        <select class="select" id="asunto" name="asunto">
+          <option value="none">Seleccione una opción</option>
+          <option value="DOP00001">Arreglo de calles de terracería</option>
+          <option value="DOP00002">Bacheo de calles</option>
+          <option value="DOP00003">
+            Limpieza de arroyos al sur de la ciudad
+          </option>
+          <option value="DOP00004">
+            Limpieza o mantenimiento de rejillas pluviales
+          </option>
+          <option value="DOP00005">
+            Pago de costo de participación en licitaciones de obra pública
+          </option>
+          <option value="DOP00006">Rehabilitación de calles</option>
+          <option value="DOP00007">
+            Retiro de escombro y material de arrastre
+          </option>
+          <option value="DOP00008">Solicitud de material caliche</option>
+        </select>
+      </div>
+    </div>
+    <div class="right">
+      <div class="form">
+        <label for="tel" class="text">Teléfono:</label>
+        <input
+          type="text"
+          id="tel"
+          class="input"
+          name="tel"
+          placeholder="Teléfono"
+        />
+
+        <label for="curp" class="text">CURP:</label>
+        <input
+          type="text"
+          id="curp"
+          class="input"
+          name="curp"
+          placeholder="CURP"
+        />
+
+        <label for="sexo" class="text">Sexo:</label>
+        <select class="select" id="sexo" name="sexo">
+          <option value="none">Seleccione un opción</option>
+          <option value="hombre">Hombre</option>
+          <option value="mujer">Mujer</option>
+          <option value="otro">Otro</option>
+        </select>
+
+        <label for="dir" class="text">Dirección:</label>
+        <input
+          type="text"
+          id="dir"
+          class="input"
+          name="dir"
+          placeholder="Dirección"
+        />
+
+        <div class="plus" id="plus">
+          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}">
+            <span class="addicon">
+              <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
+            </span>
+            <span class="txt">Añadir dirección</span>
+          </button>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="Ibottom">
+    <div class="lBtn">
+      <button type="button" class="back bbtn" id="back" data-url="{% url 'home' %}">Regresar</button>
+    </div>
+    <div class="rBtn">
+      <button onclick="next()" type="submit" class="next nbtn" id="next">Siguiente</button>
+    </div>
+  </div>
+</form>
+
+
+{% endblock %}
+
+{% block footer %}
+
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+{% endblock %}

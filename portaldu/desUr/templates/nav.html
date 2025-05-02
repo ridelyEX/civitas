@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %} 
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/homeS.css' %}?v=1">
+{% endblock %}
+{% block body %}
+<header class="contHead" id="head">
+    <div class="contCabeza" id="cbz">
+        <nav class="navbar">
+            <div class="nav-left">
+                <img src="{% static 'images/chiIcon.png' %}" alt="logo del estado">
+                <img src="{% static 'images/mIcon.png' %}" alt="logo de la M">
+            </div>
+
+            <div class="nav-center">
+                <h1>Vinculación Social</h1>
+            </div>    
+
+            <ul class="nav-right">
+                <li><a class="active" href="{% url 'home' %}"><img src="{% static 'images/home.png' %}" alt="casa">Inicio</a></li>
+                <li><a href="contacto.html"><img src="{% static 'images/mail.png' %}" alt="correo">Contacto</a></li>
+                <li><a href="directorio.html"><img src="{% static 'images/contact_phone.png' %}" alt="llamada">Directorio</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+{% endblock %}
