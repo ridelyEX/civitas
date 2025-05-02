@@ -15,21 +15,26 @@ html, body{
 
 /* MAIN */
 
-.main{
+.mainMap{
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     flex-wrap: nowrap;
+    width: 75%;
 }
 
 /* MAP */
 
 .mainMap .map{
-    width: 70rem;
+    width: 99%;
     height: 25rem;
     border: 2px solid #014277;
     padding-bottom: 2rem;
+}
+
+.searchCont{
+    width: 75%;
 }
 
 /* LABEL */
@@ -38,6 +43,7 @@ html, body{
     display: flex;
     flex-direction: column;
     max-width: 100%;
+    width: 100%;
     margin-bottom: 1rem;
 }
 
@@ -162,4 +168,23 @@ html, body{
     padding-top: 2rem;
 }
 
+@media screen and (max-width: 768px) {
+
+    html, body{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .mainMap .map{
+        width: 99%;
+        height: 99%;
+        border: none;
+        padding-bottom: 2rem;
+    }
+    
+
+}
 

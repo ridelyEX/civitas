@@ -8,7 +8,6 @@
 
 {% block body %}
 {% include 'nav.html' %}
-
 <form method="post">
   {% csrf_token %}
   <div class="main" id="main">
@@ -21,7 +20,7 @@
         <br />
 
         <div class="plus">
-          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}?contexto='soli">
+          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}?origen=soli">
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
             </span>
