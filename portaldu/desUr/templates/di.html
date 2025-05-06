@@ -1,3 +1,5 @@
+<!-- AÑADIR REQUIRED -->
+
 {% extends 'base.html' %} {% load static %} {% block head %}
 <link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
 <title>Obras Públicas</title>
@@ -96,17 +98,18 @@
           <option value="otro">Otro</option>
         </select>
 
-        <label for="dir" class="text" value="{{direccion}}">Dirección:</label>
+        <label for="dir" class="text" >Dirección:</label>
         <input
           type="text"
           id="dir"
           class="input"
           name="dir"
           placeholder="Dirección"
+          value="{{dir}}"
         />
 
         <div class="plus" id="plus">
-          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}">
+          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}?origen=data">
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
             </span>

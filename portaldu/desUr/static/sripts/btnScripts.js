@@ -25,35 +25,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
             window.location.href = sibtnurl;
         });
     }
-
-    const mNext = document.getElementById("mNext");
-    if(mNext){
-        const latInput = document.getElementById("latInput");
-        const lngInput = document.getElementById("lngInput");
-
-        const iframe = document.querySelector("iframe");
-        if (!iframe) return;
-        iframe.addEventListener("load", () => {
-            const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-        
-            innerDoc.addEventListener("click", (e) => {
-                const popup = innerDoc.querySelector(".leaflet-popup-content");
-                if (!popup) return;
-        
-                const match = popup.innerText.match(/Lat:\s*([-\d.]+)\s*Lon:\s*([-\d.]+)/);
-                if (match) {
-                latInput.value = match[1];
-                lngInput.value = match[2];
-                console.log("Coordenadas guardadas:", match[1], match[2]);
-                }
-            });
-        });
-    } 
 });
 
 document.getElementById("close").addEventListener("click", function () {
     window.location.href = this.dataset.url;
 });
-
 
 
