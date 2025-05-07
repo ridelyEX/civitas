@@ -5,6 +5,6 @@ __pycache__/
 .env
 db.sqlite3
 *.pyo
-tram/
+vrtl/
 VinculacionSocial/
 civitas/portaldu/desUr/static/videos/fondo.mp4
