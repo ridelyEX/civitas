@@ -1,6 +1,7 @@
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
 import folium
+from .models import SubirDocs
 
 
 def base(request):
@@ -15,16 +16,25 @@ def home(request):
 def intData(request):
     
     direccion = request.GET.get('dir', '')
-
+    asunto = ''
     if request.method == 'POST':
         asunto = request.POST.get('asunto')
         request.session['asunto'] = asunto
         print(asunto)
-        request.session['datos_formulario'] = request.POST.dict()
-        return redirect('soli')
-    
+        
+        match asunto:
+            case "DOP00005":
+                print("vaya a pagar prro")
+                return redirect('pago')
+            case "DOP00006":
+                print("nooo mis calles :,v")
+                return redirect('calles')
+            case _:
+                request.session['datos_formulario'] = request.POST.dict()
+                return redirect('soli')
     context = {
         'dir':direccion,
+        'asunto':asunto,
     }
     return render(request, 'di.html', context)
 
@@ -63,5 +73,19 @@ def mapa(request):
         'map':map._repr_html_(),
         'origen': origen,
     })
+    
+def docs(request):
+    return render(request, 'docs.html')
+
+def docs2(request):
+    if request.method == 'POST':
+        desc = request.POST.get('desc')
+        doc = request.FILES.get('doc')
+        documento = SubirDocs(desc=desc, doc=doc)
+        documento.save()
+        redirect('docs')
+    return render(request, 'docs2.html')
+
+
 
 # Create your views here.

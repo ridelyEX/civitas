@@ -1,0 +1,53 @@
+{% extends 'base.html' %} {% load static %} {% block head %}
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+  integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+  crossorigin="anonymous"
+/>
+<link rel="stylesheet" href="{% static 'styles/docs.css' %}?v=1" />
+<title>Obras Públicas</title>
+{% endblock %} {% block body %}
+
+<div class="head">
+  <header class="header">
+    <h1>Documentación</h1>
+  </header>
+</div>
+
+<div class="container">
+    <form class="form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="textbox">
+        <input type="text" class="desc" id="desc" placeholder="Descripción del doc. Ej. INE, foto">
+    </div>
+    <input type="file" id="file" name="file">
+    <div class="text">
+        <p>Buscar documento o foto en los archivos de su dispositivo</p>
+    </div>
+
+
+  <div class="Ibottom">
+    <div class="lBtn">
+      <button
+        type="file"
+        class="search sbtn"
+        id="search"
+      >
+        Examinar
+      </button>
+    </div>
+    <div class="rBtn">
+      <button type="submit" class="next nbtn" id="next">Guardar</button>
+    </div>
+  </div>
+  <form>
+</div>
+{% endblock %}{% block footer %}
+
+<script>document.getElementById("search").addEventListener('click',
+    function(){
+        document.getElementById("file").click();
+    });</script>
+
+{% endblock %}

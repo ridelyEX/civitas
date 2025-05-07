@@ -28,6 +28,6 @@ urlpatterns = [
     path('doc/', views.doc, name="doc"),
     path('adv/', views.adv, name="adv"),
     path('map/', views.mapa, name="map"),
-
-    
+    path('docs/', views.docs, name="docs"),
+    path('docs2/', views.docs2, name="docs2"),
 ]

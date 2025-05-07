@@ -1,26 +1,32 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block head %}
+{% extends 'base.html' %} {% load static %} {% block head %}
 <link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
 <title>Obras Públicas</title>
-{% endblock %}
-
-{% block body %}
-{% include 'nav.html' %}
+{% endblock %} {% block body %} {% include 'nav.html' %}
 <form method="post">
   {% csrf_token %}
   <div class="main" id="main">
     <div class="titulo"><h1>Datos de la solicitud</h1></div>
-    <input type="hidden" name="asunto" value="{{ asunto }}">
+    <input type="hidden" name="asunto" value="{{ asunto }}" />
     <div class="left">
       <div class="form">
         <label for="dir" class="text">Dirección del servicio:</label>
-        <input type="text" id="dir" class="input" name="dir" placeholder="Dirección del servicio" value="{{dir}}" />
+        <input
+          type="text"
+          id="dir"
+          class="input"
+          name="dir"
+          placeholder="Dirección del servicio"
+          value="{{dir}}"
+        />
         <br />
 
         <div class="plus">
-          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}?origen=soli">
+          <button
+            type="button"
+            class="addbtn"
+            id="ubi"
+            data-url="{% url 'map' %}?origen=soli"
+          >
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
             </span>
@@ -31,7 +37,12 @@
 
         <label for="desc" class="text">Descripción del servicio:</label>
         <br />
-        <textarea class="tArea" id="desc" name="desc" placeholder="Descripción del servicio"></textarea>
+        <textarea
+          class="tArea"
+          id="desc"
+          name="desc"
+          placeholder="Descripción del servicio"
+        ></textarea>
         <br />
       </div>
     </div>
@@ -50,7 +61,12 @@
 
         <label for="info" class="text">Información adicional:</label>
         <br />
-        <textarea class="tArea" id="info" name="info" placeholder="Información adicional"></textarea>
+        <textarea
+          class="tArea"
+          id="info"
+          name="info"
+          placeholder="Información adicional"
+        ></textarea>
         <br />
 
         <div class="checkbox-wrapper-46">
@@ -61,8 +77,18 @@
                 <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
               </svg>
             </span>
-            <span>Declaración bajo protesta</span>
+            <div class="p1">Declaración bajo protesta
+            </div>
           </label>
+          <div>
+          <span class="p2">
+            Manifiesto bajo protesta de decir verdad que la información 
+            proporcionada en esta solicitud es verdadera, 
+            y que si me condujera con falsedad incurriría en una conducta 
+            tipificada en la Ley Penal de la cual seré acreedor a una medida de conformidad 
+            con las disposiciones aplicables en la materia.
+          </span>
+        </div>
         </div>
       </div>
     </div>
@@ -70,7 +96,14 @@
 
   <div class="bottom">
     <div class="lBtn">
-      <button type="button" class="back bbtn" id="back" data-url="{% url 'data' %}">Regresar</button>
+      <button
+        type="button"
+        class="back bbtn"
+        id="back"
+        data-url="{% url 'data' %}"
+      >
+        Regresar
+      </button>
     </div>
 
     <div class="rBtn">
@@ -78,21 +111,21 @@
     </div>
 
     <div class="cBtn">
-      <button type="button" class="cancel cbtn" id="cancel"
-        onclick="document.querySelector('.popup').classList.add('active');">
+      <button
+        type="button"
+        class="cancel cbtn"
+        id="cancel"
+        onclick="document.querySelector('.popup').classList.add('active');"
+      >
         Cancelar
       </button>
-      <div class="popup">
-        {% include 'adv.html' %}
-      </div>
+      <div class="popup">{% include 'adv.html' %}</div>
     </div>
   </div>
 </form>
 
-{% endblock %}
+{% endblock %} {% block footer %}
 
-{% block footer %}
-
-  <script src="{% static 'sripts/btnScripts.js' %}"></script>
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
 
 {% endblock %}

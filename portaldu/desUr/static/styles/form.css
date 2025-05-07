@@ -423,7 +423,11 @@ form .main{
 
 .checkbox-wrapper-46 {
     overflow: hidden;
+    display: flex;
+    align-content: center;
+    flex-direction: row;
     width: fit-content;
+
 }
 
 
@@ -481,7 +485,7 @@ form .main{
     opacity: 1;
     border-radius: 50%;
   }
-  .checkbox-wrapper-46 .cbx span:last-child {
+  .checkbox-wrapper-46 span.p1:last-child {
     padding-left: 8px;
   }
   .checkbox-wrapper-46 .cbx:hover span:first-child {
@@ -502,6 +506,32 @@ form .main{
     transition: all 0.6s ease;
   }
   
+
+.checkbox-wrapper-46 .p1:hover{
+    color: #005194;
+}
+
+.checkbox-wrapper-46 span.p2{
+    visibility: hidden;
+    width: fit-content;
+    height:fit-content;
+    background-color: #00396e;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0 5px 10px;
+    position:absolute;
+    z-index: 1;
+    font-size: 0.90rem;
+}
+
+
+.checkbox-wrapper-46:hover span.p2{
+   
+    visibility: visible;
+}
+
+
   @keyframes wave-46 {
     50% {
       transform: scale(0.9);

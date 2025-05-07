@@ -29,3 +29,13 @@ class soli(models.Model):
     dirr   = models.CharField(max_length=100)
     desc   = models.TextField(blank=True)
     info   = models.TextField(blank=True)
+    
+class SubirDocs(models.Model):
+    desc = models.CharField(max_length=100)
+    doc = models.FileField(upload_to='docs/')
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated = models.DateTimeField(auto_now_add=False, auto_now=True)
+    
+    class Meta:
+        db_table = 'files'
+        ordering = ['-created_at']

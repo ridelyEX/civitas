@@ -1,0 +1,195 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    overflow: hidden;
+}
+
+html, body{
+    width: 100vw;
+    height: 100vh;
+}
+
+.head{
+    padding-bottom: 1rem;
+
+}
+
+.head .header{
+    width: 100%;
+    border-radius: 10px;
+    background: linear-gradient(to bottom, #d9e8f8, #f0f0f0);
+}
+
+.desc{
+    width: 100%;
+    height: 2rem;
+}
+
+.textbox{
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.text{
+    font-size: 2rem;
+}
+
+.table{
+    border: 2px solid black;
+    height: fit-content;
+}
+
+.table .img{
+    display: flex;
+    justify-content: flex-end;
+    border: none;
+    background: none;
+}
+
+.table .img .bbsura{
+    border: none;
+    background: none;
+}
+
+.btn{
+    color: rgb(22, 22, 22);
+    background: linear-gradient(to top, #258cfa, #f0f0f0);
+}
+
+.Ibottom{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(1, 1fr);
+    gap: 5rem;
+    justify-content: center;
+    width:max-content;
+    margin: 0 auto;
+    padding-top: 1rem;
+}
+
+/* NEXT BUTTON */
+.next {
+    width: 130px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.nbtn{
+    background: #004dff;
+    background: linear-gradient(0deg, #004dff 0%, #004dff 100%);
+    border: none;
+    height: 3rem;
+    width: 12rem;
+}
+
+.nbtn:before{
+    height: 0%;
+    width: 2px;
+}
+
+.nbtn:hover{
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+
+/* BACK BUTTON  */
+.back {
+    width: 130px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.bbtn{
+    background: #666d7e;
+    background: linear-gradient(0deg, #666d7e 0%, #666d7e 100%);
+    border: none;
+    height: 3rem;
+    width: 12rem;
+}
+
+.bbtn:before{
+    height: 0%;
+    width: 2px;
+}
+
+.bbtn:hover{
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* UP BUTTON */
+
+input[type="file"] {
+    display: none;
+}
+
+.search {
+    width: 130px;
+    height: 40px;
+    color: #000000;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.sbtn{
+    background: #ffffff;
+    background: linear-gradient(0deg, #ffffff 0%, #ffffff 100%);
+    border: 2px solid #000000;
+    height: 3rem;
+    width: 12rem;
+}
+
+.sbtn:before{
+    height: 0%;
+    width: 2px;
+}
+
+.sbtn:hover{
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}

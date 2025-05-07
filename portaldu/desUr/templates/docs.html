@@ -1,0 +1,70 @@
+{% extends 'base.html' %} {% load static %} {% block head %}
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+  integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+  crossorigin="anonymous"
+/>
+<link rel="stylesheet" href="{% static 'styles/docs.css' %}?v=1" />
+<title>Obras Públicas</title>
+{% endblock %} {% block body %}
+
+<div class="head">
+  <header class="header">
+    <h1>Documentación</h1>
+  </header>
+</div>
+<div class="container overflow-hidden">
+  <div class="row gy-2">
+    <div class="table-responsive">
+      <table class="table table-borderless table-hover">
+        <thead class="table-dark">
+          <tr>
+            Documentos
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+    <div class="d-grid gap-2">
+      <button class="btn btn-primary" type="button" id="plus">
+        <img class="add" src="{% static 'images/add.png' %}" />Button
+      </button>
+    </div>
+
+    <div class="Ibottom">
+      <div class="lBtn">
+        <button
+          type="button"
+          class="back bbtn"
+          id="back"
+          data-url="{% url 'doc' %}"
+        >
+          Cerrar
+        </button>
+      </div>
+      <div class="rBtn">
+        <button type="button" class="next nbtn" id="next">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}{% block footer %}
+
+<script>
+  var x = "",
+    i;
+  for (i = 1; i <= 3; i++) {
+    x +=
+      "<tr><td>Doc " +
+      i +
+      "</td><td class='img'><button type='button' class='bbsura' id='bbsura'><img class='basura' src='{% static 'images/add.png' %}'></button></td></tr>";
+  }
+
+  document.getElementById("body").innerHTML = x;
+</script>
+
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+{% endblock %}
