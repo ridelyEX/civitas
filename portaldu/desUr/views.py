@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
 import folium
-from .models import SubirDocs
+from .models import SubirDocs, soli, data
 
 
 def base(request):
@@ -21,6 +21,17 @@ def intData(request):
         asunto = request.POST.get('asunto')
         request.session['asunto'] = asunto
         print(asunto)
+        nombre = request.POST.get('nombre')
+        pApe = request.POST.get('pApe')
+        mApe = request.POST.get('mApe')
+        bDay = request.POST.get('bDay')
+        tel = request.POST.get('tel')
+        curp = request.POST.get('curp')
+        sexo = request.POST.get('sexo')
+        dirr = request.POST.get('dir')
+
+        datos = data(nombre=nombre, pApe=pApe, mApe=mApe, bDay=bDay, asunto=asunto, tel=tel, curp=curp, sexo=sexo, dirr=dirr)
+        datos.save()
         
         match asunto:
             case "DOP00005":
@@ -30,8 +41,8 @@ def intData(request):
                 print("nooo mis calles :,v")
                 return redirect('calles')
             case _:
-                request.session['datos_formulario'] = request.POST.dict()
                 return redirect('soli')
+        
     context = {
         'dir':direccion,
         'asunto':asunto,
@@ -45,7 +56,16 @@ def soliData(request):
         print(asunto)
 
         if request.method == 'POST':
-            request.session['datos_solicitud'] = request.POST.dict()
+            dirr = request.POST.get('dir')
+            print("Sí es la dirección", dirr)
+            descc = request.POST.get('descc')
+            if descc is None:
+                print("no hay nada")   
+            info = request.POST.get('info')
+            if info is None:
+                print("sin información adicional")
+            solicitud = soli(dirr=dirr, descc=descc, info=info)
+            solicitud.save()
             return redirect('doc')
         context = {
             'dir':direccion,

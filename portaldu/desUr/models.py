@@ -2,7 +2,7 @@ from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
 class data(models.Model):
-    piky    = models.AutoField(primary_key=True)
+    piKy= models.AutoField(primary_key=True)
     
     nombre  = models.CharField(max_length=100, verbose_name="Nombre")
     pApe    = models.CharField(max_length=100, verbose_name="Apellido Paterno")
@@ -15,21 +15,29 @@ class data(models.Model):
     dirr    = models.CharField(max_length=100)
     
     class meta():
+        db_table = 'desur_data'
         ordering = ["nombre"]
         verbose_name_plurar = "Datos"
         
     def __str__(self):
         return self.nombre
- 
-class soli(models.Model):
-    piky   = models.AutoField(primary_key=True)
-    
-    asunto = models.ForeignKey(data, on_delete=models.CASCADE)
 
+class soli(models.Model):
+    piSoliKy   = models.AutoField(primary_key=True)
+    fDataKy = models.ForeignKey(data, on_delete=models.CASCADE,
+                                verbose_name="Datos")
     dirr   = models.CharField(max_length=100)
-    desc   = models.TextField(blank=True)
+    descc   = models.TextField(blank=True)
     info   = models.TextField(blank=True)
     
+    class Meta():
+        db_table = 'desur_soli'
+        ordering = ["fDataKy"]
+    
+    def __str__(self):
+        return self.asunto
+
+
 class SubirDocs(models.Model):
     nombre = models.CharField(max_length=100)
     descp = models.CharField(max_length=100)
