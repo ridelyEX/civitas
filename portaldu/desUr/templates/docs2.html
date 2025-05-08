@@ -19,7 +19,7 @@
     <form class="form" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="textbox">
-        <input type="text" class="desc" id="desc" placeholder="Descripción del doc. Ej. INE, foto">
+        <input type="text" class="desc" id="desc" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
     </div>
     <input type="file" id="file" name="file">
     <div class="text">
@@ -40,8 +40,7 @@
     <div class="rBtn">
       <button type="submit" class="next nbtn" id="next">Guardar</button>
     </div>
-  </div>
-  <form>
+  </div><form>
 </div>
 {% endblock %}{% block footer %}
 

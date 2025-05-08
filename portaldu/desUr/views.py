@@ -75,13 +75,17 @@ def mapa(request):
     })
     
 def docs(request):
+    if request.method == 'POST':
+        return redirect('soli')
     return render(request, 'docs.html')
 
 def docs2(request):
     if request.method == 'POST':
-        desc = request.POST.get('desc')
+        descp = request.POST.get('descp')
         doc = request.FILES.get('doc')
-        documento = SubirDocs(desc=desc, doc=doc)
+        nombre = request.FILES.get('doc')
+        fecha = request.FILES.get('fecha')
+        documento = SubirDocs(descp=descp, doc=doc, fecha=fecha, nombre=nombre)
         documento.save()
         redirect('docs')
     return render(request, 'docs2.html')
