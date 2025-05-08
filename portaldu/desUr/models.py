@@ -31,7 +31,7 @@ class soli(models.Model):
     info   = models.TextField(blank=True)
     
 class SubirDocs(models.Model):
-    desc = models.CharField(max_length=100)
+    descp = models.CharField(max_length=100)
     doc = models.FileField(upload_to='docs/')
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated = models.DateTimeField(auto_now_add=False, auto_now=True)
