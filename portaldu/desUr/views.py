@@ -13,14 +13,16 @@ def nav(request):
 def home(request):
     return render(request, 'home.html')
 
+
 def intData(request):
-    
     direccion = request.GET.get('dir', '')
     asunto = ''
+
     if request.method == 'POST':
         asunto = request.POST.get('asunto')
         request.session['asunto'] = asunto
-        print(asunto)
+
+
         nombre = request.POST.get('nombre')
         pApe = request.POST.get('pApe')
         mApe = request.POST.get('mApe')
@@ -30,24 +32,35 @@ def intData(request):
         sexo = request.POST.get('sexo')
         dirr = request.POST.get('dir')
 
-        datos = data(nombre=nombre, pApe=pApe, mApe=mApe, bDay=bDay, asunto=asunto, tel=tel, curp=curp, sexo=sexo, dirr=dirr)
+
+        datos = data(
+            nombre=nombre,
+            pApe=pApe,
+            mApe=mApe,
+            bDay=bDay,
+            asunto=asunto,
+            tel=tel,
+            curp=curp,
+            sexo=sexo,
+            dirr=dirr
+        )
         datos.save()
-        
+
+
         match asunto:
             case "DOP00005":
-                print("vaya a pagar prro")
                 return redirect('pago')
             case "DOP00006":
-                print("nooo mis calles :,v")
                 return redirect('calles')
             case _:
                 return redirect('soli')
-        
+
     context = {
-        'dir':direccion,
-        'asunto':asunto,
+        'dir': direccion,
+        'asunto': asunto,
     }
     return render(request, 'di.html', context)
+
 
 def soliData(request):
         direccion = request.GET.get('dir', '')
@@ -101,11 +114,11 @@ def docs(request):
 
 def docs2(request):
     if request.method == 'POST':
-        descp = request.POST.get('descp')
-        doc = request.FILES.get('doc')
-        nombre = request.FILES.get('doc')
-        fecha = request.FILES.get('fecha')
-        documento = SubirDocs(descp=descp, doc=doc, fecha=fecha, nombre=nombre)
+        descDoc = request.POST.get('descp')
+        docc = request.FILES.get('docc')
+        nomDoc = request.FILES.get('docc')
+        fechaDoc = request.FILES.get('fecha')
+        documento = SubirDocs(descDoc=descDoc, doc=docc, fechaDoc=fechaDoc, nomDoc=nomDoc)
         documento.save()
         redirect('docs')
     return render(request, 'docs2.html')

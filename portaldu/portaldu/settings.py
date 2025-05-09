@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'portaldu.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'test_db',
+        'NAME': 'civitas',
         'USER': 'root',
         'PASSWORD': 'admin',
         'HOST': '127.0.0.1',
