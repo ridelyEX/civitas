@@ -1,5 +1,6 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse
+from django.views import View
 import folium
 from .models import SubirDocs, soli, data
 
@@ -108,20 +109,28 @@ def mapa(request):
     })
     
 def docs(request):
+    documentos = SubirDocs.objects.all().order_by('-nomDoc')
     if request.method == 'POST':
         return redirect('soli')
-    return render(request, 'docs.html')
+    return render(request, 'docs.html',{'documentos':documentos})
+
+def dell(request, id):
+    if request.method == 'POST':
+        docc = get_object_or_404(SubirDocs, pk=id)
+        docc.delete()
+        print("se murio")
+    return redirect('docs')
 
 def docs2(request):
-    if request.method == 'POST':
+    if request.method == 'POST' and request.FILES['file']:
         descDoc = request.POST.get('descp')
-        docc = request.FILES.get('docc')
-        nomDoc = request.FILES.get('docc')
-        fechaDoc = request.FILES.get('fecha')
-        documento = SubirDocs(descDoc=descDoc, doc=docc, fechaDoc=fechaDoc, nomDoc=nomDoc)
+        docc = request.FILES.get('file')
+        nomDoc = docc.name
+        documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc)
         documento.save()
-        redirect('docs')
-    return render(request, 'docs2.html')
+        return redirect('docs')
+    else:
+        return render(request, 'docs2.html')
 
 
 

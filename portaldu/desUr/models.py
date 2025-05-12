@@ -65,10 +65,13 @@ class soli(models.Model):
     soli_ID = models.AutoField(primary_key=True)
     data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
                                 verbose_name="Datos")
-
+    doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, verbose_name="Documentos",
+                               blank=True, null=True)
     dirr   = models.CharField(max_length=50)
     descc   = models.TextField(blank=True, null=True)
+    fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     info   = models.TextField(blank=True, null=True)
+    nada = models.IntegerField(blank=True, null=True)
 
     class Meta:
         db_table = 'soli'
@@ -82,3 +85,17 @@ class soli(models.Model):
         if not self.data_ID_id and data.objects.exists():
             self.data_ID_id = data.objects.latest('data_ID').data_ID
         super().save(*args, **kwargs)
+
+class docsSubidos:
+    up_ID = models.AutoField(primary_key=True)
+    doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, blank=True, null=True,
+                               verbose_name="documentos")
+    numDocs = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'uploaded'
+        ordering = ["up_ID"]
+        verbose_name = "nuevos_documentos"
+
+    def __str__(self):
+        return self.up_ID

@@ -1,4 +1,4 @@
-// botón back
+// botones
 document.addEventListener("DOMContentLoaded", ()=>{
     console.log("algo racista");
 //Botón global para regresar entre pantallas
@@ -27,16 +27,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
         });
     }
 
-//Botón para añadir documentos
-const pbtn = document.getElementById("plus");
-    if(pbtn){
-        const purl = pbtn.dataset.url;
-        console.log("a ver cómo añado más campos",purl);
-        pbtn.addEventListener("click", ()=>{
-            window.location.href = purl;
-        });
-    }
-
 //Botón para ir home desde el popup (creo)
     const sibtn = document.getElementById("sibtn");
     if(sibtn){
@@ -53,4 +43,4 @@ document.getElementById("close").addEventListener("click", function () {
     window.location.href = this.dataset.url;
 });
 
-
+}
