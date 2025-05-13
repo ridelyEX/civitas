@@ -1,12 +1,15 @@
 // botones
 document.addEventListener("DOMContentLoaded", ()=>{
     console.log("algo racista");
+    try{
 //Botón global para regresar entre pantallas
-    const bbtn = document.getElementById("back");
-    const url = bbtn.dataset.url;
-    bbtn.addEventListener("click", ()=>{
-        window.location.href = url;
-    });
+      const bbtn = document.getElementById("back");
+        if (bbtn) {
+            const url = bbtn.dataset.url;
+            bbtn.addEventListener("click", () => {
+                window.location.href = url;
+            });
+        }
 //Botón para entrar al mapa
     const dirbtn = document.getElementById("ubi");
     if(dirbtn){
@@ -36,11 +39,21 @@ document.addEventListener("DOMContentLoaded", ()=>{
             window.location.href = sibtnurl;
         });
     }
-});
+
+//Botón para agregar archivos
+   const pbtn = document.getElementById("plus");
+   if(pbtn){
+       const purl = pbtn.dataset.url;
+       console.log("vuelvo a existir");
+       pbtn.addEventListener("click", ()=>{
+        window.location.href = purl;
+       });
+   }
 
 //botón para cerrar el popup
-document.getElementById("close").addEventListener("click", function () {
-    window.location.href = this.dataset.url;
+    document.getElementById("close").addEventListener("click", function () {
+        window.location.href = this.dataset.url;
+    });
+}catch(e){
+        console.error("no jala este mugrero", e)}
 });
-
-}

@@ -1,11 +1,12 @@
 from django.db import models
 from django.db.models import AutoField
 from phonenumber_field.modelfields import PhoneNumberField
+import uuid
 
 
 class data(models.Model):
     data_ID = models.AutoField(primary_key=True)
-
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     nombre  = models.CharField(max_length=30, verbose_name="Nombre")
     pApe    = models.CharField(max_length=30, verbose_name="Apellido Paterno")
     mApe    = models.CharField(max_length=30, verbose_name="Apellido Materno")
@@ -61,6 +62,19 @@ class SubirDocs(models.Model):
         return self.nomDoc
 
 
+class Contador(models.Model):
+    count_ID = models.AutoField(primary_key=True)
+    count = models.PositiveIntegerField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'contador'
+        ordering = ['count']
+
+    def __str__(self):
+        return self.count
+
+
+
 class soli(models.Model):
     soli_ID = models.AutoField(primary_key=True)
     data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
@@ -71,7 +85,6 @@ class soli(models.Model):
     descc   = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     info   = models.TextField(blank=True, null=True)
-    nada = models.IntegerField(blank=True, null=True)
 
     class Meta:
         db_table = 'soli'
@@ -86,16 +99,3 @@ class soli(models.Model):
             self.data_ID_id = data.objects.latest('data_ID').data_ID
         super().save(*args, **kwargs)
 
-class docsSubidos:
-    up_ID = models.AutoField(primary_key=True)
-    doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, blank=True, null=True,
-                               verbose_name="documentos")
-    numDocs = models.IntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'uploaded'
-        ordering = ["up_ID"]
-        verbose_name = "nuevos_documentos"
-
-    def __str__(self):
-        return self.up_ID

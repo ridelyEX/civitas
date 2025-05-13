@@ -1,0 +1,29 @@
+@page{
+    size: letter;
+    margin: 2.5cm;
+    @bottom-right{
+        content: counter(pageNumber);
+    }
+}
+
+*{
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+/* TITTLE */
+th#t{
+    font-size: 2.5rem;
+    color: #2974b1;
+}
+
+/* logo */
+img.logo{
+    float:inline-end;
+    width: 7rem;
+    height: 7rem;
+}
+
+.sep{
+    border: 30px
+    
+}

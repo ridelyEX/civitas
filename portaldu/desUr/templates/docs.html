@@ -43,13 +43,13 @@
                     </button>
                   </form>
                 </td>
-                <td><input type="hidden" name="numDocs">{{ forloop.counter }}</td>
               </tr>
             {% empty %}
               <tr><td colspan="3">No hay documentos subidos</td></tr>
             {% endfor %}
           </tbody>
         </table>
+            <input type="hidden" name="count" value="{{ count }}">
       </div>
 
       <div class="d-grid gap-2">

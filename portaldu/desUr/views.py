@@ -1,8 +1,9 @@
-from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse
-from django.views import View
+from django.shortcuts import redirect, render, get_object_or_404
 import folium
-from .models import SubirDocs, soli, data
+from .models import SubirDocs, soli, data, Contador
+from weasyprint import HTML
+from django.template.loader import render_to_string
 
 
 def base(request):
@@ -110,9 +111,14 @@ def mapa(request):
     
 def docs(request):
     documentos = SubirDocs.objects.all().order_by('-nomDoc')
+    count = documentos.count()
     if request.method == 'POST':
+        contador = Contador(count=count)
+        contador.save()
         return redirect('soli')
-    return render(request, 'docs.html',{'documentos':documentos})
+    return render(request, 'docs.html',{
+        'documentos':documentos,
+        'count':count,})
 
 def dell(request, id):
     if request.method == 'POST':
@@ -131,6 +137,37 @@ def docs2(request):
         return redirect('docs')
     else:
         return render(request, 'docs2.html')
+
+
+def document(request):
+    html = render_to_string("documet/document.html")
+    pdf_out = HTML(string=html).write_pdf()
+    response = HttpResponse(pdf_out, content_type="application/pdf")
+    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    asunto = ''
+
+
+    match asunto:
+        case "DOP00001":
+            asunto = "Arrelgo de calles de terracería - DOP00001"
+        case "DOP00002":
+            asunto = "Bacheo de calles - DOP00002"
+        case "DOP00003":
+            asunto = "Limpieza de arrollos al sur de la ciudad - DOP00003"
+        case "DOP00004":
+            asunto = "Limpieza o mantenimiento de rejillas pluviales - DOP00004"
+        case "DOP00005":
+            asunto = "Pago de costo de participación en licitaciones de obra pública - DOP00005"
+        case "DOP00006":
+            asunto = "Rehabilitación de calles - DOP00006"
+        case "DOP00007":
+            asunto = "Retiro de escombro y materila de arrastre - DOP00007"
+        case "DOP00008":
+            asunto = "Solicitud de material caliche - DOP00008"
+
+    context = {'asunto':asunto}
+    #return response
+    return render(request, "documet/document.html")
 
 
 

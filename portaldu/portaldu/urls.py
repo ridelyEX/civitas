@@ -6,7 +6,7 @@ from desUr import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('nada', views.base, name="nada"),
+    path('nada/', views.document, name="document"),
     path('nav/', views.nav),
     path('', views.home, name="home"),
     path('intData/', views.intData, name="data"),
