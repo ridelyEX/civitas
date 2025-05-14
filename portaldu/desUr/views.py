@@ -140,10 +140,11 @@ def docs2(request):
 
 
 def document(request):
-    html = render_to_string("documet/document.html")
-    pdf_out = HTML(string=html).write_pdf()
-    response = HttpResponse(pdf_out, content_type="application/pdf")
-    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    #html = render_to_string("documet/document.html", {}, request)
+    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    #final_pdf = pdf_out.write_pdf()
+    #response = HttpResponse(final_pdf, content_type="application/pdf")
+    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
     asunto = ''
 
 
