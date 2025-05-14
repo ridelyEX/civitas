@@ -4,6 +4,8 @@
 {% endblock %} {% block body %} {% include 'nav.html' %}
 <form method="post">
   {% csrf_token %}
+<input type="hidden" name="uuid" value="{{ data.uuid }}">
+
   <div class="main" id="main">
     <div class="titulo"><h1>Datos de la solicitud</h1></div>
     <input type="hidden" name="asunto" value="{{ asunto }}" />
@@ -19,13 +21,13 @@
           value="{{dir}}"
         />
         <br />
-
+        <p>{{ uuid }}</p>
         <div class="plus">
           <button
             type="button"
             class="addbtn"
             id="ubi"
-            data-url="{% url 'map' %}?origen=soli"
+            data-url="{% url 'map' uuid=uuid %}?origen=soli"
           >
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
@@ -50,7 +52,7 @@
     <div class="right">
       <div class="form">
         <div class="plus">
-          <button type="button" class="addbtn" id="docs" data-url="{% url 'docs' %}">
+          <button type="button" class="addbtn" id="docs"  data-url="{% url 'docs' uuid=uuid %}">
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
             </span>

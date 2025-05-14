@@ -8,11 +8,14 @@
 
 {% block body %}
 {% include 'nav.html' %}
+<form method="post">
+  <input type="hidden" name="uuid" value="{{ data.uuid }}">
+    {% csrf_token %}
     <div class="main" id="main">
         <div class="titulo"><h1><b>Documento generado</b></h1></div><br>
         <div class="soli">
             <p><strong>Solicitud</strong></p>
-            <button type="button" class="down">
+            <button type="submit" class="down" name="action" value="descargar">
                 <span>
                     <img src="{% static 'images/download.png' %}" alt="dwnld" class="down">
                 </span>
@@ -21,15 +24,10 @@
     </div>
     <div class="bottom">
         <div class="lBtn">
-            <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' %}">Regresar</button>
+            <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' uuid=uuid%}">Regresar</button>
         </div>
         <div class="rBtn">
-            <button onclick="next()" type="button" class="next nbtn" id="next">Siguiente</button>
-            <script>
-                function next(){
-                    window.location.href = "{% url 'nada' %}"
-                }
-            </script>
+            <button type="submit" class="next nbtn" name="action" value="guardar" id="next">Siguiente</button>
         </div>
         <div class="cBtn">
             <button type="button" class="cancel cbtn" id="cancel" 
@@ -40,7 +38,7 @@
             </div>
         </div>
     </div>
-
+</form>
     
 {% endblock %}
 

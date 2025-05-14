@@ -55,7 +55,7 @@ def intData(request):
             case "DOP00006":
                 return redirect('calles')
             case _:
-                return redirect('soli')
+                return redirect('soli', uuid=datos.uuid)
 
     context = {
         'dir': direccion,
@@ -64,9 +64,10 @@ def intData(request):
     return render(request, 'di.html', context)
 
 
-def soliData(request):
+def soliData(request, uuid):
         direccion = request.GET.get('dir', '')
-
+        datos = data.objects.get(uuid=uuid)
+        print(uuid)
         asunto = request.session.get('asunto', '')
         print(asunto)
 
@@ -79,74 +80,22 @@ def soliData(request):
             info = request.POST.get('info')
             if info is None:
                 print("sin información adicional")
-            solicitud = soli(dirr=dirr, descc=descc, info=info)
+            solicitud = soli(data_ID=datos, dirr=dirr, descc=descc, info=info)
             solicitud.save()
-            return redirect('doc')
+            return redirect('doc', uuid=uuid)
         context = {
             'dir':direccion,
             'asunto':asunto,
+            'uuid':uuid,
         }
         return render(request, 'ds.html', context)
 
-def doc(request):
-    return render(request, 'dg.html')
-
-def adv(request):
-    return render(request, 'adv.html')
-
-def mapa(request):
-    origen = request.GET.get('origen', '')
-    if request.method == 'GET':
-        
-        print(origen)
-        
-    map=folium.Map(location=[28.6403497,-106.0747549], zoom_start=17).add_child(
-        folium.LatLngPopup()
-    )
-    
-    return render(request, 'mapa.html', {
-        'map':map._repr_html_(),
-        'origen': origen,
-    })
-    
-def docs(request):
-    documentos = SubirDocs.objects.all().order_by('-nomDoc')
-    count = documentos.count()
-    if request.method == 'POST':
-        contador = Contador(count=count)
-        contador.save()
-        return redirect('soli')
-    return render(request, 'docs.html',{
-        'documentos':documentos,
-        'count':count,})
-
-def dell(request, id):
-    if request.method == 'POST':
-        docc = get_object_or_404(SubirDocs, pk=id)
-        docc.delete()
-        print("se murio")
-    return redirect('docs')
-
-def docs2(request):
-    if request.method == 'POST' and request.FILES['file']:
-        descDoc = request.POST.get('descp')
-        docc = request.FILES.get('file')
-        nomDoc = docc.name
-        documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc)
-        documento.save()
-        return redirect('docs')
-    else:
-        return render(request, 'docs2.html')
-
-
-def document(request):
-    #html = render_to_string("documet/document.html", {}, request)
-    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-    #final_pdf = pdf_out.write_pdf()
-    #response = HttpResponse(final_pdf, content_type="application/pdf")
-    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
-    asunto = ''
-
+def doc(request, uuid):
+    datos = get_object_or_404(data, uuid=uuid)
+    print(uuid)
+    solicitud = soli.objects.filter(data_ID=datos).first()
+    asunto = request.session.get('asunto','')
+    print(asunto)
 
     match asunto:
         case "DOP00001":
@@ -166,7 +115,110 @@ def document(request):
         case "DOP00008":
             asunto = "Solicitud de material caliche - DOP00008"
 
-    context = {'asunto':asunto}
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'guardar':
+            return redirect('nada')
+        elif action == 'descargar':
+            context = {
+                "asunto":asunto,
+                "datos": {
+                    "nombre": datos.nombre,
+                    "pApe": datos.pApe,
+                    "mApe": datos.mApe,
+                    "bDay": datos.bDay,
+                    "tel": datos.tel,
+                    "curp": datos.curp,
+                    "sexo": datos.sexo,
+                    "dir": datos.dirr,
+                },
+                "soli": {
+                    "dir": solicitud.dirr if solicitud else "",
+                    "info": solicitud.info,
+                    "desc": solicitud.descc if solicitud else "",
+                }
+            }
+            # html = render_to_string("documet/document.html", context)
+            # pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+            # final_pdf = pdf_out.write_pdf()
+            # response = HttpResponse(final_pdf, content_type="application/pdf")
+            # response["Content-Disposition"] = f"inline; filename=información_general{uuid}.pdf"
+
+            # return response
+            return redirect('document')
+    context = {'asunto': asunto,
+               'datos':datos,
+               'soli':soli,
+               'uuid':uuid}
+    return render(request, 'dg.html', context)
+
+def adv(request):
+    return render(request, 'adv.html')
+
+def mapa(request, uuid):
+    datos = get_object_or_404(data, uuid=uuid)
+
+    origen = request.GET.get('origen', '')
+    if request.method == 'GET':
+        
+        print(origen)
+        
+    map=folium.Map(location=[28.6403497,-106.0747549], zoom_start=17).add_child(
+        folium.LatLngPopup()
+    )
+    
+    return render(request, 'mapa.html', {
+        'map':map._repr_html_(),
+        'origen': origen,
+        'uuid':uuid,
+    })
+    
+def docs(request, uuid):
+    datos = get_object_or_404(data, uuid=uuid)
+
+    documentos = SubirDocs.objects.all().order_by('-nomDoc')
+    count = documentos.count()
+    if request.method == 'POST':
+        contador = Contador(count=count)
+        contador.save()
+        return redirect('soli')
+    return render(request, 'docs.html',{
+        'documentos':documentos,
+        'count':count,
+        'uuid':uuid,})
+
+def dell(request, uuid, id):
+    if request.method == 'POST':
+        docc = get_object_or_404(SubirDocs, pk=id)
+        docc.delete()
+        print("se murio")
+    return redirect('docs', uuid=uuid)
+
+def docs2(request, uuid):
+    datos = get_object_or_404(data, uuid=uuid)
+
+    if request.method == 'POST' and request.FILES['file']:
+        descDoc = request.POST.get('descp')
+        docc = request.FILES.get('file')
+        nomDoc = docc.name
+        documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc)
+        documento.save()
+        return redirect('docs', uuid=uuid)
+    else:
+        return render(request, 'docs2.html')
+
+
+def document(request):
+    if request.method == 'POST':
+        uuid = request.POST['uuid']
+        datos = get_object_or_404(data, uuid=uuid)
+        soli = datos.soli_set.first()
+    #html = render_to_string("documet/document.html", {}, request)
+    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    #final_pdf = pdf_out.write_pdf()
+    #response = HttpResponse(final_pdf, content_type="application/pdf")
+    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
+
     #return response
     return render(request, "documet/document.html")
 

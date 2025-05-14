@@ -18,6 +18,7 @@
 <div class="container">
     <form class="form" method="post" enctype="multipart/form-data">
     {% csrf_token %}
+<input type="hidden" name="uuid" value="{{ uuid }}">
 
         <div class="textbox">
         <input type="text" class="desc" id="desc" name="descp" placeholder="Descripción del doc. Ej. INE, foto">

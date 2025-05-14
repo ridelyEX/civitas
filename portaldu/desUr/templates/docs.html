@@ -36,8 +36,10 @@
                 <td>{{ doc.nomDoc }}</td>
                 <td>{{ doc.descDoc }}</td>
                 <td>
-                  <form method="post" action="{% url 'dell' doc.doc_ID %}">
+                  <form method="post" action="{% url 'dell' uuid doc.doc_ID %}">
                     {% csrf_token %}
+<input type="hidden" name="uuid" value="{{ uuid }}">
+
                     <button type="submit" class="img" id="bbsura">
                       <img src="{% static 'images/delete.png' %}" class="bbsura">
                     </button>
@@ -53,7 +55,7 @@
       </div>
 
       <div class="d-grid gap-2">
-        <button class="btn btn-primary" type="button" id="plus" data-url="{% url 'docs2' %}">
+        <button class="btn btn-primary" type="button" id="plus" data-url="{% url 'docs2' uuid=uuid %}">
           <img class="add" src="{% static 'images/add.png' %}" /> Agregar
         </button>
       </div>
@@ -61,9 +63,10 @@
 
     <form method="post">
       {% csrf_token %}
+<input type="hidden" name="uuid" value="{{ uuid }}">
       <div class="Ibottom">
         <div class="lBtn">
-          <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' %}">
+          <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' uuid=uuid%}">
             Cerrar
           </button>
         </div>

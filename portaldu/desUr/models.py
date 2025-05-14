@@ -4,9 +4,14 @@ from phonenumber_field.modelfields import PhoneNumberField
 import uuid
 
 
+class Uuid(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
+
+
 class data(models.Model):
     data_ID = models.AutoField(primary_key=True)
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    uuid = models.ForeignKey(Uuid, on_delete=models.CASCADE,
+                                verbose_name="ides")
     nombre  = models.CharField(max_length=30, verbose_name="Nombre")
     pApe    = models.CharField(max_length=30, verbose_name="Apellido Paterno")
     mApe    = models.CharField(max_length=30, verbose_name="Apellido Materno")
@@ -94,8 +99,8 @@ class soli(models.Model):
     def __str__(self):
         return self.data_ID
 
-    def save(self, *args, **kwargs):
-        if not self.data_ID_id and data.objects.exists():
-            self.data_ID_id = data.objects.latest('data_ID').data_ID
-        super().save(*args, **kwargs)
+    #def save(self, *args, **kwargs):
+     #   if not self.data_ID_id and data.objects.exists():
+      #      self.data_ID_id = data.objects.latest('data_ID').data_ID
+      #  super().save(*args, **kwargs)
 
