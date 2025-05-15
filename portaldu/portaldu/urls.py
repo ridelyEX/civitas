@@ -6,10 +6,10 @@ from desUr import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('nada/', views.document, name="document"),
+    path('nada/<uuid:uuid>/', views.document, name="document"),
     path('nav/', views.nav),
     path('', views.home, name="home"),
-    path('intData/', views.intData, name="data"),
+    path('intData/<uuid:uuid>/', views.intData, name="data"),
     path('soliData/<uuid:uuid>/', views.soliData, name="soli"),
     #path('soliData/', views.soliData, name="soli"),
     path('doc/<uuid:uuid>/', views.doc, name="doc"),

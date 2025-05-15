@@ -5,13 +5,20 @@ import uuid
 
 
 class Uuid(models.Model):
+    prime =  models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
+
+    class Meta:
+        db_table: 'uuid'
+        ordering = ["uuid"]
+
+    def __str__(self):
+        return str(self.uuid)
 
 
 class data(models.Model):
     data_ID = models.AutoField(primary_key=True)
-    uuid = models.ForeignKey(Uuid, on_delete=models.CASCADE,
-                                verbose_name="ides")
+    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="ides")
     nombre  = models.CharField(max_length=30, verbose_name="Nombre")
     pApe    = models.CharField(max_length=30, verbose_name="Apellido Paterno")
     mApe    = models.CharField(max_length=30, verbose_name="Apellido Materno")
@@ -31,6 +38,11 @@ class data(models.Model):
     def __str__(self):
         return self.nombre
 
+    #def save(self, *args, **kwargs):
+     #   if not self.fuuid and Uuid.objects.exists():
+      #      self.fuuid = Uuid.objects.latest('uuid')
+       # super().save(*args, **kwargs)
+
 class users(models.Model):
     user_ID = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=30, verbose_name="Nombre")
@@ -46,7 +58,7 @@ class users(models.Model):
         verbose_name = "Usuarios"
 
     def __str__(self):
-        return self.user_ID
+        return str(self.user_ID)
 
 
 
@@ -64,7 +76,7 @@ class SubirDocs(models.Model):
         verbose_name = "Documentos"
 
     def __str__(self):
-        return self.nomDoc
+        return self.nomDoc or "Documento sin nombre"
 
 
 class Contador(models.Model):
@@ -76,7 +88,7 @@ class Contador(models.Model):
         ordering = ['count']
 
     def __str__(self):
-        return self.count
+        return self.count or 0
 
 
 
@@ -97,10 +109,10 @@ class soli(models.Model):
         verbose_name = "Solicitud"
 
     def __str__(self):
-        return self.data_ID
+        return str(self.soli_ID)
 
-    #def save(self, *args, **kwargs):
-     #   if not self.data_ID_id and data.objects.exists():
-      #      self.data_ID_id = data.objects.latest('data_ID').data_ID
-      #  super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if not self.data_ID_id and data.objects.exists():
+            self.data_ID_id = data.objects.latest('data_ID').data_ID
+        super().save(*args, **kwargs)
 

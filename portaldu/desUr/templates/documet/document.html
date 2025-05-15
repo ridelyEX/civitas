@@ -9,7 +9,7 @@
     <!--<link rel="stylesheet" href="{% static 'styles/docStyle.css' %}?v=1">-->
 </head>
 <body>
-<input type="hidden" name="uuid" value="{{ data.uuid }}">
+<input type="hidden" name="uuid" value="{{ Uuid.uuid }}">
 <div class="conteiner">
     <div class="head">
         <header>
@@ -29,7 +29,7 @@
     </div>
     <div class="sep"></div>
     <div class="main">
-        <div class="asunto" id="asunto"><h1 class="asunto"><strong>{{ asunto }}ASUNTO</strong></h1></div>
+        <div class="asunto" id="asunto"><h1 class="asunto"><strong>{{ asunto }}</strong></h1></div>
         <div class="tit">
             <h4 style="background-color: rgba(187, 225, 241, 0.411);"><strong>Titular o interesado</strong></h4>
             <table class="table table-striped">
@@ -42,31 +42,31 @@
                 <tbody>
                     <tr>
                         <th scope="row">Nombre:</th>
-                        <td>{{ data.nombre }}</td>
+                        <td>{{ datos.nombre }}</td>
                     </tr>
                     <tr>
                         <th scope="row">Apellido paterno:</th>
-                        <td>{{ data.pApe }}</td>
+                        <td>{{ datos.pApe }}</td>
                     </tr>
                     <tr>
                         <th scope="row">Apellido materno:</th>
-                        <td>{{ data.mApe }}</td>
+                        <td>{{ datos.mApe }}</td>
                     </tr>
                     <tr>
                         <th scope="row">Fecha de nacimiento:</th>
-                        <td>{{ data.bDay }}</td>
+                        <td>{{ datos.bDay }}</td>
                     </tr>
                     <tr>
                         <th scope="row">Teléfono:</th>
-                        <td>{{ data.tel }}</td>
+                        <td>{{ datos.tel }}</td>
                     </tr>
                     <tr>
                         <th scope="row">CURP:</th>
-                        <td>{{ data.curp }}</td>
+                        <td>{{ datos.curp }}</td>
                     </tr>
                     <tr>
                         <th scope="row">Sexo:</th>
-                        <td>{{ data.sexo }}</td>
+                        <td>{{ datos.sexo }}</td>
                     </tr>
                     <tr>
                         <th scope="row" class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);">Dirección:</th>
@@ -86,10 +86,17 @@
             </thead>
 
             <tbody>
+            {% for doc in documentos %}
             <tr><!-- for para imprimir nombre de documentos -->
-                <td>nomDoc</td>
-                <td>descDoc</td>
+                <td>{{ doc.nomDoc }}</td>
+                <td>{{ doc.descDoc }}</td>
             </tr>
+            {% empty %}
+            <tr>
+                <td>No hay documentos</td>
+                <td></td>
+            </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -105,7 +112,7 @@
             <tbody>
             <tr>
                 <th scope="row">Dirección del servicio:</th>
-                <td>{{ soli.dirr }}</td>
+                <td>{{ soli.dir }}</td>
             </tr>
               <tr>
                 <th scope="row">Descripción del servicio:</th>

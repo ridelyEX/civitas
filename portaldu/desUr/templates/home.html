@@ -9,20 +9,17 @@
 
 
 {% block body %}
-    {% include 'nav.html' %}
-    <div class="cont" id="cont">
-        <div class="btn" id="btn">
-            <button onclick="next()" type="button" class="btn btn-primary btn-lg">Iniciar</button>
-            <script>
-                function next(){
-                    window.location.href = "{% url 'data' %}"
-                }
-            </script>
+  {% include 'nav.html' %}
+<div class="cont" id="cont">
+    <form method="post">
+            {% csrf_token %}
+        <input type="hidden" name="uuid" value="{{ uuid }}">
+        <div class="boton" id="btn">
+            <button type="submit" class="btn btn-primary btn-lg">Iniciar</button>
         </div>
         <div class="vid" id="vid">
             <video src="{% static 'videos/fondo.mp4' %}" autoplay muted loop></video>
         </div>
-    </div>
-
-
+    </form>
+</div>
 {% endblock %}

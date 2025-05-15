@@ -10,10 +10,19 @@ html, body{
     height: 100%;
     width: 100%;
     justify-content: center;
-    align-items: center;
+    align-content: center;
 }
 
-.cont button{
+
+.boton{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.boton .btn{
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     font-size: 32px;
     border: 2px solid rgb(0, 0, 78);
@@ -25,7 +34,7 @@ html, body{
     cursor: pointer;
 }
 
-.cont button:hover{
+.boton .btn:hover{
     background-color: rgba(41, 87, 236, 0.863);
     opacity: 1;
     color: white;
