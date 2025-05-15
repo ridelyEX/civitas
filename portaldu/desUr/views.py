@@ -14,23 +14,27 @@ def nav(request):
 
 def home(request):
     if request.method == 'POST':
-        uuid_code = request.POST.get('uuid')
-        if not uuid_code:
-            import uuid
-            uuid_code = uuid.uuid4()
+        import uuid as uuid_lib
+        nuuid = uuid_lib.uuid4()
 
-        idd = Uuid(
-            uuid = uuid_code
-        )
+        idd = Uuid(uuid=nuuid)
         idd.save()
-        return redirect('data', uuid=idd.uuid)
+
+        response = redirect('data')
+        response.set_cookie('uuid', str(idd.uuid), max_age=3600)
     return render(request, 'home.html')
 
 
-def intData(request, uuid):
+def intData(request):
     direccion = request.GET.get('dir', '')
-    uid = get_object_or_404(Uuid, uuid=uuid)
+    uuid = request.COOKIES.get('uuid')
+
+    if not uuid:
+        return redirect('home')
     print(uuid)
+
+    uid = get_object_or_404(Uuid, uuid=uuid)
+
     asunto = ''
 
     if request.method == 'POST':
@@ -69,7 +73,7 @@ def intData(request, uuid):
             case "DOP00006":
                 return redirect('calles')
             case _:
-                return redirect('soli', uuid=uid.uuid)
+                return redirect('soli')
 
     context = {
         'dir': direccion,
@@ -79,10 +83,14 @@ def intData(request, uuid):
     return render(request, 'di.html', context)
 
 
-def soliData(request, uuid):
+def soliData(request):
+        uuid = request.COOKIES.get('uuid')
+        if not uuid:
+            return redirect('home')
+
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        print(uid)
         direccion = request.GET.get('dir', '')
-        datos = Uuid.objects.get(uuid=uuid)
-        print(uuid)
         asunto = request.session.get('asunto', '')
         print(asunto)
 
@@ -95,10 +103,9 @@ def soliData(request, uuid):
             info = request.POST.get('info')
             if info is None:
                 print("sin información adicional")
-            d = data.objects.filter(fuuid=datos).latest('data_ID')
-            solicitud = soli(data_ID=d, dirr=dirr, descc=descc, info=info)
+            solicitud = soli(data_ID=uid.data_set.latest('data_ID'), dirr=dirr, descc=descc, info=info)
             solicitud.save()
-            return redirect('doc', uuid=uuid)
+            return redirect('doc')
         context = {
             'dir':direccion,
             'asunto':asunto,
@@ -106,54 +113,22 @@ def soliData(request, uuid):
         }
         return render(request, 'ds.html', context)
 
-def doc(request, uuid):
+def doc(request):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
+
     datos = get_object_or_404(data, fuuid__uuid=uuid)
 
     solicitud = get_object_or_404(soli, data_ID=datos)
     asunto = request.session.get('asunto','')
     print(asunto)
 
-    match asunto:
-        case "DOP00001":
-            asunto = "Arrelgo de calles de terracería - DOP00001"
-        case "DOP00002":
-            asunto = "Bacheo de calles - DOP00002"
-        case "DOP00003":
-            asunto = "Limpieza de arrollos al sur de la ciudad - DOP00003"
-        case "DOP00004":
-            asunto = "Limpieza o mantenimiento de rejillas pluviales - DOP00004"
-        case "DOP00005":
-            asunto = "Pago de costo de participación en licitaciones de obra pública - DOP00005"
-        case "DOP00006":
-            asunto = "Rehabilitación de calles - DOP00006"
-        case "DOP00007":
-            asunto = "Retiro de escombro y materila de arrastre - DOP00007"
-        case "DOP00008":
-            asunto = "Solicitud de material caliche - DOP00008"
-
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'guardar':
             return redirect('nada')
         elif action == 'descargar':
-            context = {
-                "asunto":asunto,
-                "datos": {
-                    "nombre": datos.nombre,
-                    "pApe": datos.pApe,
-                    "mApe": datos.mApe,
-                    "bDay": datos.bDay,
-                    "tel": datos.tel,
-                    "curp": datos.curp,
-                    "sexo": datos.sexo,
-                    "dir": datos.dirr,
-                },
-                "soli": {
-                    "dir": solicitud.dirr if solicitud else "",
-                    "info": solicitud.info,
-                    "desc": solicitud.descc if solicitud else "",
-                }
-            }
             # html = render_to_string("documet/document.html", context)
             # pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
             # final_pdf = pdf_out.write_pdf()
@@ -171,7 +146,10 @@ def doc(request, uuid):
 def adv(request):
     return render(request, 'adv.html')
 
-def mapa(request, uuid):
+def mapa(request):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
     origen = request.GET.get('origen', '')
@@ -189,7 +167,10 @@ def mapa(request, uuid):
         'uuid':uuid,
     })
     
-def docs(request, uuid):
+def docs(request):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
     documentos = SubirDocs.objects.all().order_by('-nomDoc')
@@ -203,14 +184,20 @@ def docs(request, uuid):
         'count':count,
         'uuid':uuid,})
 
-def dell(request, uuid, id):
+def dell(request, id):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
     if request.method == 'POST':
         docc = get_object_or_404(SubirDocs, pk=id)
         docc.delete()
         print("se murio")
     return redirect('docs', uuid=uuid)
 
-def docs2(request, uuid):
+def docs2(request):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
     if request.method == 'POST' and request.FILES['file']:
@@ -224,7 +211,11 @@ def docs2(request, uuid):
         return render(request, 'docs2.html')
 
 
-def document(request, uuid):
+def document(request):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
+
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     solicitud = get_object_or_404(soli, data_ID=datos)
     documentos = SubirDocs.objects.all().order_by('-nomDoc')
