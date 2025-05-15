@@ -12,9 +12,9 @@
     <div class="searchCont">  
       <input type="hidden" name="origen" value="{{ origen }}">
       {% if origen == 'data' %}
-      <form method="get" action="{% url 'data' uuid=uuid %}" id="mapForm">
+      <form method="get" action="{% url 'data' %}" id="mapForm">
       {% elif origen == 'soli' %}
-      <form method="get" action="{% url 'soli' uuid=uuid %}" id="mapForm">
+      <form method="get" action="{% url 'soli' %}" id="mapForm">
       {% endif %}
         {% csrf_token %}
 <input type="hidden" name="uuid" value="{{ uuid }}">
@@ -41,14 +41,14 @@
           type="button" 
           class="back bbtn" 
           id="close" 
-          data-url="{% url 'data' uuid=uuid%}"
+          data-url="{% url 'data' %}"
         >Cerrar</button>
       {% elif origen == 'soli' %}
         <button 
           type="button" 
           class="back bbtn" 
           id="close" 
-          data-url="{% url 'soli' uuid=uuid %}"
+          data-url="{% url 'soli' %}"
         >Cerrar</button>
       {% endif %}
     </div>

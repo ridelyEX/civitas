@@ -27,7 +27,7 @@
             type="button"
             class="addbtn"
             id="ubi"
-            data-url="{% url 'map' uuid=uuid %}?origen=soli"
+            data-url="{% url 'map' %}?origen=soli"
           >
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
@@ -52,7 +52,7 @@
     <div class="right">
       <div class="form">
         <div class="plus">
-          <button type="button" class="addbtn" id="docs"  data-url="{% url 'docs' uuid=uuid %}">
+          <button type="button" class="addbtn" id="docs"  data-url="{% url 'docs' %}">
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
             </span>
@@ -102,14 +102,14 @@
         type="button"
         class="back bbtn"
         id="back"
-        data-url="{% url 'data' uuid=uuid %}"
+        data-url="{% url 'data' %}"
       >
         Regresar
       </button>
     </div>
 
     <div class="rBtn">
-      <button type="summit" class="next nbtn" id="next">Siguiente</button>
+      <button type="submit" class="next nbtn" id="next">Siguiente</button>
     </div>
 
     <div class="cBtn">

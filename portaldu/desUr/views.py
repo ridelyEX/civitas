@@ -1,3 +1,5 @@
+import uuid
+
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 import folium
@@ -14,14 +16,20 @@ def nav(request):
 
 def home(request):
     if request.method == 'POST':
-        import uuid as uuid_lib
-        nuuid = uuid_lib.uuid4()
+        uuidM = request.COOKIES.get('uuid')
 
-        idd = Uuid(uuid=nuuid)
-        idd.save()
+        if not uuidM:
+            uuidM = str(uuid.uuid4())
+            new = Uuid(uuid=uuidM)
+            new.save()
+        else:
+            if not Uuid.objects.filter(uuid=uuidM).exists():
+                new = Uuid(uuid=uuidM)
+                new.save()
 
         response = redirect('data')
-        response.set_cookie('uuid', str(idd.uuid), max_age=3600)
+        response.set_cookie('uuid', uuidM, max_age=3600)
+        return response
     return render(request, 'home.html')
 
 
@@ -29,8 +37,7 @@ def intData(request):
     direccion = request.GET.get('dir', '')
     uuid = request.COOKIES.get('uuid')
 
-    if not uuid:
-        return redirect('home')
+
     print(uuid)
 
     uid = get_object_or_404(Uuid, uuid=uuid)
@@ -93,6 +100,7 @@ def soliData(request):
         direccion = request.GET.get('dir', '')
         asunto = request.session.get('asunto', '')
         print(asunto)
+        dp = data.objects.filter(fuuid=uid).last()
 
         if request.method == 'POST':
             dirr = request.POST.get('dir')
@@ -103,7 +111,7 @@ def soliData(request):
             info = request.POST.get('info')
             if info is None:
                 print("sin información adicional")
-            solicitud = soli(data_ID=uid.data_set.latest('data_ID'), dirr=dirr, descc=descc, info=info)
+            solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info)
             solicitud.save()
             return redirect('doc')
         context = {
@@ -118,9 +126,11 @@ def doc(request):
     if not uuid:
         return redirect('home')
 
-    datos = get_object_or_404(data, fuuid__uuid=uuid)
+    datos = data.objects.filter(fuuid__uuid=uuid).first()
+    if not datos:
+        HttpResponse("no hay nada")
+    solicitud = soli.objects.filter(data_ID=datos).last()
 
-    solicitud = get_object_or_404(soli, data_ID=datos)
     asunto = request.session.get('asunto','')
     print(asunto)
 
@@ -136,10 +146,10 @@ def doc(request):
             # response["Content-Disposition"] = f"inline; filename=información_general{uuid}.pdf"
 
             # return response
-            return redirect('document', uuid=uuid)
+            return redirect('document')
     context = {'asunto': asunto,
                'datos':datos,
-               'soli':soli,
+               'soli':solicitud,
                'uuid':uuid}
     return render(request, 'dg.html', context)
 

@@ -9,7 +9,7 @@
 {% block body %}
 {% include 'nav.html' %}
 <form method="post">
-  <input type="hidden" name="uuid" value="{{ data.uuid }}">
+  <input type="hidden" name="uuid" value="{{ Uuid.uuid }}">
     {% csrf_token %}
     <div class="main" id="main">
         <div class="titulo"><h1><b>Documento generado</b></h1></div><br>
@@ -24,7 +24,7 @@
     </div>
     <div class="bottom">
         <div class="lBtn">
-            <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' uuid=uuid%}">Regresar</button>
+            <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' %}">Regresar</button>
         </div>
         <div class="rBtn">
             <button type="submit" class="next nbtn" name="action" value="guardar" id="next">Siguiente</button>
