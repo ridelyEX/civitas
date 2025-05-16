@@ -2,6 +2,8 @@
 
 {% extends 'base.html' %} {% load static %} {% block head %}
 <link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 <title>Obras Públicas</title>
 {% endblock %} {% block body %} {% include 'nav.html' %}
 <form method="post">
@@ -41,12 +43,11 @@
 
         <label for="bDay" class="text">Fecha de nacimiento:</label>
         <input
-          type="date"
           id="bDay"
-          class="input"
           name="bDay"
-          min="1920-12-31"
-        /><br />
+          type="text"
+          placeholder="Fecha de nacimiento"
+        /><br/>
 
         <label for="asunto" class="text">Asunto:</label>
         <select class="select" id="asunto" name="asunto">
@@ -109,20 +110,24 @@
         />
 
         <div class="plus">
-          <button type="button" class="addbtn" id="ubi" data-url="{% url 'map' %}?origen=data">
+          <button
+                  type="button"
+                  class="addbtn"
+                  id="ubi"
+                  data-url="{% url 'map' %}?origen=data">
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
             </span>
             <span class="txt">Añadir dirección</span>
           </button>
-          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="Ibottom">
     <div class="lBtn">
-      <button type="button" class="back bbtn" id="back" data-url="{% url 'home' %}">Regresar</button>
+      <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
     </div>
     <div class="rBtn">
       <button type="submit" class="next nbtn" id="next">Siguiente</button>
@@ -134,7 +139,16 @@
 {% endblock %}
 
 {% block footer %}
-
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+<script>
+  flatpickr("#bDay",{
+    dateFormat: "Y-m-d",
+    locale: "es",
+    altInput: "true",
+    altFormat: "F j, Y",
+  });
+</script>
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 
 {% endblock %}

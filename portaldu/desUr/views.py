@@ -14,6 +14,11 @@ def base(request):
 def nav(request):
     return render(request, 'nav.html')
 
+def clear(request):
+    response = redirect('home')
+    response.delete_cookie('uuid')
+    return response
+
 def home(request):
     if request.method == 'POST':
         uuidM = request.COOKIES.get('uuid')
@@ -26,6 +31,7 @@ def home(request):
             if not Uuid.objects.filter(uuid=uuidM).exists():
                 new = Uuid(uuid=uuidM)
                 new.save()
+                print(new)
 
         response = redirect('data')
         response.set_cookie('uuid', uuidM, max_age=3600)
@@ -129,7 +135,7 @@ def doc(request):
     datos = data.objects.filter(fuuid__uuid=uuid).first()
     if not datos:
         HttpResponse("no hay nada")
-    solicitud = soli.objects.filter(data_ID=datos).last()
+
 
     asunto = request.session.get('asunto','')
     print(asunto)
@@ -137,19 +143,18 @@ def doc(request):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'guardar':
-            return redirect('nada')
+            return redirect('clear')
         elif action == 'descargar':
-            # html = render_to_string("documet/document.html", context)
-            # pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-            # final_pdf = pdf_out.write_pdf()
-            # response = HttpResponse(final_pdf, content_type="application/pdf")
-            # response["Content-Disposition"] = f"inline; filename=información_general{uuid}.pdf"
+            #html = render_to_string("documet/document.html")
+            #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+            #final_pdf = pdf_out.write_pdf()
+            #response = HttpResponse(final_pdf, content_type="application/pdf")
+            #response["Content-Disposition"] = f"inline; filename=información_general{uuid}.pdf"
 
-            # return response
+            #return response
             return redirect('document')
     context = {'asunto': asunto,
                'datos':datos,
-               'soli':solicitud,
                'uuid':uuid}
     return render(request, 'dg.html', context)
 
@@ -157,14 +162,10 @@ def adv(request):
     return render(request, 'adv.html')
 
 def mapa(request):
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
-    datos = get_object_or_404(Uuid, uuid=uuid)
 
     origen = request.GET.get('origen', '')
     if request.method == 'GET':
-        
+
         print(origen)
         
     map=folium.Map(location=[28.6403497,-106.0747549], zoom_start=17).add_child(
@@ -174,7 +175,6 @@ def mapa(request):
     return render(request, 'mapa.html', {
         'map':map._repr_html_(),
         'origen': origen,
-        'uuid':uuid,
     })
     
 def docs(request):
@@ -220,6 +220,10 @@ def docs2(request):
     else:
         return render(request, 'docs2.html')
 
+
+def pago(request):
+
+    return render(request, 'pago.html')
 
 def document(request):
     uuid = request.COOKIES.get('uuid')
@@ -271,14 +275,14 @@ def document(request):
         },
         'documentos':documentos
     }
-    #html = render_to_string("documet/document.html", {}, request)
-    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-    #final_pdf = pdf_out.write_pdf()
-    #response = HttpResponse(final_pdf, content_type="application/pdf")
-    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    html = render_to_string("documet/document.html", context)
+    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    final_pdf = pdf_out.write_pdf()
+    response = HttpResponse(final_pdf, content_type="application/pdf")
+    response["Content-Disposition"] = "inline; filename=información_general.pdf"
 
-    #return response
-    return render(request, "documet/document.html", context)
+    return response
+    #return render(request, "documet/document.html", context)
 
 
 

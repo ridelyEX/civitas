@@ -11,10 +11,20 @@
     
     <div class="adv-Ibottom">
         <div class="adv-lBtn">
-            <button type="button" class="adv-next adv-nbtn" id="sibtn" data-url="{% url 'home' %}">Sí</button>
+            <button
+                    type="button"
+                    class="adv-next adv-nbtn"
+                    id="sibtn"
+                    data-url="{% url 'clear' %}">Sí</button>
         </div>
         <div class="adv-rBtn">
-            <button type="button" class="back bbtn" id="back" onclick="document.querySelector('.popup').classList.remove('active')">No</button>
+            <button
+                    type="button"
+                    class="back bbtn"
+                    id="back"
+                    onclick="document.querySelector('.popup').classList.remove('active')">
+                No
+            </button>
         </div>
     </div>
 </div>

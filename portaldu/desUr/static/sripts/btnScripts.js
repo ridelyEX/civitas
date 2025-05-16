@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
         });
     }
 
-//Botón para ir home desde el popup (creo)
+//Botón para ir home desde el popup
     const sibtn = document.getElementById("sibtn");
     if(sibtn){
         const sibtnurl = sibtn.dataset.url;
@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
        });
    }
 
-//botón para cerrar el popup
+//botón para cerrar el mapa
     document.getElementById("close").addEventListener("click", function () {
         window.location.href = this.dataset.url;
     });

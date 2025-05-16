@@ -18,4 +18,6 @@ urlpatterns = [
     path('docs/', views.docs, name="docs"),
     path('dell/<int:id>/', views.dell, name='dell'),
     path('docs2/', views.docs2, name="docs2"),
+    path('clear/', views.clear, name="clear"),
+    path('pago/', views.pago, name="pago"),
 ]
