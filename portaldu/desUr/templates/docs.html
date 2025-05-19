@@ -36,9 +36,9 @@
                 <td>{{ doc.nomDoc }}</td>
                 <td>{{ doc.descDoc }}</td>
                 <td>
-                  <form method="post" action="{% url 'dell' uuid doc.doc_ID %}">
+                  <form method="post" action="{% url 'dell' doc.doc_ID %}">
                     {% csrf_token %}
-<input type="hidden" name="uuid" value="{{ uuid }}">
+                    <input type="hidden" name="uuid" value="{{ uuid }}">
 
                     <button type="submit" class="img" id="bbsura">
                       <img src="{% static 'images/delete.png' %}" class="bbsura">

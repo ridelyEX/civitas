@@ -188,7 +188,7 @@ def docs(request):
     if request.method == 'POST':
         contador = Contador(count=count)
         contador.save()
-        return redirect('soli', uuid=uuid)
+        return redirect('soli')
     return render(request, 'docs.html',{
         'documentos':documentos,
         'count':count,
@@ -202,7 +202,7 @@ def dell(request, id):
         docc = get_object_or_404(SubirDocs, pk=id)
         docc.delete()
         print("se murio")
-    return redirect('docs', uuid=uuid)
+    return redirect('docs')
 
 def docs2(request):
     uuid = request.COOKIES.get('uuid')
@@ -216,7 +216,7 @@ def docs2(request):
         nomDoc = docc.name
         documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc)
         documento.save()
-        return redirect('docs', uuid=uuid)
+        return redirect('docs')
     else:
         return render(request, 'docs2.html')
 
