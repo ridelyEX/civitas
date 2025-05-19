@@ -2,27 +2,36 @@
 {% load static %} 
 
 {% block head %}
-<link rel="stylesheet" href="{% static 'styles/homeS.css' %}?v=1">
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+    crossorigin="anonymous"
+/>
+
 {% endblock %}
 {% block body %}
-<header class="contHead" id="head">
-    <div class="contCabeza" id="cbz">
-        <nav class="navbar">
-            <div class="nav-left">
-                <img src="{% static 'images/chiIcon.png' %}" alt="logo del estado">
-                <img src="{% static 'images/mIcon.png' %}" alt="logo de la M">
-            </div>
 
-            <div class="nav-center">
-                <h1>Vinculación Social</h1>
-            </div>    
 
-            <ul class="nav-right">
-                <li><a class="active" href="{% url 'clear' %}"><img src="{% static 'images/home.png' %}" alt="casa">Inicio</a></li>
-                <li><a href="contacto.html"><img src="{% static 'images/mail.png' %}" alt="correo">Contacto</a></li>
-                <li><a href="directorio.html"><img src="{% static 'images/contact_phone.png' %}" alt="llamada">Directorio</a></li>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="containter-fluid">
+        <a class="navbar-brand" href="https://www.municipiochihuahua.gob.mx/">
+            <img src="{% static 'images/chiIcon.png' %}" alt="logo" width="30" height="24" class="d-inline-block align-text-top">
+            Vinculación Social
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{% url 'clear' %}"><img src="{% static 'images/home.png' %}" alt="casa">Inicio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://www.municipiochihuahua.gob.mx/Directorio/Dependencia/Direcci%C3%B3n_de_Obras_P%C3%BAblicas"><img src="{% static 'images/contact_phone.png' %}" alt="llamada">Directorio</a>
+                </li>
             </ul>
-        </nav>
+        </div>
     </div>
-</header>
+</nav>
 {% endblock %}
