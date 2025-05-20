@@ -97,7 +97,7 @@ class soli(models.Model):
     data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
                                 verbose_name="Datos")
     doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, verbose_name="Documentos",
-                               blank=True, null=True)
+                                blank=True, null=True)
     dirr   = models.CharField(max_length=50)
     descc   = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)

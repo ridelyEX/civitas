@@ -3,7 +3,6 @@ html, body {
     padding: 0;
     overflow-x: hidden;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    padding-top: 2.5rem;
     width: 100vw;
 }
 
@@ -48,7 +47,6 @@ form .main{
     font-size: 1rem;
     border-radius: 10px;
     margin-left: 0.8rem;
-    margin-top: 2rem;
     margin-bottom: 2rem;
 }
 
@@ -68,8 +66,9 @@ form .main{
     gap: 3rem;
     justify-content: center;
     align-items: center;
-    width: max-content; 
-    margin: 0 auto;
+    width: max-content;
+    margin: auto;
+    margin-bottom: 3rem;
 }
 
 .bottom .cBtn{
