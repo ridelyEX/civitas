@@ -3,6 +3,12 @@
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'styles/map.css' %}?v=1" />
+ <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+    </style>
 
 {% endblock %}
 
@@ -30,8 +36,8 @@
     />
   </div>
 
-  <div class="map">
-    {{ map|safe }}
+  <div class="map" id="map">
+
   </div>
 
   <div class="Ibottom">
@@ -61,5 +67,23 @@
 {% endblock %}
 
 {% block footer %}
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{ gmapk }}&callback=initMap"
+  ></script>
+   <script>
+    function initMap() {
+        const ubicacion = { lat: 28.6353, lng: -106.0889 }; // Ejemplo: Chihuahua
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 14,
+            center: ubicacion,
+        });
+
+        const marker = new google.maps.Marker({
+            position: ubicacion,
+            map: map,
+            title: "Aquí no estamos",
+        });
+    }
+    </script>
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 {% endblock %}

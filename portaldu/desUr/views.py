@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 import folium
@@ -83,8 +84,6 @@ def intData(request):
         match asunto:
             case "DOP00005":
                 return redirect('pago')
-            case "DOP00006":
-                return redirect('calles')
             case _:
                 return redirect('soli')
 
@@ -167,13 +166,8 @@ def mapa(request):
     if request.method == 'GET':
 
         print(origen)
-        
-    map=folium.Map(location=[28.6403497,-106.0747549], zoom_start=17).add_child(
-        folium.LatLngPopup()
-    )
-    
     return render(request, 'mapa.html', {
-        'map':map._repr_html_(),
+        'gmapk':settings.gmapk,
         'origen': origen,
     })
     
@@ -255,6 +249,12 @@ def document(request):
             asunto = "Retiro de escombro y materila de arrastre - DOP00007"
         case "DOP00008":
             asunto = "Solicitud de material caliche - DOP00008"
+        case "DOP00009":
+            asunto = "Solicitud de pavimentación de calles - DOP00009"
+        case "DOP00010":
+            asunto = "Solicitud de reductores de velocidad - DOP00010"
+        case "DOP00011":
+            asunto = "Solicitud de material caliche - DOP00011"
 
     context = {
         "asunto": asunto,
