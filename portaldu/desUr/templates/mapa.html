@@ -2,13 +2,51 @@
 {% load static %}
 
 {% block head %}
+<script>
+    let map;
+    let marker;
+    function initMap() {
+    const ubicacion = { lat: 28.6353, lng: -106.0889 };
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: ubicacion,
+        zoom: 15,
+    });
+
+    map.addListener("click", (e)=>{
+      const latLng = e.latLng;
+
+      if (marker){
+        marker.setPosition(latLng);
+      }else{
+        marker = new google.maps.Marker({
+          position: latLng,
+          map: map,
+        });
+      }
+      
+      const geocoder = new google.maps.Geocoder();
+      
+      map.addListener("click", (e)=> {
+        const latLng = e.latLng;
+        
+        geocoder.geocode({ location: latLng}, (results, status) =>{
+          if (status === "OK" && results[0]){
+            const dir = results[0].formatted_address;
+            document.getElementById("dir").value = dir;
+          }else{
+            console.error("no chambea" +status);
+          }
+        });
+      });
+    });
+
+    }
+    window.initMap = initMap;
+
+</script>
 <link rel="stylesheet" href="{% static 'styles/map.css' %}?v=1" />
- <style>
-        #map {
-            height: 500px;
-            width: 100%;
-        }
-    </style>
+
+
 
 {% endblock %}
 
@@ -35,10 +73,14 @@
       placeholder="Dirección"
     />
   </div>
-
-  <div class="map" id="map">
-
-  </div>
+    <div class="mapholder">
+      <div class="map" id="map">
+      </div>
+          <script async
+            src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap"
+            defer
+          ></script>
+    </div>
 
   <div class="Ibottom">
     <div class="lBtn">
@@ -62,28 +104,12 @@
       <button type="submit" class="next nbtn" id="mNext">Seleccionar</button>
     </div>
   </div>
-</form>
-</div>
+  </form>
+  </div>
 {% endblock %}
 
 {% block footer %}
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key={{ gmapk }}&callback=initMap"
-  ></script>
-   <script>
-    function initMap() {
-        const ubicacion = { lat: 28.6353, lng: -106.0889 }; // Ejemplo: Chihuahua
-        const map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 14,
-            center: ubicacion,
-        });
 
-        const marker = new google.maps.Marker({
-            position: ubicacion,
-            map: map,
-            title: "Aquí no estamos",
-        });
-    }
-    </script>
+
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 {% endblock %}

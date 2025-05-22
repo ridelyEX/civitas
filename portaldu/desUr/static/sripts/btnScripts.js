@@ -55,5 +55,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
         window.location.href = this.dataset.url;
     });
 }catch(e){
-        console.error("no jala este mugrero", e)}
+        console.error("no jala este mugrero", e)
+    }
 });

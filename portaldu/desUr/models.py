@@ -27,7 +27,7 @@ class data(models.Model):
     tel     = PhoneNumberField(region="MX")
     curp    = models.CharField(max_length=18)
     sexo    = models.CharField(max_length=10)
-    dirr    = models.CharField(max_length=50)
+    dirr    = models.TextField()
 
     class Meta:
         db_table = 'dataT'
@@ -65,6 +65,7 @@ class users(models.Model):
 
 class SubirDocs(models.Model):
     doc_ID = AutoField(primary_key=True)
+    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
     nomDoc = models.CharField(max_length=50, null=True, blank=True)
     descDoc = models.CharField(max_length=100)
     doc = models.FileField(upload_to='documents/')
@@ -98,7 +99,7 @@ class soli(models.Model):
                                 verbose_name="Datos")
     doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, verbose_name="Documentos",
                                 blank=True, null=True)
-    dirr   = models.CharField(max_length=50)
+    dirr   = models.TextField()
     descc   = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     info   = models.TextField(blank=True, null=True)

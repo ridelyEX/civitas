@@ -167,7 +167,7 @@ def mapa(request):
 
         print(origen)
     return render(request, 'mapa.html', {
-        'gmapk':settings.gmapk,
+        'google_key':settings.GOOGLE_API_KEY,
         'origen': origen,
     })
     
@@ -177,7 +177,7 @@ def docs(request):
         return redirect('home')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
-    documentos = SubirDocs.objects.all().order_by('-nomDoc')
+    documentos = SubirDocs.objects.filter(fuuid=datos).order_by('-nomDoc')
     count = documentos.count()
     if request.method == 'POST':
         contador = Contador(count=count)
@@ -193,7 +193,7 @@ def dell(request, id):
     if not uuid:
         return redirect('home')
     if request.method == 'POST':
-        docc = get_object_or_404(SubirDocs, pk=id)
+        docc = get_object_or_404(SubirDocs, pk=id, fuuid__uuid=uuid)
         docc.delete()
         print("se murio")
     return redirect('docs')
@@ -208,7 +208,7 @@ def docs2(request):
         descDoc = request.POST.get('descp')
         docc = request.FILES.get('file')
         nomDoc = docc.name
-        documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc)
+        documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc, fuuid=datos)
         documento.save()
         return redirect('docs')
     else:
@@ -226,7 +226,7 @@ def document(request):
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     solicitud = get_object_or_404(soli, data_ID=datos)
-    documentos = SubirDocs.objects.all().order_by('-nomDoc')
+    documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
 

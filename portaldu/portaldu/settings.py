@@ -119,7 +119,7 @@ USE_I18N = True
 USE_TZ = True
 
 load_dotenv()
-gmapk = os.getenv("gmapk")
+GOOGLE_API_KEY = os.getenv("gmapk")
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
