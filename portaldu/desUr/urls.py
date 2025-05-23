@@ -16,4 +16,5 @@ urlpatterns = [
     path('docs2/', views.docs2, name="docs2"),
     path('clear/', views.clear, name="clear"),
     path('pago/', views.pago, name="pago"),
+    path('document2/', views.document2, name="document2"),
 ]

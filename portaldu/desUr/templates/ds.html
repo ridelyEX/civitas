@@ -39,7 +39,7 @@
         <label for="desc" class="text">Descripción del servicio:</label>
         <br />
         <textarea
-          class="tArea"
+          class="tArea1"
           id="desc"
           name="descc"
           placeholder="Descripción del servicio"
@@ -50,16 +50,67 @@
 
     <div class="right">
       <div class="form">
-        <div class="plus">
-          <button type="button" class="addbtn" id="docs"  data-url="{% url 'docs' %}">
-            <span class="addicon">
-              <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
-            </span>
-            <span class="txt">Documentación</span>
-          </button>
-        </div>
-        <br />
+        <div class="ngrid">
+          <div class="plus">
+            <button type="button" class="addbtn" id="docs"  data-url="{% url 'docs' %}">
+              <span class="addicon">
+                <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
+              </span>
+              <span class="txt">Documentación</span>
+            </button>
+          </div>
 
+          <div class="checkbox-wrapper-46">
+            <input type="checkbox" name="check" id="cbx-46" class="inp-cbx" />
+            <label for="cbx-46" class="cbx">
+              <span>
+                <svg viewBox="0 0 12 10" height="10px" width="12px">
+                  <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+                </svg>
+              </span>
+              <div class="p1">Declaración bajo protesta
+              </div>
+            </label>
+            <div>
+            <span class="p2">
+              Manifiesto bajo protesta de decir verdad que la información
+              proporcionada en esta solicitud es verdadera,
+              y que si me condujera con falsedad incurriría en una conducta
+              tipificada en la Ley Penal de la cual seré acreedor a una medida de conformidad
+              con las disposiciones aplicables en la materia.
+            </span>
+          </div>
+          </div>
+
+          <div class="nPuesto">
+            <label for="puo" class="text">Puesto u Oficio</label>
+            <select class="select" name="puo" id="puo">
+              <option value="none">Seleccione una opción</option>
+              <option value="regidor">Regidor</option>
+              <option value="regidor">Regidor</option>
+              <option value="regidor">Regidor</option>
+              <option value="regidor">Regidor</option>
+              <option value="regidor">Regidor</option>
+            </select>
+          </div>
+
+            <input type="file" id="file" name="file">
+          <div class="nFoto">
+            <label for="search" class="text">Añadir foto</label>
+            <button
+              type="button"
+              class="search sbtn"
+              id="search"
+              name="foto"
+              >
+              <span class="addicon">
+              <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
+              </span>
+              <span>Examinar</span>
+            </button>
+          </div>
+
+        </div>
         <label for="info" class="text">Información adicional:</label>
         <br />
         <textarea
@@ -68,29 +119,7 @@
           name="info"
           placeholder="Información adicional"
         ></textarea>
-        <br />
-
-        <div class="checkbox-wrapper-46">
-          <input type="checkbox" name="check" id="cbx-46" class="inp-cbx" />
-          <label for="cbx-46" class="cbx">
-            <span>
-              <svg viewBox="0 0 12 10" height="10px" width="12px">
-                <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-              </svg>
-            </span>
-            <div class="p1">Declaración bajo protesta
-            </div>
-          </label>
-          <div>
-          <span class="p2">
-            Manifiesto bajo protesta de decir verdad que la información 
-            proporcionada en esta solicitud es verdadera, 
-            y que si me condujera con falsedad incurriría en una conducta 
-            tipificada en la Ley Penal de la cual seré acreedor a una medida de conformidad 
-            con las disposiciones aplicables en la materia.
-          </span>
-        </div>
-        </div>
+        <br/>
       </div>
     </div>
   </div>
@@ -102,8 +131,8 @@
         class="back bbtn"
         id="back"
         data-url="{% url 'data' %}"
-      >
-        Regresar
+        >
+          Regresar
       </button>
     </div>
 
@@ -126,6 +155,12 @@
 </form>
 
 {% endblock %} {% block footer %}
+
+<script>document.getElementById("search").addEventListener('click',
+    function(){
+        document.getElementById("file").click();
+    });
+</script>
 
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 

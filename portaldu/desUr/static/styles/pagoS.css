@@ -1,36 +1,70 @@
 *{
+    margin: 0;
+    padding: 0;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    overflow: hidden;
 }
 
 html, body{
     height: 100vh;
     width: 100vw;
-    overflow: hidden;
 }
-
-
-
-.body{
-    display: flex;
-    flex-direction: column;
-    max-width: 100%;
-    margin-bottom: 1rem; 
-    justify-content: center;
-}
-
 
 .head{
     padding-bottom: 1rem;
-
 }
+
+
+.body{
+    font-size: large;
+    width: 90vw;
+    margin-bottom: 1rem;
+    padding-left: 6rem;
+}
+
+.formulario{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(1, 1fr);
+    gap: 8px;
+}
+
+.Fecha{
+    padding-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.descCont{
+    padding-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: fit-content;
+}
+.nom{
+    padding-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
 
 .head .titulo{
     width: 100%;
     border-radius: 10px;
     background: linear-gradient(to bottom, #d9e8f8, #f0f0f0);
+    margin-bottom: 1rem;
 }
 
-.body label.text{
+.head p{
+    font-size: 2rem;
+}
+
+.formulario label.text{
     font-size: 0.75rem;
     color: #005194;
     font-weight: 700;
@@ -42,7 +76,7 @@ html, body{
     padding: 0 4px;
 }
 
-.body input[type=text].input{
+.formulario input[type=text].input{
     padding: 10px;
     font-size: 0.8rem;
     border: 2px solid #005194;
@@ -55,7 +89,7 @@ html, body{
     margin-bottom: 3rem;
 }
 
-.body input[type=text].input:focus {
+.formulario input[type=text].input:focus {
     outline: none;
     border-color: #004dff;
 }
@@ -155,3 +189,28 @@ html, body{
     inset 4px 4px 6px 0 rgba(0,0,0,.4);
 }
 
+@media screen and (max-width: 576px) {
+    .formulario{
+        grid-template-columns: repeat(1, 1fr);
+        grid-template-rows: repeat(1, 1fr);
+    }
+    .Ibottom{
+        grid-template-columns: repeat(1, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+    }
+
+
+    .body{
+        padding-left: 1.5rem;
+    }
+    .nom{
+        padding-top: 0;
+    }
+    .descCont{
+        padding-top: 0;
+    }
+    .Fecha{
+        padding-top: 0;
+    }
+    
+}

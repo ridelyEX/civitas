@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import AutoField
+from django.forms import FileField
 from phonenumber_field.modelfields import PhoneNumberField
 import uuid
 
@@ -91,7 +92,24 @@ class Contador(models.Model):
     def __str__(self):
         return self.count or 0
 
+class Pagos(models.Model):
+    pago_ID = models.AutoField(primary_key=True)
+    data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
+                                verbose_name="datos")
+    fecha = models.DateTimeField(null = True, blank = True)
+    pfm = models.CharField(max_length=80, null = True, blank = True)
 
+    class Meta:
+        db_table = 'pagos'
+        ordering = ['pago_ID']
+
+    def __str__(self):
+        return self.pfm or ""
+
+    def save(self, *args, **kwargs):
+        if not self.data_ID_id and data.objects.exists():
+            self.data_ID_id = data.objects.latest('data_ID').data_ID
+        super().save(*args, **kwargs)
 
 class soli(models.Model):
     soli_ID = models.AutoField(primary_key=True)
@@ -103,6 +121,8 @@ class soli(models.Model):
     descc   = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     info   = models.TextField(blank=True, null=True)
+    puo = models.CharField(max_length=50, null=True, blank=True)
+    foto = models.FileField(upload_to = 'fotos/', null=True, blank=True)
 
     class Meta:
         db_table = 'soli'

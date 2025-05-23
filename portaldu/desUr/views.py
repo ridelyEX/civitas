@@ -4,7 +4,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 import folium
-from .models import SubirDocs, soli, data, Contador, Uuid
+from .models import SubirDocs, soli, data, Contador, Uuid, Pagos
 from weasyprint import HTML
 from django.template.loader import render_to_string
 
@@ -116,7 +116,8 @@ def soliData(request):
             info = request.POST.get('info')
             if info is None:
                 print("sin información adicional")
-            solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info)
+            foto = request.FILES.get('file')
+            solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, foto=foto)
             solicitud.save()
             return redirect('doc')
         context = {
@@ -138,20 +139,20 @@ def doc(request):
 
     asunto = request.session.get('asunto','')
     print(asunto)
-
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'guardar':
-            return redirect('clear')
-        elif action == 'descargar':
-            #html = render_to_string("documet/document.html")
-            #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-            #final_pdf = pdf_out.write_pdf()
-            #response = HttpResponse(final_pdf, content_type="application/pdf")
-            #response["Content-Disposition"] = f"inline; filename=información_general{uuid}.pdf"
-
-            #return response
-            return redirect('document')
+    if asunto == "DOP00005":
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            if action == 'guardar':
+                return redirect('clear')
+            elif action == 'descargar':
+                return redirect ('document2')
+    else:
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            if action == 'guardar':
+                return redirect('clear')
+            elif action == 'descargar':
+                return redirect('document')
     context = {'asunto': asunto,
                'datos':datos,
                'uuid':uuid}
@@ -216,6 +217,17 @@ def docs2(request):
 
 
 def pago(request):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
+    daatos = get_object_or_404(data, fuuid__uuid=uuid)
+
+    if request.method == 'POST':
+        fecha = request.POST.get('fecha')
+        pfm = request.POST.get('pfm')
+        pago = Pagos(fecha=fecha, pfm=pfm)
+        pago.save()
+        return redirect('doc')
 
     return render(request, 'pago.html')
 
@@ -284,6 +296,41 @@ def document(request):
     return response
     #return render(request, "documet/document.html", context)
 
+def document2(request):
+    uuid = request.COOKIES.get('uuid')
+    datos = get_object_or_404(data, fuuid__uuid=uuid)
+    pago = get_object_or_404(Pagos, data_ID=datos)
+
+    asunto = request.session.get('asunto', 'Sin asunto')
+
+    if asunto == "DOP00005":
+        asunto = "Pago de costo de participación en licitaciones de obra pública - DOP00005"
+
+    context={
+        "asunto":asunto,
+        "datos":{
+            "nombre": datos.nombre,
+            "pApe": datos.pApe,
+            "mApe": datos.mApe,
+            "bDay": datos.bDay,
+            "tel": datos.tel,
+            "curp": datos.curp,
+            "sexo": datos.sexo,
+            "dirr": datos.dirr,
+        },
+        "pago":{
+            "fecha":pago.fecha,
+            "pfm" : pago.pfm
+        },
+    }
+    html = render_to_string("documet/document2.html", context)
+    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    final_pdf = pdf_out.write_pdf()
+    response = HttpResponse(final_pdf, content_type="application/pdf")
+    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+
+    return response
+    #return render(request, "documet/document2.html")
 
 
 # Create your views here.
