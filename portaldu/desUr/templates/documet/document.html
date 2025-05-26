@@ -12,7 +12,6 @@
             size: letter;
             margin: 2.5cm;
             margin-top:0;
-            counter-reset: pageNumber 1;
             @bottom-right{
                 content: counter(pageNumber);
             }
@@ -88,7 +87,7 @@
                     </tr>
                     <tr>
                         <th scope="row" class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);">Dirección:</th>
-                        <td class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);"><p>{{ datos.dirr }}</p></td>
+                        <td class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);"><p>{{ datos.dir }}</p></td>
                     </tr>
                 </tbody>
             </table>
@@ -108,6 +107,10 @@
             <tr><!-- for para imprimir nombre de documentos -->
                 <td>{{ doc.nomDoc }}</td>
                 <td>{{ doc.descDoc }}</td>
+            </tr>
+            <tr>
+                <th scope="row" class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);"></th>
+                <td class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);"></td>
             </tr>
             {% empty %}
             <tr>
@@ -129,6 +132,10 @@
             </thead>
             <tbody>
             <tr>
+                <th scope="row">Puesto u oficio:</th>
+                <td><p>{{ soli.puo }}</p></td>
+            </tr>
+            <tr>
                 <th scope="row">Dirección del servicio:</th>
                 <td><p>{{ soli.dir }}</p></td>
             </tr>
@@ -139,6 +146,22 @@
               <tr>
                 <th scope="row" class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);">Información adicional:</th>
                 <td class="final" style="border-bottom: 1px  solid rgb(119, 201, 255);"><p>{{ soli.info }}</p></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="foto">
+        <table class="table table-striped">
+            <thead class="thead">
+            <tr>
+                <th scope="col"></th>
+                <th scope="col" style="float: inline-end;">Foto de INE</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <th scope="row"></th>
+                <td><img src="{% media/documents/{{ soli.puo }}%}" alt="foto"></td>
             </tr>
             </tbody>
         </table>

@@ -122,7 +122,7 @@ class soli(models.Model):
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     info   = models.TextField(blank=True, null=True)
     puo = models.CharField(max_length=50, null=True, blank=True)
-    foto = models.FileField(upload_to = 'fotos/', null=True, blank=True)
+    foto = models.ImageField(upload_to = 'fotos', default='desUr/static/fotos/mock.jpg', null=True, blank=True)
 
     class Meta:
         db_table = 'soli'

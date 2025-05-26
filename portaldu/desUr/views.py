@@ -116,8 +116,9 @@ def soliData(request):
             info = request.POST.get('info')
             if info is None:
                 print("sin información adicional")
+            puo = request.POST.get("puo")
             foto = request.FILES.get('file')
-            solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, foto=foto)
+            solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
             solicitud.save()
             return redirect('doc')
         context = {
@@ -284,17 +285,19 @@ def document(request):
             "dir": solicitud.dirr if solicitud else "",
             "info": solicitud.info,
             "desc": solicitud.descc if solicitud else "",
+            "foto": solicitud.foto,
+            "puo" : solicitud.puo,
         },
         'documentos':documentos
     }
-    html = render_to_string("documet/document.html", context)
-    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-    final_pdf = pdf_out.write_pdf()
-    response = HttpResponse(final_pdf, content_type="application/pdf")
-    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    #html = render_to_string("documet/document.html", context)
+    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    #final_pdf = pdf_out.write_pdf()
+    #response = HttpResponse(final_pdf, content_type="application/pdf")
+    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
 
-    return response
-    #return render(request, "documet/document.html", context)
+    #return response
+    return render(request, "documet/document.html", context)
 
 def document2(request):
     uuid = request.COOKIES.get('uuid')
