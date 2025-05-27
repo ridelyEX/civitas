@@ -70,6 +70,14 @@
                         <td>{{ datos.mApe }}</td>
                     </tr>
                     <tr>
+                        <th scope="row">Etnia:</th>
+                        <td>{{ datos.etnia }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Discapacidad:</th>
+                        <td>{{ datos.disc }}</td>
+                    </tr>
+                    <tr>
                         <th scope="row">Fecha de nacimiento:</th>
                         <td>{{ datos.bDay }}</td>
                     </tr>
@@ -160,8 +168,16 @@
             </thead>
             <tbody>
             <tr>
-                <th scope="row"></th>
-                <td><img src="{% media/documents/{{ soli.puo }}%}" alt="foto"></td>
+                <th scope="row">Foto</th>
+                {% for s in soli %}
+                    {% if s.foto %}
+                    <td>
+                        <img src="{{ s.foto.url }}" style="width: 150px;" alt="foto">
+                    {% else %}
+                        no hay foto
+                    </td>
+                    {% endif %}
+                {% endfor %}
             </tr>
             </tbody>
         </table>

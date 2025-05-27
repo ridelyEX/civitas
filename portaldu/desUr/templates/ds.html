@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
 <title>Obras Públicas</title>
 {% endblock %} {% block body %} {% include 'nav.html' %}
-<form method="post">
+<form method="post" enctype="multipart/form-data">
   {% csrf_token %}
 <input type="hidden" name="uuid" value="{{ data.uuid }}">
 

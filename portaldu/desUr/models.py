@@ -5,6 +5,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 import uuid
 
 
+
 class Uuid(models.Model):
     prime =  models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
@@ -29,6 +30,8 @@ class data(models.Model):
     curp    = models.CharField(max_length=18)
     sexo    = models.CharField(max_length=10)
     dirr    = models.TextField()
+    disc    = models.CharField(max_length=30, verbose_name="discapacidad")
+    etnia    = models.CharField(max_length=30, verbose_name="etnia")
 
     class Meta:
         db_table = 'dataT'
@@ -122,7 +125,7 @@ class soli(models.Model):
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     info   = models.TextField(blank=True, null=True)
     puo = models.CharField(max_length=50, null=True, blank=True)
-    foto = models.ImageField(upload_to = 'fotos', default='desUr/static/fotos/mock.jpg', null=True, blank=True)
+    foto = models.ImageField(upload_to = 'fotos', null=True, blank=True)
 
     class Meta:
         db_table = 'soli'
@@ -132,8 +135,5 @@ class soli(models.Model):
     def __str__(self):
         return str(self.soli_ID)
 
-    def save(self, *args, **kwargs):
-        if not self.data_ID_id and data.objects.exists():
-            self.data_ID_id = data.objects.latest('data_ID').data_ID
-        super().save(*args, **kwargs)
+
 

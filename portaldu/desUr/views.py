@@ -118,13 +118,18 @@ def soliData(request):
                 print("sin información adicional")
             puo = request.POST.get("puo")
             foto = request.FILES.get('file')
+            if foto is None:
+                print("no hay nada")
             solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
             solicitud.save()
             return redirect('doc')
+
+        solicitudes = soli.objects.filter(data_ID=dp)
         context = {
             'dir':direccion,
             'asunto':asunto,
             'uuid':uuid,
+            'soli':solicitudes
         }
         return render(request, 'ds.html', context)
 
@@ -280,6 +285,8 @@ def document(request):
             "curp": datos.curp,
             "sexo": datos.sexo,
             "dir": datos.dirr,
+            "disc":datos.disc,
+            "etnia":datos.etnia,
         },
         "soli": {
             "dir": solicitud.dirr if solicitud else "",
