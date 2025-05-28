@@ -9,21 +9,34 @@
     <!--<link rel="stylesheet" href="{% static 'styles/docStyle.css' %}?v=1">-->
    <style>
         @page{
-            size: letter;
+            size: Letter;
             margin: 2.5cm;
-            margin-top:0;
             @bottom-right{
-                content: counter(pageNumber);
+                content: counter(page);
             }
         }
+
+        .asunto{
+            margin-top: 1cm;
+
+        }
+        header{
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: -3cm;
+            height: 5cm;
+            margin-bottom: -10cm;
+        }
+
         .table tbody td{
             width:50%;
         }
         
-        html, body{
-            margin: 0;
-            padding: 0;    
-        }
+
+       .head{
+        margin-top: 0;
+       }
     </style>
 </head>
 <body>
@@ -163,21 +176,19 @@
             <thead class="thead">
             <tr>
                 <th scope="col"></th>
-                <th scope="col" style="float: inline-end;">Foto de INE</th>
+                <th scope="col" style="float: inline-end;"></th>
             </tr>
             </thead>
             <tbody>
             <tr>
                 <th scope="row">Foto</th>
-                {% for s in soli %}
-                    {% if s.foto %}
                     <td>
-                        <img src="{{ s.foto.url }}" style="width: 150px;" alt="foto">
+                    {% if soli.foto %}
+                        <img src="{{ soli.foto.url }}" style="width: 75px;" alt="foto">
                     {% else %}
                         no hay foto
-                    </td>
                     {% endif %}
-                {% endfor %}
+                    </td>
             </tr>
             </tbody>
         </table>
