@@ -31,7 +31,7 @@ class data(models.Model):
     sexo    = models.CharField(max_length=10)
     dirr    = models.TextField()
     disc    = models.CharField(max_length=30, verbose_name="discapacidad")
-    etnia    = models.CharField(max_length=30, verbose_name="etnia")
+    etnia   = models.CharField(max_length=30, verbose_name="etnia")
 
     class Meta:
         db_table = 'dataT'

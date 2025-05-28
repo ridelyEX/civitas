@@ -64,7 +64,15 @@ def intData(request):
         curp = request.POST.get('curp')
         sexo = request.POST.get('sexo')
         dirr = request.POST.get('dir')
-
+        etnia = request.POST.get('etnia')
+        print(etnia)
+        if etnia is None:
+            print("sin etnia")
+            etnia = "sin etnia"
+        disc = request.POST.get('discapacidad')
+        if disc is None:
+            print("normal")
+            disc = "sin discapacidad"
 
         datos = data(
             nombre=nombre,
@@ -77,6 +85,8 @@ def intData(request):
             sexo=sexo,
             dirr=dirr,
             fuuid=uid,
+            etnia=etnia,
+            disc=disc
         )
         datos.save()
 
@@ -243,7 +253,8 @@ def document(request):
         return redirect('home')
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
-    solicitud = get_object_or_404(soli, data_ID=datos)
+    #solicitud = get_object_or_404(soli, data_ID=datos)
+    solicitud = soli.objects.filter(data_ID=datos)
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
@@ -289,11 +300,11 @@ def document(request):
             "etnia":datos.etnia,
         },
         "soli": {
-            "dir": solicitud.dirr if solicitud else "",
-            "info": solicitud.info,
-            "desc": solicitud.descc if solicitud else "",
-            "foto": solicitud.foto,
-            "puo" : solicitud.puo,
+            "dir": solicitud.last().dirr if solicitud.exists() else "",
+            "info": solicitud.last().info,
+            "desc": solicitud.last().descc if solicitud.exists() else "",
+            "foto": solicitud.last().foto,
+            "puo" : solicitud.last().puo,
         },
         'documentos':documentos
     }
