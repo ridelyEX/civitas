@@ -49,8 +49,19 @@
           placeholder="Fecha de nacimiento"
         />
 
-        <label for="etnia" class="text">Etnia:</label>
-        <input type="text" id="etnia" name="etnia" class="input" placeholder="Etnia">
+        <div class="field">
+          <fieldset>
+            <legend>¿Pertenece a alguna etnia?</legend>
+            <label for="ets">
+            <input type="radio" id="ets" class="radio" name="et" onclick="habilitar(true)">
+              Sí</label>
+            <label for="etn">
+            <input type="radio" id="etn" class="radio" name="et" onclick="habilitar(false)">
+              No</label><br>
+            <label for="etnia" class="text">Etnia:</label>
+            <input type="text" id="etnia" name="etnia" class="input" placeholder="Etnia" disabled>
+          </fieldset>
+        </div>
 
         <label for="asunto" class="text">Asunto:</label>
         <select class="select" id="asunto" name="asunto">
@@ -107,6 +118,20 @@
           <option value="otro">Otro</option>
         </select>
 
+        <div class="field">
+          <fieldset>
+            <legend>¿Tiene alguna discapacidad?</legend>
+            <label for="discs">
+            <input type="radio" id="discs" name="disc" class="radio" onclick="habilitarD(true)">
+              Sí</label>
+            <label for="discn">
+            <input type="radio" id="discn" name="disc" class="radio" onclick="habilitarD(false)">
+              No</label><br>
+            <label for="disc" class="text">Discapacidad:</label>
+            <input type="text" name="discapacidad" id="disc" class="input" placeholder="Discapacidad" disabled>
+          </fieldset>
+        </div>
+
         <label for="dir" class="text" >Dirección:</label>
         <input
           type="text"
@@ -116,10 +141,6 @@
           placeholder="Dirección: calle, colonia, número ex., C.P."
           value="{{dir}}"
         />
-
-        <label for="discapacidad" class="text">Discapacidad:</label>
-        <input type="text" name="discapacidad" id="discapacidad" class="input" placeholder="dicapacidad">
-
         <div class="plus">
           <button
                   type="button"
@@ -159,6 +180,25 @@
     altInput: "true",
     altFormat: "F j, Y",
   });
+</script>
+<script>
+  function habilitar(estado){
+      console.log(estado);
+      document.getElementById("etnia").disabled = !estado;
+      if (estado == false){
+        console.log("aqui no hay nada");
+        }else{
+        console.log("aqui hay algo");
+        }
+    }
+    function habilitarD(estado){
+      document.getElementById("disc").disabled = !estado;
+      if (estado == false){
+      console.log("aqui no hay nada");
+        }else{
+        console.log("aqui hay algo");
+        }
+    }
 </script>
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 
