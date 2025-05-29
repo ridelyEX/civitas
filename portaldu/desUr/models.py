@@ -135,5 +135,16 @@ class soli(models.Model):
     def __str__(self):
         return str(self.soli_ID)
 
+class Files(models.Model):
+    fDoc_ID = models.AutoField(primary_key=True)
+    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
+    finalDoc = models.FileField(upload_to='solicitudes')
+    nomDoc = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        db_table = 'solicitudes'
+        ordering = ['fDoc_ID']
+        verbose_name = "solicitudes"
+
 
 

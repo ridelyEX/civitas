@@ -1,12 +1,13 @@
 import uuid
-
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 import folium
-from .models import SubirDocs, soli, data, Contador, Uuid, Pagos
+from .models import SubirDocs, soli, data, Contador, Uuid, Pagos, Files
 from weasyprint import HTML
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
+
 
 
 def base(request):
@@ -37,7 +38,7 @@ def home(request):
         response = redirect('data')
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
-    return render(request, 'main.html')
+    return render(request, 'home.html')
 
 
 def intData(request):
@@ -64,15 +65,7 @@ def intData(request):
         curp = request.POST.get('curp')
         sexo = request.POST.get('sexo')
         dirr = request.POST.get('dir')
-        etnia = request.POST.get('etnia')
-        print(etnia)
-        if etnia is None:
-            print("sin etnia")
-            etnia = "sin etnia"
-        disc = request.POST.get('discapacidad')
-        if disc is None:
-            print("normal")
-            disc = "sin discapacidad"
+
 
         datos = data(
             nombre=nombre,
@@ -85,8 +78,6 @@ def intData(request):
             sexo=sexo,
             dirr=dirr,
             fuuid=uid,
-            etnia=etnia,
-            disc=disc
         )
         datos.save()
 
@@ -253,8 +244,7 @@ def document(request):
         return redirect('home')
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
-    #solicitud = get_object_or_404(soli, data_ID=datos)
-    solicitud = soli.objects.filter(data_ID=datos)
+    solicitud = get_object_or_404(soli, data_ID=datos)
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
@@ -300,22 +290,22 @@ def document(request):
             "etnia":datos.etnia,
         },
         "soli": {
-            "dir": solicitud.last().dirr if solicitud.exists() else "",
-            "info": solicitud.last().info,
-            "desc": solicitud.last().descc if solicitud.exists() else "",
-            "foto": solicitud.last().foto,
-            "puo" : solicitud.last().puo,
+            "dir": solicitud.dirr if solicitud else "",
+            "info": solicitud.info,
+            "desc": solicitud.descc if solicitud else "",
+            "foto": solicitud.foto,
+            "puo" : solicitud.puo,
         },
         'documentos':documentos
     }
-    html = render_to_string("documet/document.html", context)
-    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-    final_pdf = pdf_out.write_pdf()
-    response = HttpResponse(final_pdf, content_type="application/pdf")
-    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    #html = render_to_string("documet/document.html", context)
+    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    #final_pdf = pdf_out.write_pdf()
+    #response = HttpResponse(final_pdf, content_type="application/pdf")
+    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
 
-    return response
-    #return render(request, "documet/document.html", context)
+    #return response
+    return render(request, "documet/document.html", context)
 
 def document2(request):
     uuid = request.COOKIES.get('uuid')
