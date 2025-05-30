@@ -1,9 +1,7 @@
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from . import views as view
 from django.urls import path
 
 urlpatterns = [
-
+    path('main/', view.master, name='master'),
+    path('', view.usersRender, name='users')
 ]

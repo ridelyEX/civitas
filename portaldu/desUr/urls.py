@@ -17,5 +17,4 @@ urlpatterns = [
     path('clear/', views.clear, name="clear"),
     path('pago/', views.pago, name="pago"),
     path('document2/', views.document2, name="document2"),
-    path('savee/', views.saveDocument, name="save")
 ]

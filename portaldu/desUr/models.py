@@ -47,25 +47,6 @@ class data(models.Model):
       #      self.fuuid = Uuid.objects.latest('uuid')
        # super().save(*args, **kwargs)
 
-class users(models.Model):
-    user_ID = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=30, verbose_name="Nombre")
-    apellidos = models.CharField(max_length=50, verbose_name="Apellidos")
-    correo = models.CharField(max_length=50)
-    usuario = models.CharField(max_length=30)
-    data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
-                                verbose_name="Datos", default=0)
-
-    class Meta:
-        db_table = 'users'
-        ordering = ["user_ID"]
-        verbose_name = "Usuarios"
-
-    def __str__(self):
-        return str(self.user_ID)
-
-
-
 
 class SubirDocs(models.Model):
     doc_ID = AutoField(primary_key=True)

@@ -38,7 +38,7 @@ def home(request):
         response = redirect('data')
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
-    return render(request, 'main.html')
+    return render(request, 'usersusers.html')
 
 
 def intData(request):
