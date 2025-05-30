@@ -1,12 +1,13 @@
 import uuid
-
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 import folium
-from .models import SubirDocs, soli, data, Contador, Uuid, Pagos
+from .models import SubirDocs, soli, data, Contador, Uuid, Pagos, Files
 from weasyprint import HTML
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
+
 
 
 def base(request):

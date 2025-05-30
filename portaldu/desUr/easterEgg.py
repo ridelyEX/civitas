@@ -90,3 +90,22 @@ class calculadora:
             case "6":
                 q = False
                 print("Gracias por usar la calculadora")
+
+class vaca:
+    tamano=6
+    color="blanca"
+    peso=200
+    raza="quien sabe"
+    global sonido
+
+
+
+    def Sonidos(self):
+        input(int(sonido))
+
+        if 1:
+            sonido == "muu"
+        else:
+            sonido == "beeee"
+
+        print(sonido)
