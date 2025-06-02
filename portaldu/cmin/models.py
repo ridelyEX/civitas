@@ -1,38 +1,34 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
+from django.utils import timezone
 
 class CustomUser(BaseUserManager):
-    def create_user(self, usuario, nombre, correo, contrasena):
+    def create_user(self, email, password=None, **extra_fields):
 
-        user_data = {
-            'usuario':usuario,
-            'nombre':nombre,
-            'correo':correo,
-            'contrasena':contrasena,
-        }
+        if not email:
+            raise ValueError("Ingrese email")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
-        if contrasena:
-            user_data['contrasena'] = self.make_random_password()
+class users(AbstractUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
+    nombre = models.CharField(max_length=100)
+    apellidos = models.CharField(max_length=150)
+    usuario = models.CharField(max_length=100, unique=True)
+    bday = models.DateField()
 
-        db_table = 'users'
-        user_data.save()
+    USERNAME_FIELD = 'usuario'
+    REQUIRED_FIELDS = ['nombre']
 
-        return user_data
-
-class users(models.Model):
-    user_ID = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=30, verbose_name="Nombre")
-    apellidos = models.CharField(max_length=50, verbose_name="Apellidos")
-    correo = models.EmailField(max_length=50)
-    usuario = models.CharField(max_length=30)
-
-
-    class Meta:
-        db_table = 'users'
-        ordering = ["user_ID"]
-        verbose_name = "Usuarios"
+    objects = CustomUser()
 
     def __str__(self):
-        return str(self.user_ID)
+        return self.nombre
 
+
+class LoginDate(models.Model):
+    date = models.DateTimeField(default=timezone.now)
 # Create your models here.

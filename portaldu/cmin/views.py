@@ -10,9 +10,21 @@ from .models import users
 def master(request):
     return render(request, 'master.html')
 
-def usersRender(request):
-    context = {}
-    userForm = Users()
-    context['form'] = userForm
-    return render(request, 'users.html', context)
+def users_render(request):
+    if request.method == 'POST':
+        form = Users(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('login')
+    else:
+        form = Users()
+    return render(request, 'users.html', {'form':form})
+
+
+def login(request):
+    if request.method == 'POST':
+        form = login(request.POST)
+        if form.is_valid():
+            return HttpResponse("hola mundo de verdad")
+    return render(request, 'login.html')
 # Create your views here.

@@ -1,0 +1,17 @@
+{% extends 'master.html' %}{% load static %}
+
+{% block head %}{% endblock %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=1">
+
+{% block content %}{% include 'navmin.html' %}
+<text>Hola inicia sesión</text>
+
+
+
+{% endblock %}
+
+
+{% block footer %}{% endblock %}

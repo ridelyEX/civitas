@@ -14,7 +14,7 @@ def base(request):
     return render(request, 'base.html')
 
 def nav(request):
-    return render(request, 'nav.html')
+    return render(request, 'navmin.html')
 
 def clear(request):
     response = redirect('home')
@@ -38,7 +38,7 @@ def home(request):
         response = redirect('data')
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
-    return render(request, 'usersusers.html')
+    return render(request, 'main.html')
 
 
 def intData(request):
