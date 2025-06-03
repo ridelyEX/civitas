@@ -39,7 +39,7 @@ class LoginDate(models.Model):
 
     class Meta:
         db_table = 'LoginDate'
-        ordering = 'user_FK'
+        ordering = ['user_FK']
 
     def __str__(self):
         return self.date
@@ -52,7 +52,7 @@ class SolicitudesPendientes(models.Model):
 
     class Meta:
         db_table = 'SolicitudesPendientes'
-        ordering = 'solicitud_ID'
+        ordering = ['solicitud_ID']
 
     def __str__(self):
         return self.nomSolicitud
@@ -68,7 +68,7 @@ class SolicitudesEnviadas(models.Model):
 
     class Meta:
         db_table = 'SolicitudesEnviadas'
-        ordering = 'solicitud_ID'
+        ordering = ['solicitud_ID']
 
     def __str__(self):
         return self.nomSolicitud

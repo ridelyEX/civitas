@@ -4,7 +4,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 import folium
-from .models import SubirDocs, soli, data, Contador, Uuid, Pagos, Files
+from .models import SubirDocs, soli, data, Uuid, Pagos, Files
 from weasyprint import HTML
 from django.template.loader import render_to_string, get_template
 
@@ -198,8 +198,7 @@ def docs(request):
     documentos = SubirDocs.objects.filter(fuuid=datos).order_by('-nomDoc')
     count = documentos.count()
     if request.method == 'POST':
-        contador = Contador(count=count)
-        contador.save()
+
         return redirect('soli')
     return render(request, 'docs.html',{
         'documentos':documentos,
