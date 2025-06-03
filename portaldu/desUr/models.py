@@ -65,17 +65,6 @@ class SubirDocs(models.Model):
         return self.nomDoc or "Documento sin nombre"
 
 
-class Contador(models.Model):
-    count_ID = models.AutoField(primary_key=True)
-    count = models.PositiveIntegerField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'contador'
-        ordering = ['count']
-
-    def __str__(self):
-        return self.count or 0
-
 class Pagos(models.Model):
     pago_ID = models.AutoField(primary_key=True)
     data_ID = models.ForeignKey(data, on_delete=models.CASCADE,

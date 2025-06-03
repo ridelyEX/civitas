@@ -43,8 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'desUr',
-    'cmin',
+    'portaldu.desUr.apps.DesurConfig',
+    'portaldu.cmin.apps.CminConfig',
     'bootstrap5',
 ]
 

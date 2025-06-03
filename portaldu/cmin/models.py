@@ -1,6 +1,9 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
-from django.utils import timezone
+from django.db import models
+from django.db.models import AutoField
+
+from portaldu.desUr.models import Files
+
 
 class CustomUser(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -30,5 +33,43 @@ class users(AbstractUser, PermissionsMixin):
 
 
 class LoginDate(models.Model):
-    date = models.DateTimeField(default=timezone.now)
+    login_ID = models.AutoField(primary_key=True)
+    user_FK = models.ForeignKey(users, on_delete=models.CASCADE, verbose_name='usuarios')
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'LoginDate'
+        ordering = 'user_FK'
+
+    def __str__(self):
+        return self.date
+
+class SolicitudesPendientes(models.Model):
+    solicitud_ID = models.AutoField(primary_key=True)
+    nomSolicitud = models.CharField(max_length=150)
+    fechaSolicitud = models.DateField()
+    doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
+
+    class Meta:
+        db_table = 'SolicitudesPendientes'
+        ordering = 'solicitud_ID'
+
+    def __str__(self):
+        return self.nomSolicitud
+
+
+class SolicitudesEnviadas(models.Model):
+    solicitud_ID = AutoField(primary_key=True)
+    nomSolicitud = models.CharField(max_length=150)
+    fechaEnvio = models.DateField(auto_now=True)
+    user_FK = models.ForeignKey(users, on_delete=models.CASCADE, verbose_name='usuarios')
+    doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
+    solicitud_FK = models.ForeignKey(SolicitudesPendientes, on_delete=models.CASCADE, verbose_name='solicitudes')
+
+    class Meta:
+        db_table = 'SolicitudesEnviadas'
+        ordering = 'solicitud_ID'
+
+    def __str__(self):
+        return self.nomSolicitud
 # Create your models here.
