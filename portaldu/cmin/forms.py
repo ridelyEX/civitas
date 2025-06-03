@@ -1,21 +1,20 @@
 from django import forms
 from django.forms import ModelForm
 
-from .models import Users
+from .models import users
 
-
-class UsersRender(forms.ModelForm):
+class Users(forms.ModelForm):
      password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
      confirmP = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
 
      class Meta:
-          model = Users
-          fields = ['email', 'first_name', 'last_name', 'username', 'bday', 'password']
+          model = users
+          fields = ['email', 'nombre', 'apellidos', 'usuario', 'bday', 'password']
           widgets = {
                'email': forms.EmailInput(attrs={'class':'formcontrol'}),
-               'first_name': forms.TextInput(attrs={'class':'formcontrol'}),
-               'last_name': forms.TextInput(attrs={'class':'formcontrol'}),
-               'username': forms.TextInput(attrs={'class':'formcontrol'}),
+               'nombre': forms.TextInput(attrs={'class':'formcontrol'}),
+               'apellidos': forms.TextInput(attrs={'class':'formcontrol'}),
+               'usuario': forms.TextInput(attrs={'class':'formcontrol'}),
                'bday': forms.TextInput(attrs={'type':'text', 'class':'formcontrol'}),
           }
 

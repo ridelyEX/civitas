@@ -14,7 +14,7 @@ def master(request):
 
 def users_render(request):
     if request.method == 'POST':
-        form = UsersRender(request.POST)
+        form = Users(request.POST)
         if form.is_valid():
             form.save()
             return redirect('login')
