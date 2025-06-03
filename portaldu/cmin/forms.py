@@ -36,6 +36,6 @@ class Users(forms.ModelForm):
           return user
 
 
-class login(forms):
-     usuario = forms.TextInput(widget=forms.PasswordInput(attrs={'class':'sign'}))
-     contrasena = forms.TextInput(widget=forms.TextInput(attrs={'class':'sign'}))
+class Login(forms.Form):
+     usuario = forms.CharField(widget=forms.PasswordInput(attrs={'class':'sign'}))
+     contrasena = forms.CharField(widget=forms.TextInput(attrs={'class':'sign'}))
