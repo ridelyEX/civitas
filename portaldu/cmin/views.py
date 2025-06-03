@@ -1,10 +1,9 @@
-from django.shortcuts import render
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
-from django import forms
-
 from .forms import Users, Login
+from .models import LoginDate
+
 
 def master(request):
     return render(request, 'master.html')
@@ -21,9 +20,11 @@ def users_render(request):
 
 
 def login(request):
+    form = Login(request.POST)
     if request.method == 'POST':
-        form = Login(request.POST)
         if form.is_valid():
+            fecha = LoginDate()
+            fecha.save()
             return HttpResponse("hola mundo de verdad")
-    return render(request, 'login.html')
+    return render(request, 'login.html',{'form':form})
 # Create your views here.
