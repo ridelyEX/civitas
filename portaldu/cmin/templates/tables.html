@@ -1,0 +1,56 @@
+{% extends 'master.html' %}{% load static %}
+
+{% block head %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}?v=1">
+{% endblock %}
+
+
+{% block content %}{% include 'navmin.html' %}
+<div class="row">
+    <div class="col-md-4">
+        <table>
+            <thead>
+            <tr>
+                <th>Asuntos pendientes</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Jill</td>
+                <td>Smith</td>
+            </tr>
+            <tr>
+                <td>Eve</td>
+                <td>Jackson</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-4">
+        <table>
+            <thead>
+            <tr>
+                <th>Asuntos enviados</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Jill</td>
+                <td>Smith</td>
+            </tr>
+            <tr>
+                <td>Eve</td>
+                <td>Jackson</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+
+{% endblock %}

@@ -6,36 +6,32 @@ from portaldu.desUr.models import Files
 
 
 class CustomUser(BaseUserManager):
-    def create_user(self, usuario, email, password=None, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
 
         if not email:
             raise ValueError("Ingrese email")
-        if not usuario:
-            raise ValueError("ingresar usuario")
+
         email = self.normalize_email(email)
-        user = self.model(usuario=usuario, email=email, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
 class users(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    nombre = models.CharField(max_length=100)
-    apellidos = models.CharField(max_length=150)
-    usuario = models.CharField(max_length=100, unique=True)
     bday = models.DateField()
 
-    USERNAME_FIELD = 'usuario'
-    REQUIRED_FIELDS = ['nombre']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['first_name']
 
     objects = CustomUser()
 
     class Meta:
         db_table = 'cmin_users'
-        ordering = ['usuario']
+        ordering = ['username']
 
     def __str__(self):
-        return self.usuario
+        return self.username
 
 
 class LoginDate(models.Model):
@@ -49,6 +45,11 @@ class LoginDate(models.Model):
 
     def __str__(self):
         return self.date
+
+    def save(self, *args, **kwargs):
+        if not self.user_FK_id and users.objects.exists():
+            self.user_FK_id = users.objects.filter('id').id
+        super().save(*args, *kwargs)
 
 class SolicitudesPendientes(models.Model):
     solicitud_ID = models.AutoField(primary_key=True)

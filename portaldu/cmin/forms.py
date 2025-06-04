@@ -9,12 +9,12 @@ class Users(forms.ModelForm):
 
      class Meta:
           model = users
-          fields = ['email', 'nombre', 'apellidos', 'usuario', 'bday', 'password']
+          fields = ['email', 'first_name', 'last_name', 'username', 'bday', 'password']
           widgets = {
                'email': forms.EmailInput(attrs={'class':'formcontrol'}),
-               'nombre': forms.TextInput(attrs={'class':'formcontrol'}),
-               'apellidos': forms.TextInput(attrs={'class':'formcontrol'}),
-               'usuario': forms.TextInput(attrs={'class':'formcontrol'}),
+               'first_name': forms.TextInput(attrs={'class':'formcontrol'}),
+               'last_name': forms.TextInput(attrs={'class':'formcontrol'}),
+               'username': forms.TextInput(attrs={'class':'formcontrol'}),
                'bday': forms.TextInput(attrs={'type':'text', 'class':'formcontrol'}),
           }
 
