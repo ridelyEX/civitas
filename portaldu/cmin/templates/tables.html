@@ -9,48 +9,34 @@
 
 
 {% block content %}{% include 'navmin.html' %}
-<div class="row">
-    <div class="col-md-4">
-        <table>
-            <thead>
-            <tr>
-                <th>Asuntos pendientes</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>Jill</td>
-                <td>Smith</td>
-            </tr>
-            <tr>
-                <td>Eve</td>
-                <td>Jackson</td>
-            </tr>
-            </tbody>
-        </table>
+<main class="container">
+    <div class="cards">
+      <div class="card">
+        <h3>Asuntos pendientes</h3>
+        <ul class="asuntos">
+          <li><strong>DOP00008</strong><p>Menu description.</p></li>
+          <li><strong>DOP00007</strong><p>Menu description.</p></li>
+          <li><strong>DOP00005</strong><p>Menu description.</p></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Asuntos enviados</h3>
+        <ul class="asuntos">
+          <li><strong>DOP00001</strong><p>Menu description.</p></li>
+          <li><strong>DOP00003</strong><p>Menu description.</p></li>
+          <li><strong>DOP00004</strong><p>Menu description.</p></li>
+        </ul>
+      </div>
     </div>
-    <div class="col-md-4">
-        <table>
-            <thead>
-            <tr>
-                <th>Asuntos enviados</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>Jill</td>
-                <td>Smith</td>
-            </tr>
-            <tr>
-                <td>Eve</td>
-                <td>Jackson</td>
-            </tr>
-            </tbody>
-        </table>
+
+    <div class="acciones">
+      <button type="button" class="enviar-btn">Enviar asunto</button>
     </div>
-</div>
+  </main>
+
 {% endblock %}
 
 {% block footer %}
-
+<footer class="footer"></footer>
 {% endblock %}

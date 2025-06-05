@@ -1,14 +1,15 @@
 from django import forms
 from django.forms import ModelForm
 
-from .models import users
+from .models import Users, create
 
-class Users(forms.ModelForm):
+
+class UsersRender(forms.ModelForm):
      password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
      confirmP = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
 
      class Meta:
-          model = users
+          model = Users
           fields = ['email', 'first_name', 'last_name', 'username', 'bday', 'password']
           widgets = {
                'email': forms.EmailInput(attrs={'class':'formcontrol'}),
@@ -39,3 +40,4 @@ class Users(forms.ModelForm):
 class Login(forms.Form):
      usuario = forms.CharField(widget=forms.TextInput(attrs={'class':'formcontrol'}))
      contrasena = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
+

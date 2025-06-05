@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import AutoField
@@ -17,7 +18,7 @@ class CustomUser(BaseUserManager):
         user.save(using=self._db)
         return user
 
-class users(AbstractUser, PermissionsMixin):
+class Users(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     bday = models.DateField()
 
@@ -34,9 +35,15 @@ class users(AbstractUser, PermissionsMixin):
         return self.username
 
 
+def create(users_id):
+    users = Users.objects.get(pk=users_id)
+    login = LoginDate(user_FK=users)
+    login.save()
+
+
 class LoginDate(models.Model):
     login_ID = models.AutoField(primary_key=True)
-    user_FK = models.ForeignKey(users, on_delete=models.CASCADE, verbose_name='usuarios')
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -46,10 +53,12 @@ class LoginDate(models.Model):
     def __str__(self):
         return self.date
 
-    def save(self, *args, **kwargs):
-        if not self.user_FK_id and users.objects.exists():
-            self.user_FK_id = users.objects.filter('id').id
-        super().save(*args, *kwargs)
+    @classmethod
+    def create(cls, user):
+        return cls.objects.create(
+            user_FK=user
+        )
+
 
 class SolicitudesPendientes(models.Model):
     solicitud_ID = models.AutoField(primary_key=True)
@@ -69,7 +78,7 @@ class SolicitudesEnviadas(models.Model):
     solicitud_ID = AutoField(primary_key=True)
     nomSolicitud = models.CharField(max_length=150)
     fechaEnvio = models.DateField(auto_now=True)
-    user_FK = models.ForeignKey(users, on_delete=models.CASCADE, verbose_name='usuarios')
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
     doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
     solicitud_FK = models.ForeignKey(SolicitudesPendientes, on_delete=models.CASCADE, verbose_name='solicitudes')
 
