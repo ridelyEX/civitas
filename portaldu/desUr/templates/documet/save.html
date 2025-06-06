@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% load static %}
+
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'styles/animation.css' %}">
+{% endblock %}
+
+
+{% block body %}
+
+<div>
+    hola
+</div>
+<div class="vid" id="vid">
+    <video src="{% static 'videos/fondo.mp4' %}" autoplay muted loop></video>
+</div>
+<div class="lds-spinner loader" id="loader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+
+{% endblock %}
+
+
+{% block footer %}
+
+<script> src="{% static 'sripts/loader.js' %}"></script>
+{% endblock %}

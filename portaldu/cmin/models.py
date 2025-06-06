@@ -35,12 +35,6 @@ class Users(AbstractUser, PermissionsMixin):
         return self.username
 
 
-def create(users_id):
-    users = Users.objects.get(pk=users_id)
-    login = LoginDate(user_FK=users)
-    login.save()
-
-
 class LoginDate(models.Model):
     login_ID = models.AutoField(primary_key=True)
     user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')

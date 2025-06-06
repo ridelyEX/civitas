@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 
-from .models import Users, create
+from .models import Users
 
 
 class UsersRender(forms.ModelForm):

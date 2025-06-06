@@ -1,5 +1,6 @@
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
@@ -24,9 +25,7 @@ def users_render(request):
 
 def login_view(request):
     form = Login(request.POST)
-    #userid = request.POST.get('id')
-    #us = get_object_or_404(users, id=userid)
-    #user = users.objects.filter(user_FK=us)
+
     if request.method == 'POST' and form.is_valid():
         usuario = form.cleaned_data['usuario']
         contrasena = form.cleaned_data['contrasena']
@@ -41,6 +40,11 @@ def login_view(request):
 
     return render(request, 'login.html', {'form':form})
 
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+#@login_required
 def tables(request):
     return render(request, 'tables.html')
 # Create your views here.

@@ -108,7 +108,7 @@ class soli(models.Model):
 class Files(models.Model):
     fDoc_ID = models.AutoField(primary_key=True)
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
-    finalDoc = models.FileField(upload_to='solicitudes')
+    finalDoc = models.FileField(upload_to='solicitudes/')
     nomDoc = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
