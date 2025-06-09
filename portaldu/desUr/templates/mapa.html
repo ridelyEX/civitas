@@ -112,4 +112,23 @@
 
 
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+<script>
+document.getElementById("mNext").addEventListener("click", function () {
+  const dirInput = document.getElementById("dir").value;
+
+  if (!dirInput.trim()) {
+    alert("Por favor selecciona una dirección en el mapa.");
+    return;
+  }
+
+  document.getElementById("mapForm").submit();
+});
+
+// Para el botón de cerrar que regresa a la vista original
+document.getElementById("close").addEventListener("click", function () {
+  const url = this.getAttribute("data-url");
+  window.location.href = url + "?uuid=" + encodeURIComponent(document.querySelector('input[name="uuid"]').value);
+});
+</script>
 {% endblock %}

@@ -11,14 +11,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
             });
         }
 //Botón para entrar al mapa
-    const dirbtn = document.getElementById("ubi");
+   /* const dirbtn = document.getElementById("ubi");
     if(dirbtn){
         const dirurl = dirbtn.dataset.url;
         console.log("algo todavía más racista",dirurl);
         dirbtn.addEventListener("click", ()=>{
             window.location.href = dirurl;
         });
-    }
+    } */
 
 //Boton para entrar a docs
     const docbtn = document.getElementById("docs");
