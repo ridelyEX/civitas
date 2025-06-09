@@ -123,6 +123,7 @@ def intData(request):
         'dir': direccion,
         'asunto': asunto,
         'uuid':uuid,
+        'google_key': settings.GOOGLE_API_KEY,
     }
     return render(request, 'di.html', context)
 
@@ -162,7 +163,8 @@ def soliData(request):
             'dir':direccion,
             'asunto':asunto,
             'uuid':uuid,
-            'soli':solicitudes
+            'soli':solicitudes,
+            'google_key': settings.GOOGLE_API_KEY,
         }
         return render(request, 'ds.html', context)
 

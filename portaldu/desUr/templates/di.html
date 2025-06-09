@@ -153,6 +153,12 @@
             <span class="txt">Añadir dirección</span>
           </button>
         </div>
+        <div id="modalD" class="modal" style="display:none;">
+          <div class="modal-content">
+            <span class="close" id="cerrar">&times;</span>
+            {% include 'mapa.html' %}
+          </div>
+        </div>
 
       </div>
     </div>
@@ -202,5 +208,25 @@
     }
 </script>
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
+<script>
+
+  //mostrar
+  document.getElementById('ubi').onclick = function(){
+    document.getElementById('modalD').style.display = 'block';
+  }
+
+  //cerrar
+  document.getElementById('cerrar').onclick = function(){
+    document.getElementById('modalD').style.display = 'none';
+  }
+  window.onclick = function(event){
+    var modal = document.getElementById('modalD');
+    if (event.taget === modal){
+      modal.style.display = "none";
+    }
+  }
+
+
+</script>
 
 {% endblock %}
