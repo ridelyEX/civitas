@@ -4,6 +4,12 @@
     box-sizing: border-box;
 }
 
+html, body{
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
 
 .lds-spinner {
   /* change color here */
@@ -93,11 +99,6 @@
   }
 }
 
-.vid{
-    position: absolute;
-    z-index: 1000;
-}
-
 .loader{
     background: black;
     width: 100%;
@@ -110,10 +111,56 @@
     left: 0;
     z-index: 100000;
     clip-path: circle(141.4% at 0 0); 
-    transition:clip-path 0.3 ease-in-out;
+    transition:clip-path 0.9 ease-in-out;
 }
 
 .loader2{
-    clip-path: circle(0 at 0 0);
- 
+    clip-path: circle(0% at 100% 100%);
+    
+  }
+  
+.vid{
+      position: absolute;
+      z-index: 1000;
+}
+
+.text-container{
+    position: relative;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 78, 0.692);;
+    z-index: 100000;
+    height: 3rem;
+}
+
+.text{
+    
+   
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    z-index: 100000;
+
+  }
+
+.vid video{
+  display: block;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    opacity: 0.90;
+}
+
+.cont{
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

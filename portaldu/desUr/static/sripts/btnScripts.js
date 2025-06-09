@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
             });
         }
 //Botón para entrar al mapa
-    const dirbtn = document.getElementById("ubi");
+  const dirbtn = document.getElementById("ubi");
     if(dirbtn){
         const dirurl = dirbtn.dataset.url;
         console.log("algo todavía más racista",dirurl);
@@ -51,9 +51,23 @@ document.addEventListener("DOMContentLoaded", ()=>{
    }
 
 //botón para cerrar el mapa
-    document.getElementById("close").addEventListener("click", function () {
-        window.location.href = this.dataset.url;
-    });
+    const closebtn = document.getElementById("close");
+    if(closebtn){
+        const closeurl = closebtn.dataset.url;
+        console.log("cerrando el mapa", closeurl);
+        closebtn.addEventListener("click", ()=>{
+            window.location.href = closeurl;
+        });
+    }
+
+    const fbtn = document.getElementById("finish");
+    if(fbtn){
+        const furl = fbtn.dataset.url;
+        console.log=("y se murió", furl);
+        fbtn.addEventListener("click", ()=>{
+            window.location.href = furl;
+        });
+    }
 }catch(e){
         console.error("no jala este mugrero", e)
     }
