@@ -1,4 +1,7 @@
 import uuid
+from io import BytesIO
+
+from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.http import HttpResponse
@@ -11,7 +14,7 @@ from django.template.loader import render_to_string, get_template
 
 
 def base(request):
-    return render(request, 'base.html')
+    return render(request, 'documet/save.html')
 
 def nav(request):
     return render(request, 'navmin.html')
@@ -75,22 +78,40 @@ def intData(request):
             print("normal")
             disc = "sin discapacidad"
 
-        datos = data(
-            nombre=nombre,
-            pApe=pApe,
-            mApe=mApe,
-            bDay=bDay,
-            asunto=asunto,
-            tel=tel,
-            curp=curp,
-            sexo=sexo,
-            dirr=dirr,
-            fuuid=uid,
-            etnia=etnia,
-            disc=disc
-        )
-        datos.save()
-
+        if not data.objects.filter(fuuid=uid).exists():
+            datos = data(
+                nombre=nombre,
+                pApe=pApe,
+                mApe=mApe,
+                bDay=bDay,
+                asunto=asunto,
+                tel=tel,
+                curp=curp,
+                sexo=sexo,
+                dirr=dirr,
+                fuuid=uid,
+                etnia=etnia,
+                disc=disc
+            )
+            datos.save()
+        else:
+            print("ya hay datos")
+            data.objects.update_or_create(
+                fuuid=uid,
+                defaults={
+                    'nombre' : nombre,
+                    'pApe' : pApe,
+                    'mApe' : mApe,
+                    'bDay' : bDay,
+                    'asunto' : asunto,
+                    'tel' : tel,
+                    'curp' : curp,
+                    'sexo' : sexo,
+                    'dirr' : dirr,
+                    'etnia' : etnia,
+                    'disc' : disc,
+                    }
+                )
 
         match asunto:
             case "DOP00005":
@@ -132,6 +153,7 @@ def soliData(request):
             foto = request.FILES.get('file')
             if foto is None:
                 print("no hay nada")
+
             solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
             solicitud.save()
             return redirect('doc')
@@ -169,7 +191,7 @@ def doc(request):
         if request.method == 'POST':
             action = request.POST.get('action')
             if action == 'guardar':
-                return redirect('clear')
+                return redirect('saveD1')
             elif action == 'descargar':
                 return redirect('document')
     context = {'asunto': asunto,
@@ -318,6 +340,79 @@ def document(request):
 
     return response
     #return render(request, "documet/document.html", context)
+
+
+def save_document(request):
+    uuid = request.COOKIES.get('uuid')
+    #if not uuid:
+     #   return redirect('home')
+
+    datos = get_object_or_404(data, fuuid__uuid=uuid)
+    uid = get_object_or_404(Uuid, uuid=uuid)
+    #solicitud = get_object_or_404(soli, data_ID=datos)
+    solicitud = soli.objects.filter(data_ID=datos)
+    documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
+
+    asunto = request.session.get('asunto', 'Sin asunto')
+
+    print(asunto)
+
+    match asunto:
+        case "DOP00001":
+            asunto = "Arrelgo de calles de terracería - DOP00001"
+        case "DOP00002":
+            asunto = "Bacheo de calles - DOP00002"
+        case "DOP00003":
+            asunto = "Limpieza de arrollos al sur de la ciudad - DOP00003"
+        case "DOP00004":
+            asunto = "Limpieza o mantenimiento de rejillas pluviales - DOP00004"
+        case "DOP00005":
+            asunto = "Pago de costo de participación en licitaciones de obra pública - DOP00005"
+        case "DOP00006":
+            asunto = "Rehabilitación de calles - DOP00006"
+        case "DOP00007":
+            asunto = "Retiro de escombro y materila de arrastre - DOP00007"
+        case "DOP00008":
+            asunto = "Solicitud de material caliche - DOP00008"
+        case "DOP00009":
+            asunto = "Solicitud de pavimentación de calles - DOP00009"
+        case "DOP00010":
+            asunto = "Solicitud de reductores de velocidad - DOP00010"
+        case "DOP00011":
+            asunto = "Solicitud de material caliche - DOP00011"
+
+    context = {
+        "asunto": asunto,
+        "datos": {
+            "nombre": datos.nombre,
+            "pApe": datos.pApe,
+            "mApe": datos.mApe,
+            "bDay": datos.bDay,
+            "tel": datos.tel,
+            "curp": datos.curp,
+            "sexo": datos.sexo,
+            "dir": datos.dirr,
+            "disc":datos.disc,
+            "etnia":datos.etnia,
+        },
+        "soli": {
+            "dir": solicitud.last().dirr if solicitud.exists() else "",
+            "info": solicitud.last().info,
+            "desc": solicitud.last().descc if solicitud.exists() else "",
+            "foto": solicitud.last().foto,
+            "puo" : solicitud.last().puo,
+        },
+        'documentos':documentos
+    }
+    html = render_to_string("documet/document.html", context)
+    buffer = BytesIO()
+    pdf_out = HTML(string=html).write_pdf(buffer)
+    pdf_file = ContentFile(buffer.getvalue())
+    nomDoc = f'VS_{asunto}_{datos.nombre}_{datos.pApe}.pdf'
+    doc = Files(nomDoc=nomDoc, fuuid=uid)
+    doc.finalDoc.save(nomDoc, pdf_file)
+
+    return render(request, 'documet/save.html', {'doc':doc})
 
 def document2(request):
     uuid = request.COOKIES.get('uuid')

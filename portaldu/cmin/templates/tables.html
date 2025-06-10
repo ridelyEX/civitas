@@ -1,0 +1,42 @@
+{% extends 'master.html' %}{% load static %}
+
+{% block head %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}?v=1">
+{% endblock %}
+
+
+{% block content %}{% include 'navmin.html' %}
+<main class="container">
+    <div class="cards">
+      <div class="card">
+        <h3>Asuntos pendientes</h3>
+        <ul class="asuntos">
+          <li><strong>DOP00008</strong><p>Menu description.</p></li>
+          <li><strong>DOP00007</strong><p>Menu description.</p></li>
+          <li><strong>DOP00005</strong><p>Menu description.</p></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Asuntos enviados</h3>
+        <ul class="asuntos">
+          <li><strong>DOP00001</strong><p>Menu description.</p></li>
+          <li><strong>DOP00003</strong><p>Menu description.</p></li>
+          <li><strong>DOP00004</strong><p>Menu description.</p></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="acciones">
+      <button type="button" class="enviar-btn">Enviar asunto</button>
+    </div>
+  </main>
+
+{% endblock %}
+
+{% block footer %}
+<footer class="footer"></footer>
+{% endblock %}

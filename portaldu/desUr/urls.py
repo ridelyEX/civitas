@@ -1,7 +1,10 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('base/', views.base, name='base'),
     path('nada/', views.document, name="document"),
     path('nav/', views.nav),
     path('', views.home, name="home"),
@@ -17,4 +20,5 @@ urlpatterns = [
     path('clear/', views.clear, name="clear"),
     path('pago/', views.pago, name="pago"),
     path('document2/', views.document2, name="document2"),
-]
+    path('save/', views.save_document, name="saveD1")
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

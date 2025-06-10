@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import AutoField
@@ -10,31 +11,33 @@ class CustomUser(BaseUserManager):
 
         if not email:
             raise ValueError("Ingrese email")
+
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-class users(AbstractUser, PermissionsMixin):
+class Users(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    nombre = models.CharField(max_length=100)
-    apellidos = models.CharField(max_length=150)
-    usuario = models.CharField(max_length=100, unique=True)
     bday = models.DateField()
 
-    USERNAME_FIELD = 'usuario'
-    REQUIRED_FIELDS = ['nombre']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['first_name']
 
     objects = CustomUser()
 
+    class Meta:
+        db_table = 'cmin_users'
+        ordering = ['username']
+
     def __str__(self):
-        return self.nombre
+        return self.username
 
 
 class LoginDate(models.Model):
     login_ID = models.AutoField(primary_key=True)
-    user_FK = models.ForeignKey(users, on_delete=models.CASCADE, verbose_name='usuarios')
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -43,6 +46,13 @@ class LoginDate(models.Model):
 
     def __str__(self):
         return self.date
+
+    @classmethod
+    def create(cls, user):
+        return cls.objects.create(
+            user_FK=user
+        )
+
 
 class SolicitudesPendientes(models.Model):
     solicitud_ID = models.AutoField(primary_key=True)
@@ -62,7 +72,7 @@ class SolicitudesEnviadas(models.Model):
     solicitud_ID = AutoField(primary_key=True)
     nomSolicitud = models.CharField(max_length=150)
     fechaEnvio = models.DateField(auto_now=True)
-    user_FK = models.ForeignKey(users, on_delete=models.CASCADE, verbose_name='usuarios')
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
     doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
     solicitud_FK = models.ForeignKey(SolicitudesPendientes, on_delete=models.CASCADE, verbose_name='solicitudes')
 

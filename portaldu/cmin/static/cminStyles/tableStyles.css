@@ -1,0 +1,81 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #cdcdcd;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  background-color: #0c0b5c;
+  color: white;
+  padding: 1rem;
+  font-weight: bold;
+}
+
+.footer {
+  background-color: #0c0b5c;
+  height: 40px;
+  margin-top: auto;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6rem;
+}
+
+.cards {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  width: 30rem;
+  min-height: 300px;
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.asuntos {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.asuntos li {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.acciones {
+  margin-top: 2rem;
+}
+
+.enviar-btn {
+  background-color: #014c8c;
+  color: white;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.enviar-btn:hover {
+  background-color: #003c6c;
+}

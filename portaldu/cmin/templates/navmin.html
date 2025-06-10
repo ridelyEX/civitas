@@ -4,16 +4,47 @@
     {% load bootstrap5 %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
+
+<style>
+    .logout-btn {
+        background-color: transparent;
+        border: 1px solid white;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: auto;
+}
+
+.logout-btn:hover {
+        background-color: white;
+        color: #0c0b5c;
+}
+</style>
+
 {% endblock %}
 
 
 {% block content %}
-    <nav class="navbar navbar-expand-sm navbar-light" style="background-color: rgb(0, 0, 78); color: white;">
+    <nav class="navbar navbar-expand-sm navbar-light" style="background-color: rgb(0, 0, 78); position: relative; width: 100%; color: white;">
         <div class="container-fluid">
             <a class="navbar-brand">
-            <img src="logo.png" alt="Avatar Logo" style="width:40px;" class="rounded-pill">
-                <span style="color: white;">hola</span>
+            <img src="logo.png" alt="Avatar Logo" style="width:40px;" class="rounded-pill">👤
+                {% if user.is_authenticated %}
+                <span style="color: white;">{{ user.username }}</span>
+                {% else %}
+                <span style="color: white;">ADMIN</span>
+                {% endif %}
             </a>
+            <div class="button">
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    {% if user.is_authenticated %}
+                    <button type="submit" class="logout-btn">Cerrar sesión</button>
+                    {% else %}
+                    {% endif %}
+                </form>
+            </div>
         </div>
     </nav>
 {% endblock %}

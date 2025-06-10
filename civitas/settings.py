@@ -117,11 +117,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Mexico/General'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("gmapk")
