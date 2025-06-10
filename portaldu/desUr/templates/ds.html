@@ -26,7 +26,7 @@
             type="button"
             class="addbtn"
             id="ubi"
-            data-url="{% url 'map' %}?origen=soli"
+            onclick="openm()"
           >
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
@@ -157,15 +157,90 @@
     </div>
   </div>
 </form>
+<div class="modal hidden" id="modal">
+  {% include 'modals/modal_map.html' %}
+</div>
 
 {% endblock %} {% block footer %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>
 
-<script>document.getElementById("search").addEventListener('click',
+<script>
+  document.getElementById("search").addEventListener('click',
     function(){
         document.getElementById("file").click();
     });
 </script>
+<script>
+  let map;
+  let marker;
 
-<script src="{% static 'sripts/btnScripts.js' %}"></script>
+  function initMap() {
+    const ubicacion = { lat: 28.6353, lng: -106.0889 };
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: ubicacion,
+      zoom: 15,
+    });
+
+    const geocoder = new google.maps.Geocoder();
+
+    map.addListener("click", (e) => {
+      const latLng = e.latLng;
+
+      if (marker) {
+        marker.setPosition(latLng);
+      } else {
+        marker = new google.maps.Marker({
+          position: latLng,
+          map: map,
+        });
+      }
+
+      geocoder.geocode({ location: latLng }, (results, status) => {
+        if (status === "OK" && results[0]) {
+          document.getElementById("dirr").value = results[0].formatted_address;
+        } else {
+          console.error("No se pudo obtener la dirección: " + status);
+        }
+      });
+    });
+  }
+
+  document.getElementById("mNext").addEventListener("click", function () {
+    const dirInput = document.getElementById("dirr").value;
+    if (!dirInput.trim()) {
+      alert("Por favor selecciona una dirección en el mapa.");
+      return;
+    }
+  });
+</script>
+
+<script>
+
+  //enviar
+  function enviar(){
+    const text = document.getElementById('dirr').value;
+    document.getElementById('dir').value = text;
+    closem();
+  }
+
+  //mostrar
+ function openm(){
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modal').style.display = 'block';
+}
+//cerrar
+function closem(){
+    document.getElementById('modal').classList.add('hidden');
+    document.getElementById('modal').style.display = 'none';
+}
+  window.onclick = function(event){
+    var modal = document.getElementById('mapModal');
+    if (event.target === modal){
+      modal.style.display = "none";
+    }
+  }
+
+
+</script>
 
 {% endblock %}

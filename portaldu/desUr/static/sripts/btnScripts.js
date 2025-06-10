@@ -51,9 +51,11 @@ document.addEventListener("DOMContentLoaded", ()=>{
    }
 
 //botón para cerrar el mapa
+/*
     document.getElementById("close").addEventListener("click", function () {
         window.location.href = this.dataset.url;
     });
+*/
 }catch(e){
         console.error("no jala este mugrero", e)
     }
