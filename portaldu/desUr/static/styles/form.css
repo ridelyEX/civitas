@@ -4,6 +4,7 @@ html, body {
     overflow-x: hidden;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     width: 100vw;
+    height: 100vh;
 }
 
 
@@ -515,13 +516,20 @@ input[type="file"] {
 .modal{
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 9999;
     left: 0; top: 0; width: 100vw; height: 100vh;
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.4);
+    transition: 0.3s ease;
+    opacity: 0;
 }
 
-.modal-content{
+.modal:not(.hidden){
+  opacity: 1;
+}
+
+
+.mainMap{
     background-color: #fff;
     margin: 10% auto;
     padding: 20px;
@@ -530,7 +538,10 @@ input[type="file"] {
     max-width: 80rem;
     border-radius: 8px;
     position: relative;
+    box-sizing: border-box;
 }
+
+
 
 .close{
     color: #aaa;

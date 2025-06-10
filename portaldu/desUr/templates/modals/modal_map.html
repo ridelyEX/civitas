@@ -1,3 +1,7 @@
+<!DOCTYPE html>
+
+<head>
+    <style>
 
 
 
@@ -11,6 +15,13 @@
     flex-direction: column;
     flex-wrap: nowrap;
     width: 75%;
+
+    height: auto;
+    min-height: 80vh;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 /* MAP */
@@ -142,6 +153,22 @@
     inset 4px 4px 6px 0 rgba(0,0,0,.4);
 }
 
+.mapModal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+
+}
+
+
+.hidden {
+  display: none;
+}
 
 /* BOTTOM */
 
@@ -173,7 +200,45 @@
         border: none;
         padding-bottom: 2rem;
     }
-    
+
 
 }
 
+    </style>
+</head>
+<body>
+<div class="bodi">
+<div id="mapModal" class="mapModal ">
+  <div class="mainMap">
+    <div class="searchCont">
+      <input type="hidden" name="origen" value="{{ origen }}">
+      <input type="hidden" name="uuid" value="{{ uuid }}">
+
+      <div class="buscar">
+        <label for="dirr" class="text">Dirección:</label>
+        <input
+          type="text"
+          class="input"
+          id="dirr"
+          name="dir"
+          placeholder="Dirección"
+        />
+      </div>
+
+      <div class="mapholder">
+        <div class="map" id="map"></div>
+      </div>
+
+      <div class="Ibottom">
+        <div class="lBtn">
+          <button type="button" class="back bbtn" onclick="closem()">Cerrar</button>
+        </div>
+        <div class="rBtn">
+          <button type="button" class="next nbtn" id="mNext" onclick="enviar()">Seleccionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</body>

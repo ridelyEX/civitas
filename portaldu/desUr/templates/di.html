@@ -65,7 +65,7 @@
 
         <label for="asunto" class="text">Asunto:</label>
         <select class="select" id="asunto" name="asunto">
-          <option value="none">Seleccione una opción</option>
+          <option value="">Seleccione una opción</option>
           <option value="DOP00001">Arreglo de calles de terracería</option>
           <option value="DOP00002">Bacheo de calles</option>
           <option value="DOP00003">
@@ -112,7 +112,7 @@
 
         <label for="sexo" class="text">Sexo:</label>
         <select class="select" id="sexo" name="sexo">
-          <option value="none">Seleccione un opción</option>
+          <option value="">Seleccione un opción</option>
           <option value="hombre">Hombre</option>
           <option value="mujer">Mujer</option>
           <option value="otro">Otro</option>
@@ -146,20 +146,13 @@
                   type="button"
                   class="addbtn"
                   id="ubi"
-                  data-url="{% url 'map' %}?origen=data">
-            <span class="addicon">
-              <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
-            </span>
+                  onclick="openm()">
+                  <span class="addicon">
+                    <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
+                  </span>
             <span class="txt">Añadir dirección</span>
           </button>
         </div>
-        <div id="modalD" class="modal" style="display:none;">
-          <div class="modal-content">
-            <span class="close" id="cerrar">&times;</span>
-            {% include 'mapa.html' %}
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -173,11 +166,60 @@
     </div>
   </div>
 </form>
-
-
+<div class="modal hidden" id="modal">
+  {% include 'modals/modal_map.html' %}
+</div>
 {% endblock %}
 
 {% block footer %}
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+<script>
+  let map;
+  let marker;
+
+  function initMap() {
+    const ubicacion = { lat: 28.6353, lng: -106.0889 };
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: ubicacion,
+      zoom: 15,
+    });
+
+    const geocoder = new google.maps.Geocoder();
+
+    map.addListener("click", (e) => {
+      const latLng = e.latLng;
+
+      if (marker) {
+        marker.setPosition(latLng);
+      } else {
+        marker = new google.maps.Marker({
+          position: latLng,
+          map: map,
+        });
+      }
+
+      geocoder.geocode({ location: latLng }, (results, status) => {
+        if (status === "OK" && results[0]) {
+          document.getElementById("dirr").value = results[0].formatted_address;
+        } else {
+          console.error("No se pudo obtener la dirección: " + status);
+        }
+      });
+    });
+  }
+
+  document.getElementById("mNext").addEventListener("click", function () {
+    const dirInput = document.getElementById("dirr").value;
+    if (!dirInput.trim()) {
+      alert("Por favor selecciona una dirección en el mapa.");
+      return;
+    }
+  });
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
 <script>
@@ -210,18 +252,26 @@
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 <script>
 
-  //mostrar
-  document.getElementById('ubi').onclick = function(){
-    document.getElementById('modalD').style.display = 'block';
+  //enviar
+  function enviar(){
+    const text = document.getElementById('dirr').value;
+    document.getElementById('dir').value = text;
+    closem();
   }
 
-  //cerrar
-  document.getElementById('cerrar').onclick = function(){
-    document.getElementById('modalD').style.display = 'none';
-  }
+  //mostrar
+ function openm(){
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modal').style.display = 'block';
+}
+//cerrar
+function closem(){
+    document.getElementById('modal').classList.add('hidden');
+    document.getElementById('modal').style.display = 'none';
+}
   window.onclick = function(event){
-    var modal = document.getElementById('modalD');
-    if (event.taget === modal){
+    var modal = document.getElementById('modal');
+    if (event.target === modal){
       modal.style.display = "none";
     }
   }
