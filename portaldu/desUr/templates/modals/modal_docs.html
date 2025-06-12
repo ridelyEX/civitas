@@ -1,4 +1,8 @@
 
+<head>
+  <style>
+
+
 .mainDoc{
       display: flex;
     justify-content: center;
@@ -217,3 +221,81 @@ input[type="file"] {
 .hidden {
   display: none;
 }
+  </style>
+</head>
+<body>
+<div id="modalDoc" class="modalDoc">
+<div class="mainDoc">
+
+  <div class="head">
+    <header class="header">
+      <h1>Documentación</h1>
+    </header>
+  </div>
+  
+  <div class="container overflow-hidden">
+    <div class="row gy-2">
+      <div class="table-responsive">
+        <table class="table table-borderless table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="body">
+            {% for doc in documentos %}
+            <tr>
+                <td>{{ doc.nomDoc }}</td>
+                <td>{{ doc.descDoc }}</td>
+                <td>
+                  <form method="post" >
+                    {% csrf_token %}
+                    <input type="hidden" name="uuid" value="{{ uuid }}">
+                    
+                    <button type="submit" class="img" id="bbsura">
+                      <img src="/static/images/delete.png" class="bbsura">
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="3">No hay documentos subidos</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+            <input type="hidden" name="count" value="{{ count }}">
+      </div>
+      
+      <div class="d-grid gap-2">
+        <button class="btn btn-primary" type="button" id="plus" onclick="modals('open', 'modalD2')">
+          <img class="add" src="/static/images/add.png" /> Agregar
+        </button>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+<input type="hidden" name="uuid" value="{{ uuid }}">
+<div class="Ibottom">
+  <div class="lBtn">
+    <button type="button" class="back bbtn" id="back" onclick="modals('close', 'modalD')">
+            Cerrar
+          </button>
+        </div>
+        <div class="rBtn">
+          <button type="submit" class="next nbtn" id="next">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+
+<div class="modal hidden" id="modal2">
+  {% include 'modals/modal_docs2.html' %}
+</div>
+
+</body>
+

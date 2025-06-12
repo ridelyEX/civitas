@@ -1,4 +1,10 @@
 {% extends 'base.html' %} {% load static %} {% block head %}
+ <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+    crossorigin="anonymous"
+  />
 <link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
 <title>Obras Públicas</title>
 {% endblock %} {% block body %} {% include 'nav.html' %}
@@ -26,7 +32,7 @@
             type="button"
             class="addbtn"
             id="ubi"
-            onclick="openm()"
+            onclick="modals('open', 'modal')"
           >
             <span class="addicon">
               <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
@@ -52,7 +58,7 @@
       <div class="form">
         <div class="ngrid">
           <div class="plus">
-            <button type="button" class="addbtn" id="docs"  data-url="{% url 'docs' %}">
+            <button type="button" class="addbtn" id="docs" onclick="modals('open', 'modalD')">
               <span class="addicon">
                 <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
               </span>
@@ -141,7 +147,7 @@
     </div>
 
     <div class="rBtn">
-      <button type="submit" class="next nbtn" id="next">Siguiente</button>
+      <button type="submit" class="next nbtn" id="next" name="action" value="save">Siguiente</button>
     </div>
 
     <div class="cBtn">
@@ -160,6 +166,15 @@
 <div class="modal hidden" id="modal">
   {% include 'modals/modal_map.html' %}
 </div>
+
+<div class="modal hidden" id="modalD">
+  {% include 'modals/modal_docs.html' %}
+</div>
+
+<div class="modal hidden" id="modalD2">
+  {% include 'modals/modal_docs2.html' %}
+</div>
+
 
 {% endblock %} {% block footer %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>
@@ -214,33 +229,6 @@
   });
 </script>
 
-<script>
-
-  //enviar
-  function enviar(){
-    const text = document.getElementById('dirr').value;
-    document.getElementById('dir').value = text;
-    closem();
-  }
-
-  //mostrar
- function openm(){
-    document.getElementById('modal').classList.remove('hidden');
-    document.getElementById('modal').style.display = 'block';
-}
-//cerrar
-function closem(){
-    document.getElementById('modal').classList.add('hidden');
-    document.getElementById('modal').style.display = 'none';
-}
-  window.onclick = function(event){
-    var modal = document.getElementById('mapModal');
-    if (event.target === modal){
-      modal.style.display = "none";
-    }
-  }
-
-
-</script>
+<script src="{% static 'sripts/modals.js' %}"></script>
 
 {% endblock %}

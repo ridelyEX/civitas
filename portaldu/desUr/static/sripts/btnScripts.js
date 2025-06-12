@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     } */
 
 //Boton para entrar a docs
+/*
     const docbtn = document.getElementById("docs");
     if(docbtn){
         const docurl = docbtn.dataset.url;
@@ -29,7 +30,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
             window.location.href = docurl;
         });
     }
-
+*/
 //Botón para ir home desde el popup
     const sibtn = document.getElementById("sibtn");
     if(sibtn){
@@ -41,6 +42,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     }
 
 //Botón para agregar archivos
+/*
    const pbtn = document.getElementById("plus");
    if(pbtn){
        const purl = pbtn.dataset.url;
@@ -49,13 +51,15 @@ document.addEventListener("DOMContentLoaded", ()=>{
         window.location.href = purl;
        });
    }
-
+*/
 //botón para cerrar el mapa
 /*
     document.getElementById("close").addEventListener("click", function () {
         window.location.href = this.dataset.url;
     });
 */
+
+    console.log("este mugrero está jalando")
 }catch(e){
         console.error("no jala este mugrero", e)
     }

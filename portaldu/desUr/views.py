@@ -141,22 +141,32 @@ def soliData(request):
         dp = data.objects.filter(fuuid=uid).last()
 
         if request.method == 'POST':
-            dirr = request.POST.get('dir')
-            print("Sí es la dirección", dirr)
-            descc = request.POST.get('descc')
-            if descc is None:
-                print("no hay nada")   
-            info = request.POST.get('info')
-            if info is None:
-                print("sin información adicional")
-            puo = request.POST.get("puo")
-            foto = request.FILES.get('file')
-            if foto is None:
-                print("no hay nada")
+            action = request.POST.get('action')
+            if action == 'save':
+                dirr = request.POST.get('dir')
+                print("Sí es la dirección", dirr)
+                descc = request.POST.get('descc')
+                if descc is None:
+                    print("no hay nada")
+                info = request.POST.get('info')
+                if info is None:
+                    print("sin información adicional")
+                puo = request.POST.get("puo")
+                foto = request.FILES.get('file')
+                if foto is None:
+                    print("no hay nada")
 
-            solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
-            solicitud.save()
-            return redirect('doc')
+                solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
+                solicitud.save()
+                return redirect('doc')
+            elif action == 'savedocs':
+                descDoc = request.POST.get('descp')
+                docc = request.FILES.get('file')
+                nomDoc = docc.name
+
+                if docc:
+                    documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc, fuuid=uid)
+                    documento.save()
 
         solicitudes = soli.objects.filter(data_ID=dp)
         context = {
