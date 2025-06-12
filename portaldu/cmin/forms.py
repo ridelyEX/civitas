@@ -1,7 +1,6 @@
 from django import forms
 from django.forms import ModelForm
 
-from .models import users
 
 class Users(forms.ModelForm):
      password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
