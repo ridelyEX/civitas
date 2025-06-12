@@ -1,8 +1,7 @@
 from django import forms
 from django.forms import ModelForm
 
-from portaldu.cmin.models import Users
-
+from .models import Users
 
 class UsersRender(forms.ModelForm):
      password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
