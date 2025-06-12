@@ -1,4 +1,7 @@
 
+<head>
+    <style>
+
 .mainDoc{
       display: flex;
     justify-content: center;
@@ -217,3 +220,49 @@ input[type="file"] {
 .hidden {
   display: none;
 }
+    </style>
+</head>
+<body>
+
+<div class="modalDoc" id="modalDoc">
+<div class="mainDoc">
+
+<div class="head">
+  <header class="header">
+    <h1>Documentación</h1>
+  </header>
+</div>
+
+<div class="container">
+    <form class="form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+<input type="hidden" name="uuid" value="{{ uuid }}">
+
+        <div class="textbox">
+        <input type="text" class="desc" id="desc" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
+    </div>
+    <input type="file" id="file" name="file">
+    <div class="text">
+        <p>Buscar documento o foto en los archivos de su dispositivo</p>
+    </div>
+
+
+  <div class="Ibottom">
+    <div class="lBtn">
+      <button
+        type="button"
+        class="search sbtn"
+        id="search"
+      >
+        Examinar
+      </button>
+    </div>
+    <div class="rBtn">
+      <button type="submit" class="next nbtn" id="next" name="action" value="savedocs">Guardar</button>
+    </div>
+  </div>
+ </form>
+</div>
+</div>
+</div>
+</body>
