@@ -2,6 +2,14 @@
 <head>
     <style>
 
+#document{
+    margin-top: 1rem;
+    min-height: 1.2rem;
+    text-align: center;
+    font.weight: bold;
+    transition: all 0.3s ease;
+}
+
 .mainDoc{
       display: flex;
     justify-content: center;
@@ -32,6 +40,21 @@
 .desc{
     width: 100%;
     height: 2rem;
+    padding: 0.5rem;
+    border. 2px solid #014277;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.desc:focus{
+    outline: none;
+    borderr-color: #004dff;
+}
+
+.file-info{
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
 }
 
 .textbox{
@@ -224,7 +247,7 @@ input[type="file"] {
 </head>
 <body>
 
-<div class="modalDoc" id="modalDoc">
+<div class="modalDoc" id="modalDoc2">
 <div class="mainDoc">
 
 <div class="head">
@@ -234,7 +257,7 @@ input[type="file"] {
 </div>
 
 <div class="container">
-    <form class="form" method="post" enctype="multipart/form-data">
+    <form class="form" id="upDocs" method="post" enctype="multipart/form-data">
     {% csrf_token %}
 <input type="hidden" name="uuid" value="{{ uuid }}">
 
@@ -262,6 +285,7 @@ input[type="file"] {
     </div>
   </div>
  </form>
+    <div id="document"></div>
 </div>
 </div>
 </div>

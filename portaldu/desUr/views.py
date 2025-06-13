@@ -4,7 +4,7 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 import folium
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files
@@ -160,13 +160,45 @@ def soliData(request):
                 solicitud.save()
                 return redirect('doc')
             elif action == 'savedocs':
-                descDoc = request.POST.get('descp')
+                descDoc = request.POST.get('descp', '').strip()
                 docc = request.FILES.get('file')
-                nomDoc = docc.name
+                if not docc:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'archivo sin seleccionar'
+                    })
+                try:
+                    if docc.size > 5 * 1024 * 1024:
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'archivo demasiado grande (máximo 5MB)'
+                        }, status=400)
+                    allowed_extensions = ['.pdf','.jpg','.jpeg','.png']
+                    if not any(docc.name.lower().endswith(ext) for ext in allowed_extensions):
+                        return JsonResponse({
+                            'succes': False,
+                            'error': 'Tipo de archivo no permitido'
+                        }, status=400)
 
-                if docc:
-                    documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc, fuuid=uid)
+                    nomDoc = docc.name
+                    documento = SubirDocs(
+                        descDoc=descDoc if descDoc else "documento sin descripción",
+                        doc=docc,
+                        nomDoc=nomDoc,
+                        fuuid=uid,
+                    )
                     documento.save()
+
+                    return JsonResponse({
+                        'success': True,
+                        'filename': nomDoc,
+                    })
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False,
+                        'error': str(e)
+                    }, status=500)
+
 
         solicitudes = soli.objects.filter(data_ID=dp)
         context = {
@@ -261,7 +293,11 @@ def docs2(request):
         nomDoc = docc.name
         documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc, fuuid=datos)
         documento.save()
-        return redirect('docs')
+
+        if request.headers.get('xrequested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        else:
+            return redirect('docs')
     else:
         return render(request, 'docs2.html')
 
