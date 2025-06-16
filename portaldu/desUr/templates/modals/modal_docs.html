@@ -221,6 +221,20 @@ input[type="file"] {
 .hidden {
   display: none;
 }
+
+    .upload-section{
+      display: none;
+      padding: 2rem 0;
+      width: 100%;
+    }
+
+    .upload-section.active{
+      display: block;
+    }
+
+    .doc-list-section{
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -234,7 +248,10 @@ input[type="file"] {
   </div>
   
   <div class="container overflow-hidden">
-    <div class="row gy-2">
+    <div style="text-align: right; width:100%; padding: 1rem; color: black;">
+      <button type="button" class="back bbtn" onclick="modals('close', 'modalD')">Cerrar</button>
+    </div>
+    <div class="doc-list-section">
       <div class="table-responsive">
         <table class="table table-borderless table-hover">
           <thead class="table-dark">
@@ -250,14 +267,13 @@ input[type="file"] {
                 <td>{{ doc.nomDoc }}</td>
                 <td>{{ doc.descDoc }}</td>
                 <td>
-                  <form method="post" >
-                    {% csrf_token %}
+                  <div>
                     <input type="hidden" name="uuid" value="{{ uuid }}">
                     
-                    <button type="submit" class="img" id="bbsura">
+                    <button type="button" class="img" id="bbsura">
                       <img src="/static/images/delete.png" class="bbsura">
                     </button>
-                  </form>
+                  </div>
                 </td>
               </tr>
               {% empty %}
@@ -269,29 +285,164 @@ input[type="file"] {
       </div>
       
       <div class="d-grid gap-2">
-        <button class="btn btn-primary" type="button" id="plus" onclick="modals('open', 'modalD2')">
+        <button class="btn btn-primary" type="button" id="showUpload">
           <img class="add" src="/static/images/add.png" /> Agregar
         </button>
       </div>
     </div>
-
-    <form method="post">
-      {% csrf_token %}
-<input type="hidden" name="uuid" value="{{ uuid }}">
-<div class="Ibottom">
-  <div class="lBtn">
-    <button type="button" class="back bbtn" id="back" onclick="modals('close', 'modalD')">
-            Cerrar
-          </button>
+    <div class="upload-section" id="uploadSection">
+        <div class="form" id="upDocs">
+          <input type="hidden" name="uuid" value="{{ uuid }}">
+          <div class="textbox">
+            <input type="text" class="desc" id="desc" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
+          </div>
+          <input type="file" id="file" name="file">
+          <div class="text">
+            <p>Buscar documento o foto en los archivos de su dispositivo</p>
+          </div>
+          <div class="Ibottom">
+            <div class="lBtn">
+              <button type="button" class="search sbtn" id="search">Examinar</button>
+              <button type="button" class="back bbtn" id="back" onclick="modals('close', 'modalD')">
+                      Cerrar
+                    </button>
+                  </div>
+                  <div class="rBtn">
+                    <button type="button" class="next nbtn" id="saveDoc">Guardar</button>
+                  </div>
+                </div>
         </div>
-        <div class="rBtn">
-          <button type="submit" class="next nbtn" id="next">Guardar</button>
-        </div>
-      </div>
-    </form>
+      <div id="document"></div>
+    </div>
   </div>
 </div>
 </div>
+
+<footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const uploadSection = document.getElementById('uploadSection');
+      const showUploadBtn = document.getElementById('showUpload');
+      const searchBtn = document.getElementById('search');
+      const fileInput = document.getElementById('file');
+      const uploadForm = document.getElementById('upDocs');
+      const tbody = document.getElementById('body');
+      const save = document.getElementById('saveDoc');
+
+      let tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+      renderTempDocs();
+
+      showUploadBtn.addEventListener('click', function() {
+        console.log('a ver si jala');
+        uploadSection.classList.toggle('active');
+        console.log('sí chambeó');
+      });
+
+      searchBtn.addEventListener('click', function() {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', function() {
+        document.getElementById('document').textContent = this.files[0].name;
+      });
+
+      save.addEventListener('click', function() {
+
+        const file = fileInput.files[0];
+        const desc = document.getElementById('desc').value;
+
+        if(!file) {
+          alert('seleccione un archivo');
+          return;
+        }
+
+        const tempDoc = {
+          name: file.name,
+          desc: desc,
+          file: file
+        };
+
+        tempDocs.push(tempDoc);
+        sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
+
+        //actualizar tabla
+        renderTempDocs();
+
+        //limpieza
+        document.getElementById('desc').value = '';
+        fileInput.value = '';
+        document.getElementById('document').textContent = '';
+        uploadSection.classList.remove('active');
+      });
+
+    });
+
+    function renderTempDocs() {
+      const tbody = document.getElementById('body');
+      const tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+
+      tbody.innerHTML = '';
+      if (tempDocs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3"> no hay documentos subidos</td></tr>';
+        return;
+      }
+
+      tempDocs.forEach((doc, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+           <td>${doc.name}</td>
+            <td>${doc.desc}</td>
+            <td>
+                <button type="button" class="img" onclick="removeTempDoc(${index})">
+                    <img src="/static/images/delete.png" class="bbsura">
+                </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+      });
+    }
+
+    function removeTempDoc(index) {
+      let tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+      tempDocs.splice(index, 1);
+      sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
+      renderTempDocs();
+    }
+
+    function deleteDoc(docId) {
+      if (!confirm('¿Desea eliminar este documento?')){
+        return;
+      }
+
+      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      fetch(`/dell${docId}`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(response => {
+        if (response.ok) {
+          const row = document.querySelector(`button[onclick="deleteDoc('${docId}')"]`).closest('tr');
+          row.remove();
+
+          const tbody = document.getElementById('body');
+          if (tbody.children.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3"> no hay documentos subidos</td></tr>';
+          }
+        }else{
+          alert('Error al eliminar el documento');
+        }
+      })
+      .catch(error => {
+        console.error('Error: ', error);
+        alert('Error al eliminar el documento');
+      });
+    }
+  </script>
+</footer>
 
 </body>
 
