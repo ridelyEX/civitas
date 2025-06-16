@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="{% static 'styles/form.css' %}?v=1" />
 <title>Obras Públicas</title>
 {% endblock %} {% block body %} {% include 'nav.html' %}
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="mainForm" action="{% url 'soli' %}">
   {% csrf_token %}
 <input type="hidden" name="uuid" value="{{ data.uuid }}">
 
@@ -171,20 +171,10 @@
   {% include 'modals/modal_docs.html' %}
 </div>
 
-<div class="modal hidden" id="modalD2">
-  {% include 'modals/modal_docs2.html' %}
-</div>
-
-
 {% endblock %} {% block footer %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>
 
-<script>
-  document.getElementById("search").addEventListener('click',
-    function(){
-        document.getElementById("file").click();
-    });
-</script>
+
 <script>
   let map;
   let marker;
@@ -226,6 +216,44 @@
       alert("Por favor selecciona una dirección en el mapa.");
       return;
     }
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const mainForm = document.querySelector('form[method="post"]');
+    const formAction = mainForm.getAttribute('action');
+
+    mainForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+
+      //agregar los documentos
+      tempDocs.forEach((doc, index) => {
+        const file = new File([doc.file], doc.name);
+        formData.append(`tempfile_${index}`, file);
+        formData.append(`tempdesc_${index}`, doc.desc);
+      });
+
+      fetch(formAction, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          sessionStorage.removeItem('tempDocs');
+          window.location.href = response.url;
+        }
+      })
+      .catch(error => console.error('Error:', error));
+
+
+    });
   });
 </script>
 

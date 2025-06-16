@@ -139,66 +139,62 @@ def soliData(request):
         asunto = request.session.get('asunto', '')
         print(asunto)
         dp = data.objects.filter(fuuid=uid).last()
+        print(dp)
 
         if request.method == 'POST':
-            action = request.POST.get('action')
-            if action == 'save':
-                dirr = request.POST.get('dir')
-                print("Sí es la dirección", dirr)
-                descc = request.POST.get('descc')
-                if descc is None:
-                    print("no hay nada")
-                info = request.POST.get('info')
-                if info is None:
-                    print("sin información adicional")
-                puo = request.POST.get("puo")
-                foto = request.FILES.get('file')
-                if foto is None:
-                    print("no hay nada")
+            print(request.method)
+            dirr = request.POST.get('dir')
+            print("Sí es la dirección", dirr)
+            descc = request.POST.get('descc')
+            if descc is None:
+                print("no hay nada")
+            info = request.POST.get('info')
+            if info is None:
+                print("sin información adicional")
+            puo = request.POST.get("puo")
+            foto = request.FILES.get('file')
+            if foto is None:
+                print("no hay nada")
 
-                solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
-                solicitud.save()
-                return redirect('doc')
-            elif action == 'savedocs':
-                descDoc = request.POST.get('descp', '').strip()
-                docc = request.FILES.get('file')
-                if not docc:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'archivo sin seleccionar'
-                    })
+            if dp:
                 try:
-                    if docc.size > 5 * 1024 * 1024:
-                        return JsonResponse({
-                            'success': False,
-                            'error': 'archivo demasiado grande (máximo 5MB)'
-                        }, status=400)
-                    allowed_extensions = ['.pdf','.jpg','.jpeg','.png']
-                    if not any(docc.name.lower().endswith(ext) for ext in allowed_extensions):
-                        return JsonResponse({
-                            'succes': False,
-                            'error': 'Tipo de archivo no permitido'
-                        }, status=400)
+                    solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
+                    solicitud.save()
+                    print("se guardó todo", solicitud)
 
-                    nomDoc = docc.name
+                    if soli.objects.filter(pk=solicitud.pk).exists():
+                        print("registrado")
+                    else:
+                        print("no registrado")
+                except Exception as e:
+                    print("no se guarda fakin nada", str(e))
+            else:
+                print("no hay fakin nada ni en dp")
+
+            file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
+
+            if file_keys:
+                for key in file_keys:
+                    index = key.split('_')[-1]
+                    file = request.FILES[key]
+                    desc = request.POST.get(f'tempdesc_{index}')
+                    if desc is None:
+                        print("no hay descripción del documento")
+                        desc = "Documento sin descripción"
+
+                    if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
+                        print("no existe el documento, se guardará")
+                    else:
+                        print("el documento ya existe, no se guardará de nuevo")
                     documento = SubirDocs(
-                        descDoc=descDoc if descDoc else "documento sin descripción",
-                        doc=docc,
-                        nomDoc=nomDoc,
-                        fuuid=uid,
-                    )
+                        descDoc=desc,
+                        doc=file,
+                        nomDoc=file.name,
+                        fuuid=uid
+                        )
                     documento.save()
 
-                    return JsonResponse({
-                        'success': True,
-                        'filename': nomDoc,
-                    })
-                except Exception as e:
-                    return JsonResponse({
-                        'success': False,
-                        'error': str(e)
-                    }, status=500)
-
+            return redirect('doc')
 
         solicitudes = soli.objects.filter(data_ID=dp)
         context = {
@@ -276,10 +272,14 @@ def dell(request, id):
     if not uuid:
         return redirect('home')
     if request.method == 'POST':
-        docc = get_object_or_404(SubirDocs, pk=id, fuuid__uuid=uuid)
-        docc.delete()
-        print("se murio")
-    return redirect('docs')
+        try:
+            docc = get_object_or_404(SubirDocs, pk=id, fuuid__uuid=uuid)
+            docc.delete()
+            print("se murio")
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Método inválido'}, status=405)
 
 def docs2(request):
     uuid = request.COOKIES.get('uuid')
