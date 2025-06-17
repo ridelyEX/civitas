@@ -15,8 +15,8 @@
         <div class="text-container">
             <span class="text">¡Muchas Gracias!</span>
         </div>
-        <div class="lds-spinner loader" id="loader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
     </button>
+    <div class="lds-spinner loader" id="loader"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
 </div>
 
 {% endblock %}
@@ -26,5 +26,28 @@
 
 <script src="{% static 'sripts/loader.js' %}"></script>
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+<script>
+// Script de respaldo para garantizar que el botón funcione
+document.addEventListener("DOMContentLoaded", function() {
+    // Forzar que el botón ocupe toda la pantalla
+    const btn = document.getElementById("finish");
+    if (btn) {
+        btn.style.width = "100%";
+        btn.style.height = "100%";
+        btn.style.position = "absolute";
+        btn.style.zIndex = "100";
+    }
+
+    // Forzar la eliminación del loader
+    setTimeout(function() {
+        const loader = document.getElementById("loader");
+        if (loader) {
+            loader.style.display = "none";
+            loader.style.zIndex = "-1";
+        }
+    }, 1000);
+});
+</script>
 
 {% endblock %}

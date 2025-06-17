@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
         const fbtn = document.getElementById("finish");
         if (fbtn) {
             const furl = fbtn.dataset.url;
+            console.log("terminar botón", furl);
             fbtn.addEventListener("click", () => {
                 window.location.href = furl;
             });
