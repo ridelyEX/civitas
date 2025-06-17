@@ -10,6 +10,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
                 window.location.href = url;
             });
         }
+
+        const fbtn = document.getElementById("finish");
+        if (fbtn) {
+            const furl = fbtn.dataset.url;
+            fbtn.addEventListener("click", () => {
+                window.location.href = furl;
+            });
+        }
 //Botón para entrar al mapa
    /* const dirbtn = document.getElementById("ubi");
     if(dirbtn){

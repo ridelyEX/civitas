@@ -294,7 +294,7 @@ input[type="file"] {
         <div class="form" id="upDocs">
           <input type="hidden" name="uuid" value="{{ uuid }}">
           <div class="textbox">
-            <input type="text" class="desc" id="desc" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
+            <input type="text" class="desc" id="descc" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
           </div>
           <input type="file" id="file" name="file">
           <div class="text">
@@ -329,6 +329,8 @@ input[type="file"] {
       const tbody = document.getElementById('body');
       const save = document.getElementById('saveDoc');
 
+
+
       let tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
       renderTempDocs();
 
@@ -349,7 +351,18 @@ input[type="file"] {
       save.addEventListener('click', function() {
 
         const file = fileInput.files[0];
-        const desc = document.getElementById('desc').value;
+        const descc = document.getElementById('descc');
+
+        if (!descc) {
+          console.error("no hayt nada oiga");
+          alert("No se pudo obtener nada");
+          return;
+        }
+
+        const descripcion = descc.value;
+
+        console.log("a ver si hay desc pue" + descc);
+        console.log(descripcion);
 
         if(!file) {
           alert('seleccione un archivo');
@@ -358,15 +371,25 @@ input[type="file"] {
 
         const tempDoc = {
           name: file.name,
-          desc: desc,
+          desc: descripcion,
           file: file
         };
 
         tempDocs.push(tempDoc);
         sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
 
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          tempDocs[tempDocs.length -1].fileData = e.target.result;
+          sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
+          //actualizar tabla
+          renderTempDocs();
+        };
+
+        reader.readAsDataURL(file);
+
         //actualizar tabla
-        renderTempDocs();
+        //renderTempDocs();
 
         //limpieza
         document.getElementById('desc').value = '';
