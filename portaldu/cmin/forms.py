@@ -9,13 +9,14 @@ class UsersRender(forms.ModelForm):
 
      class Meta:
           model = Users
-          fields = ['email', 'first_name', 'last_name', 'username', 'bday', 'password']
+          fields = ['email', 'first_name', 'last_name', 'username', 'bday', 'password', 'foto']
           widgets = {
                'email': forms.EmailInput(attrs={'class':'formcontrol'}),
                'first_name': forms.TextInput(attrs={'class':'formcontrol'}),
                'last_name': forms.TextInput(attrs={'class':'formcontrol'}),
                'username': forms.TextInput(attrs={'class':'formcontrol'}),
                'bday': forms.TextInput(attrs={'type':'text', 'class':'formcontrol'}),
+               'foto': forms.FileInput(attrs={'class':'foto', 'accept':'image/*'}),
           }
 
 
@@ -37,5 +38,5 @@ class UsersRender(forms.ModelForm):
 
 
 class Login(forms.Form):
-     usuario = forms.CharField(widget=forms.PasswordInput(attrs={'class':'sign'}))
-     contrasena = forms.CharField(widget=forms.TextInput(attrs={'class':'sign'}))
+     usuario = forms.CharField(widget=forms.TextInput(attrs={'class':'sign'}))
+     contrasena = forms.CharField(widget=forms.PasswordInput(attrs={'class':'sign'}))

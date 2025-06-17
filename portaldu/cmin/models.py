@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import AutoField
+from django.forms import FileField
 
 from portaldu.desUr.models import Files
 
@@ -21,6 +22,7 @@ class CustomUser(BaseUserManager):
 class Users(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     bday = models.DateField()
+    foto = models.ImageField(upload_to='fotos')
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['first_name']

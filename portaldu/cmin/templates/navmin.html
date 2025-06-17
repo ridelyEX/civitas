@@ -1,4 +1,4 @@
-{% extends 'master.html' %}
+{% extends 'master.html' %}{% load static %}
 
 {% block head %}
     {% load bootstrap5 %}
@@ -29,7 +29,11 @@
     <nav class="navbar navbar-expand-sm navbar-light" style="background-color: rgb(0, 0, 78); position: relative; width: 100%; color: white;">
         <div class="container-fluid">
             <a class="navbar-brand">
-            <img src="logo.png" alt="Avatar Logo" style="width:40px;" class="rounded-pill">👤
+                {% if user.is_authenticated %}
+                <img src="{{ user.foto.url }}" alt="Avatar Logo" style="width:40px;" class="rounded-pill">
+                {% else %}
+                <img src="{% static 'stock/stock.png' %}" alt="Avatar Logo" style="width:40px;" class="rounded-pill">
+                {% endif %}
                 {% if user.is_authenticated %}
                 <span style="color: white;">{{ user.username }}</span>
                 {% else %}

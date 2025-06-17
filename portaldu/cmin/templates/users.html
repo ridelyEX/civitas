@@ -34,6 +34,22 @@
                 <label for="id_last_name">Apellido(s)</label>
                 {{form.last_name}}
                 </div>
+                <div class="mini">
+                    <div class="nFoto">
+                    <label for="search" class="text">Añadir foto</label>
+                        <button
+                          type="button"
+                          class="search sbtn"
+                          id="search"
+                          name="foto"
+                          >
+                          <span class="addicon">
+                          <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
+                          </span>
+                          <span>Foto</span>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="col-md-6">
                 <div class="mini">
@@ -57,6 +73,7 @@
         <button type="button" class="back bbtn" id="back" data-url="{% url 'login' %}">Volver a login</button>
         <button type="submit" class="next nbtn">Registrar usuario</button>
 
+        {{form.foto}}
     </form>
 </div>
 {% endblock %}
@@ -75,5 +92,11 @@
     altInput: "true",
     altFormat: "F j, Y",
   });
+</script>
+<script>
+    document.getElementById("search").addEventListener('click', function(){
+    console.log("click");
+        document.getElementById("id_foto").click();
+    });
 </script>
 {% endblock %}

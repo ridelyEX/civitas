@@ -15,8 +15,9 @@ def master(request):
 
 def users_render(request):
     if request.method == 'POST':
-        form = Users(request.POST)
+        form = UsersRender(request.POST, request.FILES)
         if form.is_valid():
+            cleaned_data = form.cleaned_data
             form.save()
             return redirect('login')
     else:
