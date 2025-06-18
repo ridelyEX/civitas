@@ -16,17 +16,30 @@
             }
         }
 
-        .asunto{
-            margin-top: 1cm;
-
+        body{
+            padding: 0;
+            margin: 0;
         }
-        header{
 
+        .container{
+            width: 100%;
+            padding: 0 15px;
+        }
+
+        .asunto{
+            margin-top: 0;
+        }
+
+        .asunto h1{
+            margin-top: 0;
+            margin-bottom: 0.5cm;
+        }
+
+        header{
             left: 0;
             right: 0;
-
-            height: 5cm;
-            margin-bottom: -10cm;
+            height: 4cm;
+            margin-bottom: 0.3cm;
         }
 
         .table tbody td{
@@ -37,10 +50,23 @@
        .head{
         margin-top: 0;
        }
+
+       .sep{
+        height: 1px;
+       }
+
+       .final{
+        border-bottom: 1px solid rgb(119, 201, 255);
+       }
+
+       .thead{
+        background-color: rgba(187, 255, 241, 0.411);
+       }
+
     </style>
 </head>
 <body>
-<div class="conteiner">
+<div class="container">
     <div class="head">
         <header>
             <table class="table">
@@ -57,7 +83,6 @@
             </table>
         </header>
     </div>
-    <div class="sep"></div>
     <div class="main">
         <div class="asunto" id="asunto"><h1 class="asunto"><strong>{{ asunto }}</strong></h1></div>
         <div class="tit">
@@ -183,11 +208,11 @@
             <tr>
                 <th scope="row">Foto</th>
                     <td>
-                    {% if soli.foto %}
-                        <img src="{{ soli.foto.url }}" style="width: 100px;" alt="foto">
-                    {% else %}
-                        no hay foto
-                    {% endif %}
+                        {% if soli.foto %}
+                            <img src="{{ soli.foto.url }}" style="width: 100px;" alt="foto">
+                        {% else %}
+                           <p>no hay foto</p>
+                        {% endif %}
                     </td>
             </tr>
             </tbody>

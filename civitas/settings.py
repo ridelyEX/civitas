@@ -13,8 +13,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
-from django.conf.global_settings import AUTH_USER_MODEL
+from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL
 from dotenv import load_dotenv
+load_dotenv()
 
 
 
@@ -123,7 +124,6 @@ USE_I18N = True
 
 USE_TZ = False
 
-load_dotenv()
 GOOGLE_API_KEY = os.getenv("gmapk")
 
 # Static files (CSS, JavaScript, Images)
@@ -143,3 +143,15 @@ AUTH_USER_MODEL = 'cmin.users'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = os.getenv('email')
+EMAIL_HOST_PASSWORD = os.getenv('contra')
+DEFAULT_FROM_EMAIL = f"Test {os.getenv('email')}"
+
+print({EMAIL_HOST_USER}, {EMAIL_HOST_PASSWORD})

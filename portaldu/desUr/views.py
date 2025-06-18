@@ -452,7 +452,7 @@ def save_document(request):
     }
     html = render_to_string("documet/document.html", context)
     buffer = BytesIO()
-    pdf_out = HTML(string=html).write_pdf(buffer)
+    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
     pdf_file = ContentFile(buffer.getvalue())
     nomDoc = f'VS_{asunto}_{datos.nombre}_{datos.pApe}.pdf'
     doc = Files(nomDoc=nomDoc, fuuid=uid)

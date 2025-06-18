@@ -14,29 +14,80 @@
       <div class="card">
         <h3>Asuntos pendientes</h3>
         <ul class="asuntos">
-          <li><strong>DOP00008</strong><p>Menu description.</p></li>
-          <li><strong>DOP00007</strong><p>Menu description.</p></li>
-          <li><strong>DOP00005</strong><p>Menu description.</p></li>
+          {% for solicitud in solicitudesP %}
+          <li>
+              <form method="post" action="{% url 'saveSoli' %}">
+                {% csrf_token %}
+                  <input type="hidden" name="doc_id" value="{{ solicitud.fDoc_ID }}">
+                  <strong>{{ solicitud.nomDoc }}</strong>
+                  <p>{{ solicitud.fuuid }}</p>
+                  <a href="{{ solicitud.finalDoc.url }}" target="_blank">Ver documentos</a>
+                  <button type="submit" class="guardar-btn">Guardar</button>
+              </form>
+          </li>
+         {% empty %}
+          <li><strong>No hay asuntos pendientes.</strong><p>No hay nuevas solicitudes.</p></li>
+         {% endfor %}
         </ul>
       </div>
 
       <div class="card">
         <h3>Asuntos enviados</h3>
         <ul class="asuntos">
-          <li><strong>DOP00001</strong><p>Menu description.</p></li>
-          <li><strong>DOP00003</strong><p>Menu description.</p></li>
-          <li><strong>DOP00004</strong><p>Menu description.</p></li>
+          {% for solicitud in solicitudesE %}
+          <li>
+              <strong>{{ solicitud.nomSolicitud }}</strong>
+              <p>Enviado: {{ solicitud.fechaEnvio|date:"d/m/y" }}</p>
+              <p>Enviado por: {{ solicitud.user_FK.username }}</p>
+              <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
+          </li>
+           {% empty %}
+          <li><strong>No hay asuntos enviados</strong><p>No hay solicitudes enviadas.</p></li>
+           {% endfor %}
         </ul>
       </div>
     </div>
 
     <div class="acciones">
-      <button type="button" class="enviar-btn">Enviar asunto</button>
+      <button type="button" class="enviar-btn" onclick="showSendForm()">Enviar asunto</button>
     </div>
+
+    <!-- otro modal dios ayudame -->
+
+    <div id="modal-sender" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3>Enviar solicitud</h3>
+            <form method="post" action="{% url 'send_mail' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="solicitud">Seleccione solicitud:</label>
+                    <select name="solicitud_id" id="solicitud" class="form-control">
+                        <option value="">-- Seleccione solicitud --</option>
+                        {% for solicitud in solicitudesP %}
+                        <option value="{{ solicitud.fDoc_ID }}">{{ solicitud.nomDoc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="correo">Correo electrónico del destinatario:</label>
+                    <input type="email" id="correo" name="correo" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="mensaje">Mensaje:</label>
+                    <textarea name="mensaje" id="mensaje" class="form-control" rows="4"></textarea>
+                </div>
+                <button type="submit" class="enviar-btn">Enviar</button>
+            </form>
+        </div>
+    </div>
+
   </main>
 
 {% endblock %}
 
 {% block footer %}
 <footer class="footer"></footer>
+
+<script src="{% static 'cminScripts/cminModal.js' %}"></script>
 {% endblock %}

@@ -18,7 +18,7 @@
 {% block content %}{% include 'navmin.html' %}
 <text>Crear usuario</text>
 <div class="container text-center">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data" action="{% url 'users' %}">
         {% csrf_token %}
         <div class="row row-cols-2">
             <div class="col-md-6">
