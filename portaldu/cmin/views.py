@@ -11,6 +11,7 @@ from django.core.mail import EmailMessage
 import os
 from .forms import UsersRender, Login
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas
+import pywhatkit
 
 
 def master(request):
@@ -52,7 +53,7 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-#@login_required
+@login_required
 def tables(request):
 
 
@@ -68,7 +69,7 @@ def tables(request):
 
     return render(request, 'tables.html', context)
 
-#@login_required
+@login_required
 def save_request(request): #saveSoli
     if request.method == 'POST':
         doc_id = request.POST.get('doc_id')
@@ -92,7 +93,7 @@ def save_request(request): #saveSoli
             messages.error(request, f"Error al guardar: {str(e)}")
     return redirect('tablas')
 
-#@login_required
+@login_required
 def sendMail(request): #send_mail
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')
@@ -187,5 +188,24 @@ def test_email(request):
         messages.error(request, f"Error al enviar correo: {str(e)}")
 
     return redirect('tablas')
+
+def test_wasap(request):
+
+    try:
+        import datetime
+        hora_envio = datetime.datetime.now()
+        envio = hora_envio + datetime.timedelta(minutes=5
+                                                )
+
+        hora = envio.hour
+        minuto = envio.minute
+
+        pywhatkit.sendwhatmsg("+526142520764", "hola mundo", hora, minuto, 15, True, 10)
+        print("se mandó el mensaje")
+    except Exception as e:
+        print(f"Error al enviar el mensaje: {str(e)}")
+        messages.error(request, f"Error al enviar el mensaje: {str(e)}")
+
+    return render(request, 'wasap.html')
 
 # Create your views here.

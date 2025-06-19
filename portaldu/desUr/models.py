@@ -52,6 +52,7 @@ class SubirDocs(models.Model):
     doc_ID = AutoField(primary_key=True)
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
     nomDoc = models.CharField(max_length=50, null=True, blank=True)
+    folio = models.CharField(max_length=20, null=True, blank=True)
     descDoc = models.CharField(max_length=100)
     doc = models.FileField(upload_to='documents/')
     fechaDoc = models.DateTimeField(auto_now_add=True, null=True, blank=True)

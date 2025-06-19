@@ -156,6 +156,7 @@ def soliData(request):
             if info is None:
                 print("sin información adicional")
             puo = request.POST.get("puo")
+            request.session['puo'] = puo
             foto = request.FILES.get('file')
             if foto is None:
                 print("no hay nada")
@@ -240,6 +241,10 @@ def doc(request):
                'datos':datos,
                'uuid':uuid}
     return render(request, 'dg.html', context)
+
+def folio(request):
+
+    return redirect('doc')
 
 def adv(request):
     return render(request, 'adv.html')
