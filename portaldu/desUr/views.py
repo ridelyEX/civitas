@@ -14,7 +14,11 @@ from django.template.loader import render_to_string, get_template
 
 
 def base(request):
-    return render(request, 'documet/save.html')
+    uuid = request.COOKIES.get('uuid')
+
+    if not uuid:
+        return redirect('home')
+    return render(request, 'documet/save.html',{'uuid':uuid})
 
 def nav(request):
     return render(request, 'navmin.html')
