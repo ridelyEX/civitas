@@ -86,7 +86,7 @@
     <div class="main">
         <div class="asunto" id="asunto"><h1 class="asunto"><strong>{{ asunto }}</strong></h1></div>
         <div class="tit">
-            <h4 style="background-color: rgba(187, 225, 241, 0.411);"><strong>Titular o interesado</strong></h4>
+            <h4 style="background-color: rgba(187, 225, 241, 0.411);"><strong>Titular o interesado</strong><span style="float: inline-end">Folio: {{ folio }}</span></h4>
             <table class="table table-striped">
                 <thead class="thead" style="background-color: rgba(187, 225, 241, 0.411);">
                 <tr>
@@ -179,7 +179,7 @@
             <tbody>
             <tr>
                 <th scope="row">Puesto u oficio:</th>
-                <td><p>{{ soli.puo }}</p></td>
+                <td><p>{{ puo }}</p></td>
             </tr>
             <tr>
                 <th scope="row">Dirección del servicio:</th>

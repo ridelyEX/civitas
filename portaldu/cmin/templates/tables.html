@@ -39,6 +39,12 @@
               <strong>{{ solicitud.nomSolicitud }}</strong>
               <p>Enviado: {{ solicitud.fechaEnvio|date:"d/m/y" }}</p>
               <p>Enviado por: {{ solicitud.user_FK.username }}</p>
+
+              <!--
+               campos:
+               Destinatario
+               Folio  (a ver cómo mando el folio a la base de datos)
+               -->
               <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
           </li>
            {% empty %}

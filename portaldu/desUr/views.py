@@ -10,7 +10,7 @@ import folium
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files
 from weasyprint import HTML
 from django.template.loader import render_to_string, get_template
-
+from datetime import date
 
 
 def base(request):
@@ -137,13 +137,17 @@ def soliData(request):
         if not uuid:
             return redirect('home')
 
+        puo = ''
+
         uid = get_object_or_404(Uuid, uuid=uuid)
         print(uid)
         direccion = request.GET.get('dir', '')
         asunto = request.session.get('asunto', '')
         print(asunto)
         dp = data.objects.filter(fuuid=uid).last()
-        print(dp)
+        if dp:
+            id_dp = dp.pk
+        print(id_dp)
 
         if request.method == 'POST':
             print(request.method)
@@ -208,6 +212,7 @@ def soliData(request):
             'uuid':uuid,
             'soli':solicitudes,
             'google_key': settings.GOOGLE_API_KEY,
+            'puo': puo,
         }
         return render(request, 'ds.html', context)
 
@@ -242,9 +247,55 @@ def doc(request):
                'uuid':uuid}
     return render(request, 'dg.html', context)
 
-def folio(request):
+def gen_folio(uid, puo):
+    print(puo)
+    dp = data.objects.filter(fuuid=uid).last()
+    uid_str = str(uid.uuid)
+    folio = ''
+    if dp:
+        id_dp = dp.pk
+    print(id_dp)
+    fecha = date.today()
+    year_str = str(fecha.year)
+    year_slice = year_str[2:4]
+    match puo:
+        case 'OFI':
+            folio = f'GOP-OFI-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Oficio'
+        case 'CRC':
+            folio = f'GOP-CRC-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'CRC'
+        case 'MEC':
+            folio = f'GOP-MEC-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Marca el cambio'
+        case 'DLO':
+            folio = f'GOP-DLO-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Diputado Local'
+        case 'DFE':
+            folio = f'GOP-DFE-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Diputado Federal'
+        case 'REG':
+            folio = f'GOP-REG-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Regidores'
+        case 'DEA':
+            folio = f'GOP-DEA-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Despacho del Alcalde'
+        case 'EVA':
+            folio = f'GOP-EVA-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Evento con el Alcalde'
+        case 'PED':
+            folio = f'GOP-PED-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Presencial en Dirección'
+        case 'VIN':
+            folio = f'GOP-VIN-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Vinculación'
+    ###
+    # Concatenar id al formato del folio y al año
+    # Separar la cadena de la fecha?
+    # Base de datos para el folio? naahhh
+    # ###
 
-    return redirect('doc')
+    return puo, folio
 
 def adv(request):
     return render(request, 'adv.html')
@@ -337,7 +388,9 @@ def document(request):
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
-
+    puo = request.session.get('puo', 'Sin PUO')
+    print(puo)
+    num_folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'Sin PUO')
     print(asunto)
 
     match asunto:
@@ -383,18 +436,22 @@ def document(request):
             "info": solicitud.last().info,
             "desc": solicitud.last().descc if solicitud.exists() else "",
             "foto": solicitud.last().foto,
-            "puo" : solicitud.last().puo,
         },
-        'documentos':documentos
+        'puo': num_folio[0],
+        'documentos':documentos,
+        'folio': num_folio[1],
     }
-    html = render_to_string("documet/document.html", context)
-    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-    final_pdf = pdf_out.write_pdf()
-    response = HttpResponse(final_pdf, content_type="application/pdf")
-    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    ###
+    #
+    #html = render_to_string("documet/document.html", context)
+    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    #final_pdf = pdf_out.write_pdf()
+    #response = HttpResponse(final_pdf, content_type="application/pdf")
+    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    #return response
+    # ###
 
-    return response
-    #return render(request, "documet/document.html", context)
+    return render(request, "documet/document.html", context)
 
 
 def save_document(request):
