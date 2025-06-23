@@ -92,11 +92,15 @@ class soli(models.Model):
     doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, verbose_name="Documentos",
                                 blank=True, null=True)
     dirr   = models.TextField()
+    calle = models.CharField(max_length=50, null=True, blank=True)
+    colonia = models.CharField(max_length=50, null=True, blank=True)
+    cp = models.CharField(max_length=5, null=True, blank=True)
     descc   = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     info   = models.TextField(blank=True, null=True)
     puo = models.CharField(max_length=50, null=True, blank=True)
     foto = models.ImageField(upload_to = 'fotos', null=True, blank=True)
+    folio = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'soli'

@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import AutoField
 from django.forms import FileField
 
-from portaldu.desUr.models import Files
+from portaldu.desUr.models import Files, soli
 
 
 class CustomUser(BaseUserManager):
@@ -61,6 +61,7 @@ class SolicitudesPendientes(models.Model):
     nomSolicitud = models.CharField(max_length=150)
     fechaSolicitud = models.DateField()
     doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
+    destinatario = models.CharField(max_length=150, null=True, blank=True)
 
     class Meta:
         db_table = 'SolicitudesPendientes'
@@ -77,6 +78,8 @@ class SolicitudesEnviadas(models.Model):
     user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
     doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
     solicitud_FK = models.ForeignKey(SolicitudesPendientes, on_delete=models.CASCADE, verbose_name='solicitudes')
+    soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE)
+    folio = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         db_table = 'SolicitudesEnviadas'

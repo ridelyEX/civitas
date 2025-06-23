@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
-from portaldu.desUr.models import Files
+from portaldu.desUr.models import Files, soli
 from django.contrib import messages
 from django.core.mail import EmailMessage
 import os
@@ -107,8 +107,15 @@ def sendMail(request): #send_mail
         try:
             documento = Files.objects.get(fDoc_ID=solicitud_id)
 
+            try:
+                solicitud = soli.objects.get(doc_ID=documento)
+                folio = solicitud.folio
+            except soli.DoesNotExist:
+                solicitud = None
+                folio = None
             solicitudP, created = SolicitudesPendientes.objects.get_or_create(
                 doc_FK=documento,
+                destinatario=correo_destino,
                 defaults={
                     'nomSolicitud': documento.nomDoc or f"Solicitud-{documento.fDoc_ID}",
                     'fechaSolicitud': timezone.now().date(),
@@ -131,11 +138,14 @@ def sendMail(request): #send_mail
             try:
 
                 email.send()
+
                 SolicitudesEnviadas.objects.create(
                     nomSolicitud=solicitudP.nomSolicitud,
                     user_FK=request.user,
                     doc_FK=documento,
-                    solicitud_FK=solicitudP
+                    solicitud_FK=solicitudP,
+                    soli_FK=solicitud,
+                    folio=folio,
                 )
                 messages.success(request, f"Correo enviado correctamente a {correo_destino}")
             except SMTPAuthenticationError:

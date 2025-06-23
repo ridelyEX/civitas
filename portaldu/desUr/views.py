@@ -1,6 +1,6 @@
 import uuid
 from io import BytesIO
-
+import googlemaps
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
@@ -138,7 +138,7 @@ def soliData(request):
             return redirect('home')
 
         puo = ''
-
+        solicitud = ''
         uid = get_object_or_404(Uuid, uuid=uuid)
         print(uid)
         direccion = request.GET.get('dir', '')
@@ -153,6 +153,7 @@ def soliData(request):
             print(request.method)
             dirr = request.POST.get('dir')
             print("Sí es la dirección", dirr)
+            calle, colonia, cp = cut_direction(dirr)
             descc = request.POST.get('descc')
             if descc is None:
                 print("no hay nada")
@@ -167,7 +168,15 @@ def soliData(request):
 
             if dp:
                 try:
-                    solicitud = soli(data_ID=dp, dirr=dirr, descc=descc, info=info, puo=puo,foto=foto)
+                    solicitud = soli(data_ID=dp,
+                                     dirr=dirr,
+                                     calle=calle,
+                                     colonia=colonia,
+                                     cp=cp,
+                                     descc=descc,
+                                     info=info,
+                                     puo=puo,
+                                     foto=foto)
                     solicitud.save()
                     print("se guardó todo", solicitud)
 
@@ -202,6 +211,12 @@ def soliData(request):
                         fuuid=uid
                         )
                     documento.save()
+
+            puo_texto, folio = gen_folio(uid, puo)
+            solicitud.folio = folio
+            solicitud.save()
+            print(folio)
+            print(puo_texto)
 
             return redirect('doc')
 
@@ -417,6 +432,13 @@ def document(request):
         case "DOP00011":
             asunto = "Solicitud de material caliche - DOP00011"
 
+    ultima_solicitud = solicitud.last()
+    if ultima_solicitud and ultima_solicitud.folio:
+        puo_texto = num_folio[0]
+        folio = ultima_solicitud.folio
+    else:
+        puo_texto, folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'no hay puo')
+
     context = {
         "asunto": asunto,
         "datos": {
@@ -437,9 +459,9 @@ def document(request):
             "desc": solicitud.last().descc if solicitud.exists() else "",
             "foto": solicitud.last().foto,
         },
-        'puo': num_folio[0],
+        'puo':puo_texto,
         'documentos':documentos,
-        'folio': num_folio[1],
+        'folio': folio,
     }
     ###
     #
@@ -561,6 +583,39 @@ def document2(request):
 
     return response
     #return render(request, "documet/document2.html")
+
+def cut_direction(dirreccion_completa):
+    gmaps = googlemaps.Client(key=settings.GOOGLE_API_KEY)
+
+    geocode_result = gmaps.geocode(dirreccion_completa)
+
+    if not geocode_result:
+        return None, None, None
+
+    calle = None
+    colonia = None
+    cp = None
+
+    for component in geocode_result[0]['address_components']:
+        types = component['types']
+
+        if 'route' in types:
+            calle = component['long_name']
+
+            for comp in geocode_result[0]['address_components']:
+                if 'street_number' in comp['types']:
+                    calle += ' ' + comp['long_name']
+                    break
+
+        if any(t in types for t in ['sublocality', 'sublocality_level_1', 'neighborhood']):
+            colonia = component['long_name']
+
+        if 'postal_code' in types:
+            cp = component['long_name']
+
+    return calle, colonia, cp
+
+
 
 
 # Create your views here.
