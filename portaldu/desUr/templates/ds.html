@@ -105,6 +105,7 @@
             </select>
           </div>
 
+          <!-- este botón debe abrir el modal -->
             <input type="file" id="file" name="file" accept="image/*" capture="user">
           <div class="nFoto">
             <label for="search" class="text">Añadir foto</label>
@@ -120,7 +121,7 @@
               <span>Examinar</span>
             </button>
           </div>
-
+          <!-- fak -->
         </div>
         <label for="info" class="text">Información adicional:</label>
         <br />
@@ -171,6 +172,8 @@
 <div class="modal hidden" id="modalD">
   {% include 'modals/modal_docs.html' %}
 </div>
+
+<!-- otro modal para la cámara fak -->
 
 {% endblock %} {% block footer %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>

@@ -362,9 +362,9 @@ def docs2(request):
         return redirect('home')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
-    if request.method == 'POST' and request.FILES['file']:
+    if request.method == 'POST' and request.FILES['ffile']:
         descDoc = request.POST.get('descp')
-        docc = request.FILES.get('file')
+        docc = request.FILES.get('ffile')
         nomDoc = docc.name
         documento = SubirDocs(descDoc=descDoc, doc=docc, nomDoc=nomDoc, fuuid=datos)
         documento.save()
