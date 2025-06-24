@@ -56,15 +56,17 @@ def logout_view(request):
 @login_required
 def tables(request):
 
-
     solicitudesG = SolicitudesPendientes.objects.values_list('doc_FK_id', flat=True)
     solicitudesP = Files.objects.exclude(fDoc_ID__in=solicitudesG).order_by('-fDoc_ID')
 
     solictudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
 
+    solicitudes = soli.objects.all()
+
     context = {
         'solicitudesP': solicitudesP,
         'solicitudesE': solictudesE,
+        'solicitudes': solicitudes,
     }
 
     return render(request, 'tables.html', context)
@@ -93,26 +95,47 @@ def save_request(request): #saveSoli
             messages.error(request, f"Error al guardar: {str(e)}")
     return redirect('tablas')
 
+
 @login_required
-def sendMail(request): #send_mail
+def sendMail(request):
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')
         correo_destino = request.POST.get('correo')
         msg = request.POST.get('mensaje')
 
         if not solicitud_id or not correo_destino:
-            messages.error(request, "Los campos de solicitud y correo son obligatorios.")
+            messages.error(request, "Todos los campos son obligatorios.")
             return redirect('tablas')
 
         try:
             documento = Files.objects.get(fDoc_ID=solicitud_id)
 
-            try:
-                solicitud = soli.objects.get(doc_ID=documento)
-                folio = solicitud.folio
-            except soli.DoesNotExist:
-                solicitud = None
-                folio = None
+            if not documento.soli_FK_id:
+                solicitud_existente = soli.objects.filter(data_ID__fuuid=documento.fuuid).first()
+
+                if solicitud_existente:
+                    documento.soli_FK = solicitud_existente
+                else:
+                    from portaldu.desUr.models import data
+                    datos = data.objects.filter(fuuid=documento.fuuid).first()
+
+                    if not datos:
+                        messages.error(request, "No se encontraron datos asociados al documento.")
+                        return redirect('tablas')
+
+                    nueva_solicitud = soli.objects.create(
+                        data_ID=datos,
+                        dirr="asignación automática",
+                        folio=f"AUTO-{documento.fDoc_ID}",
+                        doc_ID=documento
+                    )
+                    documento.soli_FK = nueva_solicitud
+
+                documento.save()
+
+            solicitud = documento.soli_FK
+            folio = solicitud.folio if solicitud else None
+
             solicitudP, created = SolicitudesPendientes.objects.get_or_create(
                 doc_FK=documento,
                 destinatario=correo_destino,
@@ -122,44 +145,58 @@ def sendMail(request): #send_mail
                 }
             )
 
+            # Agrega logs para depuración
+            print(f"Enviando correo a: {correo_destino}")
+            print(f"Documento: {documento.nomDoc}, ID: {documento.fDoc_ID}")
+            print(f"Adjunto: {documento.finalDoc.path if documento.finalDoc else 'No hay adjunto'}")
+
             email = EmailMessage(
                 subject=f'Solicitud: {solicitudP.nomSolicitud}',
-                body=msg or f'Se adjunta la soliciut {solicitudP.nomSolicitud}.',
+                body=msg or f'Se adjunta la solicitud {solicitudP.nomSolicitud}.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[correo_destino],
             )
 
             if documento.finalDoc:
                 archivo_path = documento.finalDoc.path
-                email.attach_file(archivo_path)
-
+                if os.path.exists(archivo_path):  # Verificar que el archivo existe
+                    email.attach_file(archivo_path)
+                    print(f"Archivo adjuntado: {archivo_path}")
+                else:
+                    print(f"El archivo no existe en la ruta: {archivo_path}")
+                    messages.warning(request, "El archivo no existe en el sistema.")
 
             from smtplib import SMTPAuthenticationError, SMTPException
             try:
+                email.send(fail_silently=False)  # Cambia a False para ver errores
 
-                email.send()
-
-                SolicitudesEnviadas.objects.create(
+                solicitud_enviada = SolicitudesEnviadas.objects.create(
                     nomSolicitud=solicitudP.nomSolicitud,
                     user_FK=request.user,
                     doc_FK=documento,
                     solicitud_FK=solicitudP,
-                    soli_FK=solicitud,
                     folio=folio,
                 )
                 messages.success(request, f"Correo enviado correctamente a {correo_destino}")
-            except SMTPAuthenticationError:
+                print("Correo enviado exitosamente")
+            except SMTPAuthenticationError as e:
+                print(f"Error de autenticación: {str(e)}")
                 messages.error(request, "Error de autenticación con el servidor de correo. Verifica las credenciales.")
                 return redirect('tablas')
             except SMTPException as e:
+                print(f"Error SMTP: {str(e)}")
                 messages.error(request, f"Error SMTP: {str(e)}")
                 return redirect('tablas')
+            except Exception as e:
+                print(f"Error desconocido al enviar: {str(e)}")
+                messages.error(request, f"Error al enviar el correo: {str(e)}")
+                return redirect('tablas')
 
-            messages.success(request, f"Solicitud Enviada a {correo_destino}")
         except Files.DoesNotExist:
-            messages.error(request, "No se pudo enviar nada")
+            messages.error(request, "No se encontró el documento especificado.")
         except Exception as e:
-            messages.error(request, f"Error al enviar el correo: {str(e)}")
+            print(f"Error general: {str(e)}")
+            messages.error(request, f"Error al procesar la solicitud: {str(e)}")
 
     return redirect('tablas')
 

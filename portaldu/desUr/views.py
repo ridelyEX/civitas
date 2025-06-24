@@ -275,34 +275,34 @@ def gen_folio(uid, puo):
     year_slice = year_str[2:4]
     match puo:
         case 'OFI':
-            folio = f'GOP-OFI-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-OFI-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Oficio'
         case 'CRC':
-            folio = f'GOP-CRC-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-CRC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'CRC'
         case 'MEC':
-            folio = f'GOP-MEC-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-MEC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Marca el cambio'
         case 'DLO':
-            folio = f'GOP-DLO-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-DLO-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Diputado Local'
         case 'DFE':
-            folio = f'GOP-DFE-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-DFE-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Diputado Federal'
         case 'REG':
-            folio = f'GOP-REG-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-REG-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Regidores'
         case 'DEA':
-            folio = f'GOP-DEA-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-DEA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Despacho del Alcalde'
         case 'EVA':
-            folio = f'GOP-EVA-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-EVA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Evento con el Alcalde'
         case 'PED':
-            folio = f'GOP-PED-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-PED-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Presencial en Dirección'
         case 'VIN':
-            folio = f'GOP-VIN-{id_dp:04d}-{uid_str[:4]}/{year_slice}'
+            folio = f'GOP-VIN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
             puo = 'Vinculación'
     ###
     # Concatenar id al formato del folio y al año

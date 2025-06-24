@@ -78,7 +78,6 @@ class SolicitudesEnviadas(models.Model):
     user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
     doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
     solicitud_FK = models.ForeignKey(SolicitudesPendientes, on_delete=models.CASCADE, verbose_name='solicitudes')
-    soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE)
     folio = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:

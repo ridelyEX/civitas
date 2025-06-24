@@ -115,11 +115,17 @@ class Files(models.Model):
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
     finalDoc = models.FileField(upload_to='solicitudes/')
     nomDoc = models.CharField(max_length=255, null=True, blank=True)
+    soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'solicitudes'
         ordering = ['fDoc_ID']
         verbose_name = "solicitudes"
+
+    def __str__(self):
+        return str(self.nomDoc)
+
+
 
 
 

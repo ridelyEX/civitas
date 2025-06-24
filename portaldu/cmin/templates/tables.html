@@ -38,7 +38,7 @@
           <li>
               <strong>{{ solicitud.nomSolicitud }}</strong>
               <p>Enviado: {{ solicitud.fechaEnvio|date:"d/m/y" }}</p>
-              <p>Folio: {{ solicitud.folio.folio }}</p>
+              <p>Folio: {{ solicitud.doc_FK.soli_FK.folio }}</p>
               <p>Destinatario: {{ solicitud.solicitud_FK.destinatario }}</p>
               <p>Enviado por: {{ solicitud.user_FK.username }}</p>
 
