@@ -1,12 +1,15 @@
 import uuid
 from io import BytesIO
+from tempfile import NamedTemporaryFile
+from urllib.request import urlopen
+from django.core.files import File
 import googlemaps
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
-import folium
+
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files
 from weasyprint import HTML
 from django.template.loader import render_to_string, get_template
@@ -162,9 +165,21 @@ def soliData(request):
                 print("sin información adicional")
             puo = request.POST.get("puo")
             request.session['puo'] = puo
-            foto = request.FILES.get('file')
-            if foto is None:
-                print("no hay nada")
+            imgpath = request.POST.get("src")
+            img = NamedTemporaryFile()
+            img.write(urlopen(imgpath).read())
+            img.flush()
+            img = File(img)
+            name = str(img.name).split("\\")[-1]
+            name += '.jpg'
+            img.name = name
+            #foto = request.FILES.get('file')
+            if img is not None:
+                foto = soli.objects.create(foto=img)
+                foto.save()
+
+                print("ya jala tú")
+
 
             if dp:
                 try:
@@ -176,7 +191,7 @@ def soliData(request):
                                      descc=descc,
                                      info=info,
                                      puo=puo,
-                                     foto=foto)
+                                     )
                     solicitud.save()
                     print("se guardó todo", solicitud)
 
@@ -478,8 +493,8 @@ def document(request):
 
 def save_document(request):
     uuid = request.COOKIES.get('uuid')
-    #if not uuid:
-     #   return redirect('home')
+    if not uuid:
+        return redirect('home')
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     uid = get_object_or_404(Uuid, uuid=uuid)
@@ -488,7 +503,9 @@ def save_document(request):
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
-
+    puo = request.session.get('puo', 'Sin PUO')
+    print(puo)
+    num_folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'Sin PUO')
     print(asunto)
 
     match asunto:
@@ -515,6 +532,13 @@ def save_document(request):
         case "DOP00011":
             asunto = "Solicitud de material caliche - DOP00011"
 
+    ultima_solicitud = solicitud.last()
+    if ultima_solicitud and ultima_solicitud.folio:
+        puo_texto = num_folio[0]
+        folio = ultima_solicitud.folio
+    else:
+        puo_texto, folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'no hay puo')
+
     context = {
         "asunto": asunto,
         "datos": {
@@ -526,17 +550,18 @@ def save_document(request):
             "curp": datos.curp,
             "sexo": datos.sexo,
             "dir": datos.dirr,
-            "disc":datos.disc,
-            "etnia":datos.etnia,
+            "disc": datos.disc,
+            "etnia": datos.etnia,
         },
         "soli": {
             "dir": solicitud.last().dirr if solicitud.exists() else "",
             "info": solicitud.last().info,
             "desc": solicitud.last().descc if solicitud.exists() else "",
             "foto": solicitud.last().foto,
-            "puo" : solicitud.last().puo,
         },
-        'documentos':documentos
+        'puo': puo_texto,
+        'documentos': documentos,
+        'folio': folio,
     }
     html = render_to_string("documet/document.html", context)
     buffer = BytesIO()
