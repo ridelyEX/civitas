@@ -51,6 +51,8 @@ function closem(){
         modal.classList.add('hidden');
     }
 }
+
+
 /*
 document.getElementById('modalDoc2').addEventListener('click', function(e){
     if (e.target == this){

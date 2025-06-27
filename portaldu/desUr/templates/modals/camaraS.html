@@ -1,18 +1,20 @@
 
-<div class="content">
+<div class="content" id="content">
+    <span class="close" onclick="modals('close', 'camaraD')">&times;</span>
     <div class="input">
-        <video id="video"></video> <!-- muestra lo que se va a tomar -->
-        <button id="start" type="button">Tomar foto</button> <!-- Toma la foto -->
-        <input type="text" value="" name="src" id="webimg" style="display: none;">
-        <canvas id="canvas" hidden></canvas> <!-- muestra la foto tomada -->
-        <!--img src="http://localhost:8000/desUr/soliData/" alt="foto" id="foto"> muestra la foto tomada x2 -->
-    </div>
-    <br>
-    <div>
-        <img alt="la foto" id="photo">
+        <div id="camera" class="camera">
+            <video id="video"></video> <!-- muestra lo que se va a tomar -->
+            <button id="start" type="button">Tomar foto</button> <!-- Toma la foto -->
+            <input type="text" value="" name="src" id="webimg" style="display: none;">
+            <canvas id="canvas" hidden></canvas> <!-- muestra la foto tomada -->
+            <!--img src="http://localhost:8000/desUr/soliData/" alt="foto" id="foto"> muestra la foto tomada x2 -->
+        </div>
+        <br>
+        <div>
+            <img alt="la foto" id="photo">
+        </div>
     </div>
     <div class="iBottom">
-        <button id="close" type="button" class="btn btn-primary">Cerrar</button> <!-- Cierra la ventana modal -->
         <button id="save" type="button" class="btn btn-primary">Guardar</button> <!-- Guarda la foto tomada -->
     </div>
 </div>
