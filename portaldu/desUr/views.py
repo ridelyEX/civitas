@@ -1,3 +1,4 @@
+import base64
 import uuid
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -166,22 +167,24 @@ def soliData(request):
             puo = request.POST.get("puo")
             request.session['puo'] = puo
             imgpath = request.POST.get("src")
-            img = NamedTemporaryFile()
-            img.write(urlopen(imgpath).read())
-            img.flush()
-            img = File(img)
+            if imgpath and imgpath.startswith("data:image"):
+                header, encoded = imgpath.split(",", 1)
+                datos = base64.b64decode(encoded)
+                img = NamedTemporaryFile(delete=False)
+                img.write(datos)
+                img.flush()
+                img = File(img)
+            else:
+                img = NamedTemporaryFile()
+                img.write(urlopen(imgpath).read())
+                img.flush()
+                img = File(img)
             name = str(img.name).split("\\")[-1]
             name += '.jpg'
             img.name = name
             #foto = request.FILES.get('file')
-            if img is not None:
-                foto = soli.objects.create(foto=img)
-                foto.save()
-                context['imgpath'] = foto.img.url
-                print("ya jala tú")
 
-
-            if dp:
+            if dp and img is not None:
                 try:
                     solicitud = soli(data_ID=dp,
                                      dirr=dirr,
@@ -191,8 +194,10 @@ def soliData(request):
                                      descc=descc,
                                      info=info,
                                      puo=puo,
+                                     foto=img,
                                      )
                     solicitud.save()
+                    context['imgpath'] = solicitud.foto.url
                     print("se guardó todo", solicitud)
 
                     if soli.objects.filter(pk=solicitud.pk).exists():

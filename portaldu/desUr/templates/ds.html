@@ -107,14 +107,15 @@
           </div>
 
           <!-- este botón debe abrir el modal -->
-            <input type="file" id="file" name="file" accept="image/*" capture="user">
+
           <div class="nFoto">
-            <label for="search" class="text">Añadir foto</label>
+            <label for="searchPhoto" class="text">Añadir foto</label>
             <button
               type="button"
               class="search sbtn"
-              id="search"
+              id="searchPhoto"
               name="foto"
+              onclick="modals('open', 'camara')"
               >
               <span class="addicon">
               <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
@@ -175,7 +176,9 @@
 </div>
 
 <!-- otro modal para la cámara fak -->
-
+<div class="modal hidden" id="camara">
+    {% include 'modals/camaraS.html' %}
+</div>
 {% endblock %} {% block footer %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>
 
@@ -263,5 +266,6 @@
 </script>
 
 <script src="{% static 'sripts/modals.js' %}"></script>
+<script src="{% static 'sripts/fotos.js' %}"></script>
 
 {% endblock %}
