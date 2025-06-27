@@ -87,8 +87,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'civitas',
         'USER': 'root',
-        'PASSWORD': 'admin',
-        'HOST': '127.0.0.1',
+        'PASSWORD': 'H0L4',
+        'HOST': 'localhost',
         'PORT': '3306',
     }
 }
