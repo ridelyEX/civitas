@@ -151,7 +151,7 @@ def soliData(request):
         if dp:
             id_dp = dp.pk
         print(id_dp)
-
+        context = dict()
         if request.method == 'POST':
             print(request.method)
             dirr = request.POST.get('dir')
@@ -177,7 +177,7 @@ def soliData(request):
             if img is not None:
                 foto = soli.objects.create(foto=img)
                 foto.save()
-
+                context['imgpath'] = foto.img.url
                 print("ya jala tú")
 
 
