@@ -491,17 +491,16 @@ def document(request):
         'documentos':documentos,
         'folio': folio,
     }
-    ###
-    #
-    #html = render_to_string("documet/document.html", context)
-    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-    #final_pdf = pdf_out.write_pdf()
-    #response = HttpResponse(final_pdf, content_type="application/pdf")
-    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
-    #return response
-    # ###
 
-    return render(request, "documet/document.html", context)
+    html = render_to_string("documet/document.html", context)
+    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    final_pdf = pdf_out.write_pdf()
+    response = HttpResponse(final_pdf, content_type="application/pdf")
+    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    return response
+
+
+    #return render(request, "documet/document.html", context)
 
 
 def save_document(request):

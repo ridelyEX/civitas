@@ -86,7 +86,14 @@
     <div class="main">
         <div class="asunto" id="asunto"><h1 class="asunto"><strong>{{ asunto }}</strong></h1></div>
         <div class="tit">
-            <h4 style="background-color: rgba(187, 225, 241, 0.411);"><strong>Titular o interesado</strong><span style="float: inline-end">Folio: {{ folio }}</span></h4>
+            <table class="table" >
+                <thead >
+                <tr>
+                    <th scope="col" style="background-color: rgba(187, 255, 241, 0.411);"><strong>Titular o interesado</strong></th>
+                    <th scope="col" class="final" style="background-color: rgba(187,255,241,0.411); float: inline-end;">Folio: {{ folio }}</th>
+                </tr>
+                </thead>
+            </table>
             <table class="table table-striped">
                 <thead class="thead" style="background-color: rgba(187, 225, 241, 0.411);">
                 <tr>

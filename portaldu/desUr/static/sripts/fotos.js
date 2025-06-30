@@ -78,9 +78,10 @@
             var saveBtn = document.getElementById('save');
             if (saveBtn){
                 saveBtn.addEventListener('click', function(){
+                    event.preventDefault();
                     var form = saveBtn.closest('form');
                     if (form){
-                        form.submit();
+                        //form.submit();
                     }else{
                         console.error('No se encontró el formulario para enviar la foto.');
                     }
