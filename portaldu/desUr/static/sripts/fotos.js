@@ -67,9 +67,25 @@
 
                 var data = canvas.toDataURL('image/png');
                 photo.setAttribute('src', data);
+                document.getElementById('webimg').value = data;
             }else{
                 clearphoto();
             }
         }
         window.addEventListener('load', startup, false);
+
+        document.addEventListener('DOMContentLoaded', function(){
+            var saveBtn = document.getElementById('save');
+            if (saveBtn){
+                saveBtn.addEventListener('click', function(){
+                    var form = saveBtn.closest('form');
+                    if (form){
+                        form.submit();
+                    }else{
+                        console.error('No se encontró el formulario para enviar la foto.');
+                    }
+                });
+            }
+        });
+
         })();

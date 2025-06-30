@@ -166,6 +166,10 @@
       <div class="popup">{% include 'adv.html' %}</div>
     </div>
   </div>
+<!-- otro modal para la cámara fak -->
+<div class="modal hidden" id="camaraD">
+    {% include 'modals/camaraS.html' %}
+</div>
 </form>
 <div class="modal hidden" id="modal">
   {% include 'modals/modal_map.html' %}
@@ -175,10 +179,6 @@
   {% include 'modals/modal_docs.html' %}
 </div>
 
-<!-- otro modal para la cámara fak -->
-<div class="modal hidden" id="camaraD">
-    {% include 'modals/camaraS.html' %}
-</div>
 {% endblock %} {% block footer %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>
 

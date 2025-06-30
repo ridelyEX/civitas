@@ -167,6 +167,7 @@ def soliData(request):
             puo = request.POST.get("puo")
             request.session['puo'] = puo
             imgpath = request.POST.get("src")
+            img = None
             if imgpath and imgpath.startswith("data:image"):
                 header, encoded = imgpath.split(",", 1)
                 datos = base64.b64decode(encoded)
@@ -174,11 +175,18 @@ def soliData(request):
                 img.write(datos)
                 img.flush()
                 img = File(img)
+            elif imgpath:
+                try:
+                    img = NamedTemporaryFile()
+                    img.write(urlopen(imgpath).read())
+                    img.flush()
+                    img = File(img)
+                except Exception as e:
+                    print(f"Error con la imagen: {e}")
+                    return JsonResponse({'error': 'url invalida'}, status=400)
             else:
-                img = NamedTemporaryFile()
-                img.write(urlopen(imgpath).read())
-                img.flush()
-                img = File(img)
+                print("No hay imagen")
+                return JsonResponse({'error': 'sin imagen'}, status=400)
             name = str(img.name).split("\\")[-1]
             name += '.jpg'
             img.name = name
