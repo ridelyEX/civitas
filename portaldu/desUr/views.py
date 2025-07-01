@@ -3,6 +3,8 @@ import uuid
 from io import BytesIO
 from tempfile import NamedTemporaryFile
 from urllib.request import urlopen
+
+import pywhatkit
 from django.core.files import File
 import googlemaps
 from django.core.files.base import ContentFile
@@ -10,11 +12,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
-
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files
 from weasyprint import HTML
 from django.template.loader import render_to_string, get_template
 from datetime import date
+from tkinter import *
 
 
 def base(request):
@@ -285,10 +287,54 @@ def doc(request):
                 return redirect('saveD1')
             elif action == 'descargar':
                 return redirect('document')
+            elif action == 'wasap':
+                wasap_msg(uuid, datos.tel)
     context = {'asunto': asunto,
                'datos':datos,
                'uuid':uuid}
     return render(request, 'dg.html', context)
+
+def wasap_msg(uid, num):
+
+    import pyautogui
+    win = Tk()
+
+    print(num)
+
+    dp = data.objects.filter(fuuid=uid).last()
+    if dp:
+        id_dp = dp.pk
+        print(id_dp)
+
+    screen_w = win.winfo_screenwidth()
+    screen_h = win.winfo_screenheight()
+
+    pdfile = Files.objects.filter(fuuid=uid).last()
+
+    if pdfile and pdfile.finalDoc:
+        file_path = pdfile.finalDoc.path
+        mensaje = "este es el tremendisimo mensaje"
+
+        try:
+            pywhatkit.sendwhats_image(
+                phone_no=num,
+                img_path=file_path,
+                caption=mensaje,
+                wait_time=15
+            )
+
+            pyautogui.moveTo(screen_w/2, screen_h/2)
+            pyautogui.click()
+            pyautogui.press('enter')
+            print("Se mandó el mensaje con todo y todo")
+            return redirect('doc')
+        except Exception as e:
+            print(f"No se pudo enviar nadota: {e}")
+            return redirect('doc')
+    else:
+        print("Sin documentos")
+        return redirect('doc')
+
 
 def gen_folio(uid, puo):
     print(puo)

@@ -12,6 +12,7 @@ import os
 from .forms import UsersRender, Login
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas
 import pywhatkit
+from tkinter import *
 
 
 def master(request):
@@ -238,16 +239,26 @@ def test_email(request):
 
 def test_wasap(request):
 
+    import pyautogui
+    win = Tk()
+    screen_width = win.winfo_screenwidth()
+    screen_height = win.winfo_screenheight()
+
     try:
         import datetime
         hora_envio = datetime.datetime.now()
-        envio = hora_envio + datetime.timedelta(minutes=5
+        envio = hora_envio + datetime.timedelta(minutes=3
                                                 )
 
         hora = envio.hour
         minuto = envio.minute
 
-        pywhatkit.sendwhatmsg("+526142520764", "hola mundo", hora, minuto, 15, True, 10)
+        pywhatkit.sendwhatmsg_instantly("+526142520764", "?\r",30, True, 30)
+
+        pyautogui.moveTo(screen_width/2, screen_height/2)
+        pyautogui.click()
+
+        pyautogui.press('enter')
         print("se mandó el mensaje")
     except Exception as e:
         print(f"Error al enviar el mensaje: {str(e)}")
