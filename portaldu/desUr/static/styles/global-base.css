@@ -1,0 +1,88 @@
+/* ESTILOS BASE GLOBALES - Evita conflictos */
+
+/* Reset y estilos base */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Variables CSS para consistencia */
+:root {
+    --primary-color: #005194;
+    --primary-hover: #004dff;
+    --primary-dark: #00396e;
+    --secondary-color: #286496;
+    --cancel-color: #ca0000;
+    --gray-color: #666d7e;
+    --border-radius: 5px;
+    --border-radius-large: 10px;
+    --shadow-light: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+                   7px 7px 20px 0 rgba(0,0,0,.1),
+                   4px 4px 5px 0 rgba(0,0,0,.1);
+    --shadow-hover: 4px 4px 6px 0 rgba(255,255,255,.5),
+                   -4px -4px 6px 0 rgba(116,125,136,.5),
+                   inset -4px -4px 6px 0 rgba(255,255,255,.2),
+                   inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* MEJORAS PARA MÓVILES */
+
+/* Touch targets mejorados */
+@media (max-width: 768px) {
+    /* Asegurar que todos los elementos táctiles tengan al menos 44px */
+    button, 
+    input[type="button"], 
+    input[type="submit"], 
+    .addbtn,
+    .next,
+    .back,
+    .cancel,
+    .search {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Mejorar legibilidad en móviles */
+    body {
+        font-size: 16px; /* Evita zoom automático en iOS */
+        line-height: 1.4;
+    }
+    
+    /* Suavizar transiciones en móviles */
+    * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        -webkit-touch-callout: none;
+    }
+    
+    /* Mejorar scroll en iOS */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Optimización para pantallas de alta densidad */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Bordes más nítidos */
+    .form input,
+    .form textarea,
+    .form select {
+        border-width: 1px;
+    }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

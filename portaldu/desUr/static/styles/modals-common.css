@@ -1,0 +1,451 @@
+/* MODALES Y OVERLAYS COMUNES */
+
+/* Popup para cancelar */
+.cBtn .popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10000;
+}
+
+.cBtn .popup.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Prevenir interacciones con elementos de fondo */
+.cBtn .popup {
+    isolation: isolate;
+}
+
+/* Modal general */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+    transition: 0.3s ease;
+    opacity: 0;
+}
+
+.modal:not(.hidden) {
+    opacity: 1;
+}
+
+/* Contenido del modal */
+.mainMap {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 80rem;
+    border-radius: 8px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.content {
+    font-size: 16px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 80rem;
+    border-radius: 8px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.close {
+    color: #aaa;
+    position: absolute;
+    right: 16px;
+    top: 8px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    cursor: pointer;
+    color: #000;
+    text-decoration: none;
+}
+
+/* CÁMARA STYLES */
+#video {
+    border: 1px solid black;
+    box-shadow: 2px 2px 3px black;
+    width: 320px;
+    height: 240px;
+}
+
+#photo {
+    border: 1px solid black;
+    box-shadow: 2px 2px 3px black;
+    width: 320px;
+    height: 240px;
+}
+
+#canvas {
+    display: none;
+}
+
+.camera {
+    width: 340px;
+    display: inline-block;
+}
+
+.input {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+#start {
+    display: block;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    bottom: 32px;
+    background-color: rgba(0, 150, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    color: rgba(255,255,255,1.0);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* ESTILOS ESPECÍFICOS DE ADVERTENCIA/CONFIRMACIÓN */
+
+/* ADV MAIN */
+.adv-main {
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;    
+    width: 400px;
+    min-width: 400px;
+    height: 200px;
+    min-height: 200px;
+    border: 2px solid black;
+    border-radius: 15px;
+    color: #666d7e;
+    flex-wrap: nowrap;
+    background-color: #d1d2d3;
+    box-sizing: border-box;
+    padding: 20px;
+    margin: 0 auto;
+}
+
+.adv-main p {
+    margin: 0 0 20px 0;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+/* ADV BOTTOM */
+.adv-Ibottom {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+    margin-top: auto;
+}
+
+/* ADV BUTTON CONTAINERS */
+.adv-lBtn,
+.adv-rBtn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+/* BOTONES ESPECÍFICOS DE ADV */
+.adv-next {
+    width: 130px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+    box-sizing: border-box;
+    border: none;
+}
+
+.adv-nbtn {
+    background: #004dff;
+    background: linear-gradient(0deg, #004dff 0%, #004dff 100%);
+}
+
+.adv-nbtn:before {
+    height: 0%;
+    width: 2px;
+}
+
+.adv-nbtn:hover {
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* Botón "No" específico para ADV */
+.adv-main .back.bbtn {
+    width: 130px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: #666d7e;
+    background: linear-gradient(0deg, #666d7e 0%, #666d7e 100%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+    box-sizing: border-box;
+    border: none;
+}
+
+.adv-main .back.bbtn:hover {
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* RESPONSIVE MODALES */
+
+/* TABLETS (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .mainMap,
+    .content {
+        width: 90%;
+        margin: 8% auto;
+        padding: 15px;
+    }
+    
+    .adv-main {
+        width: 380px;
+        height: 180px;
+        padding: 18px;
+    }
+    
+    .adv-main p {
+        font-size: 1.1rem;
+    }
+    
+    .adv-Ibottom {
+        gap: 35px;
+    }
+}
+
+/* MÓVILES Y TABLETS PEQUEÑAS (hasta 768px) */
+@media (max-width: 768px) {
+    /* Modales generales */
+    .mainMap,
+    .content {
+        width: 95%;
+        margin: 3% auto;
+        padding: 12px;
+        border-radius: 12px;
+    }
+    
+    .close {
+        right: 10px;
+        top: 5px;
+        font-size: 24px;
+    }
+
+    /* Cámara responsive */
+    #video,
+    #photo {
+        width: 100%;
+        max-width: 280px;
+        height: 200px;
+    }
+
+    .camera {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    #start {
+        width: 80%;
+        max-width: 200px;
+        height: 40px;
+        font-size: 16px;
+        padding: 10px 20px;
+    }
+    
+    /* ADV Popup en móviles */
+    .adv-main {
+        width: 85%;
+        max-width: 320px;
+        height: auto;
+        min-height: 160px;
+        padding: 12px;
+        margin: 0 auto;
+        font-size: 1.2rem;
+    }
+    
+    .adv-main p {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        line-height: 1.3;
+    }
+    
+    .adv-Ibottom {
+        gap: 15px;
+        flex-direction: row;
+        margin-top: 15px;
+    }
+    
+    .adv-next,
+    .adv-main .back.bbtn {
+        width: 90px;
+        height: 38px;
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+}
+
+/* MÓVILES PEQUEÑOS (hasta 480px) */
+@media (max-width: 480px) {
+    /* Modales en pantallas muy pequeñas */
+    .mainMap,
+    .content {
+        width: 98%;
+        margin: 2% auto;
+        padding: 8px;
+        border-radius: 8px;
+    }
+    
+    .close {
+        right: 8px;
+        top: 3px;
+        font-size: 20px;
+    }
+    
+    /* Cámara en móviles pequeños */
+    #video,
+    #photo {
+        width: 100%;
+        max-width: 240px;
+        height: 180px;
+    }
+
+    .camera {
+        width: 100%;
+        max-width: 260px;
+    }
+    
+    #start {
+        width: 90%;
+        max-width: 180px;
+        height: 35px;
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+    
+    /* ADV muy compacto */
+    .adv-main {
+        width: 90%;
+        max-width: 280px;
+        min-height: 140px;
+        padding: 10px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+    }
+    
+    .adv-main p {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+    
+    .adv-Ibottom {
+        gap: 12px;
+        margin-top: 12px;
+    }
+    
+    .adv-next,
+    .adv-main .back.bbtn {
+        width: 80px;
+        height: 35px;
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+}
+
+/* ORIENTACIÓN LANDSCAPE EN MÓVILES */
+@media (max-height: 500px) and (orientation: landscape) {
+    .adv-main {
+        width: 60%;
+        max-width: 400px;
+        height: auto;
+        min-height: 120px;
+        padding: 8px;
+    }
+    
+    .adv-main p {
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    
+    .adv-Ibottom {
+        gap: 20px;
+        margin-top: 10px;
+    }
+    
+    .adv-next,
+    .adv-main .back.bbtn {
+        width: 100px;
+        height: 32px;
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}

@@ -1,0 +1,292 @@
+/* ARCHIVO COMÚN PARA BOTONES - Evita duplicaciones */
+
+/* BOTÓN SIGUIENTE */
+.next, .adv-next {
+    width: 130px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.nbtn, .adv-nbtn {
+    background: #004dff;
+    background: linear-gradient(0deg, #004dff 0%, #004dff 100%);
+    border: none;
+}
+
+.nbtn:before, .adv-nbtn:before {
+    height: 0%;
+    width: 2px;
+}
+
+.nbtn:hover, .adv-nbtn:hover {
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* BOTÓN ATRÁS */
+.back {
+    width: 130px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.bbtn {
+    background: #666d7e;
+    background: linear-gradient(0deg, #666d7e 0%, #666d7e 100%);
+    border: none;
+}
+
+.bbtn:before {
+    height: 0%;
+    width: 2px;
+}
+
+.bbtn:hover {
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* BOTÓN CANCELAR */
+.cancel {
+    width: 130px;
+    height: 40px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.cbtn {
+    background: #ca0000;
+    background: linear-gradient(0deg, #ca0000 0%, #ca0000 100%);
+    border: none;
+}
+
+.cbtn:before {
+    height: 0%;
+    width: 2px;
+}
+
+.cbtn:hover {
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* BOTÓN BUSCAR/EXAMINAR */
+.search {
+    width: 130px;
+    height: 40px;
+    color: #000000;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.sbtn {
+    background: #ffffff;
+    background: linear-gradient(0deg, #ffffff 0%, #ffffff 100%);
+    border: 2px solid #005194;
+    height: 3rem;
+    width: 12rem;
+}
+
+.sbtn:before {
+    height: 0%;
+    width: 2px;
+}
+
+.sbtn:hover {
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+/* BOTÓN ADD */
+.addbtn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 15px;
+    height: 40px;
+    width: 180px;
+    background-color: #005194;
+    color: #ffffff;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.addbtn:hover {
+    background-color: #00396e;
+}
+
+.addbtn .txt {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.addbtn .addicon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* RESPONSIVE PARA BOTONES */
+
+/* TABLETS (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .addbtn {
+        width: 160px;
+        height: 42px;
+        font-size: 0.9rem;
+    }
+    
+    .next, .back, .cancel {
+        width: 120px;
+        height: 38px;
+        font-size: 14px;
+    }
+    
+    .search.sbtn {
+        width: 10rem;
+        height: 2.8rem;
+    }
+}
+
+/* MÓVILES Y TABLETS PEQUEÑAS (hasta 768px) */
+@media (max-width: 768px) {
+    /* Botones ADD más grandes y táctiles */
+    .addbtn {
+        width: 100%;
+        min-height: 50px;
+        font-size: 1rem;
+        padding: 12px 20px;
+        border-radius: 12px;
+        justify-content: center;
+        gap: 12px;
+    }
+    
+    .addbtn .txt {
+        font-size: 1rem;
+    }
+    
+    .addbtn .addicon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    /* Botones de navegación */
+    .next, .back, .cancel {
+        width: 100%;
+        min-height: 50px;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+    
+    /* Botón de búsqueda/examinar */
+    .search.sbtn {
+        width: 100%;
+        height: 50px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+    
+    /* Espaciado mejorado para touch */
+    .bottom {
+        padding: 0 15px;
+    }
+    
+    .bottom .lBtn,
+    .bottom .rBtn,
+    .bottom .cBtn {
+        margin-bottom: 8px;
+    }
+}
+
+/* MÓVILES PEQUEÑOS (hasta 480px) */
+@media (max-width: 480px) {
+    .addbtn {
+        min-height: 45px;
+        font-size: 0.9rem;
+        padding: 10px 15px;
+        gap: 8px;
+    }
+    
+    .addbtn .addicon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .next, .back, .cancel {
+        min-height: 45px;
+        font-size: 1rem;
+    }
+    
+    .search.sbtn {
+        height: 45px;
+        font-size: 0.9rem;
+    }
+    
+    .bottom {
+        padding: 0 10px;
+    }
+}

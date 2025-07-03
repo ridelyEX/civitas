@@ -1,0 +1,212 @@
+/* CHECKBOX CUSTOMIZADO */
+
+.checkbox-wrapper-46 {
+    overflow: hidden;
+    display: flex;
+    align-content: center;
+    flex-direction: row;
+    width: fit-content;
+}
+
+.checkbox-wrapper-46 input[type="checkbox"] {
+    display: none;
+    visibility: hidden;
+}
+
+.checkbox-wrapper-46 .cbx {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    margin: 20px;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+.checkbox-wrapper-46 .cbx span {
+    display: inline-block;
+    vertical-align: middle;
+    transform: translate3d(0, 0, 0);
+}
+
+.checkbox-wrapper-46 .cbx span:first-child {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    transform: scale(1);
+    vertical-align: middle;
+    border: 1px solid #9098a9;
+    transition: all 0.2s ease;
+}
+
+.checkbox-wrapper-46 .cbx span:first-child svg {
+    position: absolute;
+    top: 3px;
+    left: 2px;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 16px;
+    stroke-dashoffset: 16px;
+    transition: all 0.3s ease;
+    transition-delay: 0.1s;
+    transform: translate3d(0, 0, 0);
+}
+
+.checkbox-wrapper-46 .cbx span:first-child:before {
+    content: "";
+    width: 100%;
+    height: 100%;
+    background: #005194;
+    display: block;
+    transform: scale(0);
+    opacity: 1;
+    border-radius: 50%;
+}
+
+.checkbox-wrapper-46 span.p1:last-child {
+    padding-left: 8px;
+}
+
+.checkbox-wrapper-46 .cbx:hover span:first-child {
+    border-color: #005194;
+}
+
+.checkbox-wrapper-46 .inp-cbx:checked + .cbx span:first-child {
+    background: #005194;
+    border-color: #005194;
+    animation: wave-46 0.4s ease;
+}
+
+.checkbox-wrapper-46 .inp-cbx:checked + .cbx span:first-child svg {
+    stroke-dashoffset: 0;
+}
+
+.checkbox-wrapper-46 .inp-cbx:checked + .cbx span:first-child:before {
+    transform: scale(3.5);
+    opacity: 0;
+    transition: all 0.6s ease;
+}
+
+.checkbox-wrapper-46 .p1:hover {
+    color: #005194;
+}
+
+.checkbox-wrapper-46 span.p2 {
+    visibility: hidden;
+    width: fit-content;
+    height: fit-content;
+    background-color: #00396e;
+    color: #ffffff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0 5px 10px;
+    position: absolute;
+    z-index: 1;
+    font-size: 0.90rem;
+}
+
+.checkbox-wrapper-46:hover span.p2 {
+    visibility: visible;
+}
+
+@keyframes wave-46 {
+    50% {
+        transform: scale(0.9);
+    }
+}
+
+/* RESPONSIVE CHECKBOX */
+
+/* TABLETS (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .checkbox-wrapper-46 .cbx {
+        margin: 18px;
+    }
+    
+    .checkbox-wrapper-46 .cbx span:first-child {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .checkbox-wrapper-46 span.p1:last-child {
+        padding-left: 10px;
+        font-size: 0.95rem;
+    }
+}
+
+/* MÓVILES Y TABLETS PEQUEÑAS (hasta 768px) */
+@media (max-width: 768px) {
+    .checkbox-wrapper-46 {
+        width: 100%;
+        justify-content: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .checkbox-wrapper-46 .cbx {
+        margin: 15px 10px 15px 0;
+        align-items: flex-start;
+    }
+    
+    .checkbox-wrapper-46 .cbx span:first-child {
+        width: 22px;
+        height: 22px;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+    
+    .checkbox-wrapper-46 .cbx span:first-child svg {
+        top: 4px;
+        left: 3px;
+    }
+    
+    .checkbox-wrapper-46 span.p1:last-child {
+        padding-left: 12px;
+        font-size: 1rem;
+        line-height: 1.4;
+        flex: 1;
+    }
+    
+    .checkbox-wrapper-46 span.p2 {
+        font-size: 0.85rem;
+        padding: 8px 5px 8px 12px;
+        border-radius: 8px;
+        max-width: 90vw;
+        word-wrap: break-word;
+        left: 0;
+        top: 100%;
+        margin-top: 5px;
+    }
+}
+
+/* MÓVILES PEQUEÑOS (hasta 480px) */
+@media (max-width: 480px) {
+    .checkbox-wrapper-46 .cbx {
+        margin: 12px 8px 12px 0;
+    }
+    
+    .checkbox-wrapper-46 .cbx span:first-child {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .checkbox-wrapper-46 .cbx span:first-child svg {
+        top: 3px;
+        left: 2px;
+    }
+    
+    .checkbox-wrapper-46 span.p1:last-child {
+        padding-left: 10px;
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+    
+    .checkbox-wrapper-46 span.p2 {
+        font-size: 0.8rem;
+        padding: 6px 4px 6px 10px;
+        max-width: 85vw;
+    }
+}

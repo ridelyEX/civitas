@@ -739,7 +739,7 @@ input[type="file"] {
 
 /* QUERIES */
 
-@media (max-width: 768x) {
+@media (max-width: 768px) {
 
     html,body{
         padding-top: 1rem;
