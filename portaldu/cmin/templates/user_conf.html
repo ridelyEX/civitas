@@ -1,0 +1,82 @@
+{% extends 'master.html' %}{% load static %}
+
+{% block head %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=1">
+
+<style>
+    .nFoto {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+</style>
+
+{% endblock %}
+
+{% block title %}
+    Usuarios
+{% endblock %}
+
+{% block content %}{% include 'navmin.html' %}
+<text>Configuración de usuario</text>
+<div class="container text-center">
+    <form method="post" enctype="multipart/form-data" action="{% url 'user_conf' %}">
+        <div class="col-md-8 offset-md-2">
+            {% csrf_token %}
+
+            <div class="foto">
+                <img src="{{ user.foto.url }}" alt="Avatar Logo" class="rounded" style="width: 200px; height: 200px;">
+            </div>
+
+            <div class="mini">
+                <label for="id_username">Nombre de usuario</label>
+                {{form.username}}
+            </div>
+            <div class="mini">
+            <label for="id_password">Contraseña</label>
+                {{form.password}}
+            </div>
+            <div class="mini">
+                <label for="id_confirmP">Confirmar contraseña</label>
+                {{form.confirmP}}
+            </div>
+              <div class="mini">
+                    <div class="nFoto">
+                    <label for="search" class="text">Cambiar foto</label>
+                        <button
+                          type="button"
+                          class="search sbtn"
+                          id="search"
+                          name="foto"
+                          >
+                          <span class="addicon">
+                          <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
+                          </span>
+                          <span>Foto</span>
+                        </button>
+                    </div>
+              </div>
+            {{form.foto}}
+        </div>
+        <button type="button" class="back bbtn" id="back" data-url="{% url 'tablas' %}">Volver</button>
+        <button type="submit" class="next nbtn">Guadar cambios</button>
+    </form>
+</div>
+
+{% endblock %}
+
+
+{% block footer %}
+<div class="footer" style="height: 50px; background: rgb(0, 0, 78);"></div>
+<script src="{% static 'cminScripts/cminBtns.js' %}"></script>
+<script>
+    document.getElementById("search").addEventListener('click', function(){
+    console.log("click");
+        document.getElementById("id_foto").click();
+    });
+</script>
+{% endblock %}

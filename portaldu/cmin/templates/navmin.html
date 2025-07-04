@@ -28,7 +28,7 @@
 {% block content %}
     <nav class="navbar navbar-expand-sm navbar-light" style="background-color: rgb(0, 0, 78); position: relative; width: 100%; color: white;">
         <div class="container-fluid">
-            <a class="navbar-brand">
+            <a href="{% url 'user_conf' %}" class="navbar-brand">
                 {% if user.is_authenticated %}
                 <img src="{{ user.foto.url }}" alt="Avatar Logo" style="width:40px;" class="rounded-pill">
                 {% else %}

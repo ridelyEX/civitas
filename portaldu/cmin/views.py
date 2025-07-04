@@ -9,7 +9,7 @@ from portaldu.desUr.models import Files, soli
 from django.contrib import messages
 from django.core.mail import EmailMessage
 import os
-from .forms import UsersRender, Login
+from .forms import UsersRender, Login, UsersConfig
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas
 import pywhatkit
 from tkinter import *
@@ -53,6 +53,22 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+def user_conf(request):
+    usuario = request.user
+    if request.method == 'POST':
+        form = UsersConfig(request.POST, request.FILES, instance=usuario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil actualizado correctamente.")
+            return redirect('login')
+    else:
+        form = UsersConfig(instance=usuario)
+    return render(request, 'user_conf.html', {'form': form})
+
+def usertest(request):
+    return render(request, 'user_conf.html')
 
 @login_required
 def tables(request):
@@ -201,7 +217,7 @@ def sendMail(request):
 
     return redirect('tablas')
 
-
+"""
 def test_email(request):
     from django.core.mail import send_mail
     import socket
@@ -236,34 +252,6 @@ def test_email(request):
         messages.error(request, f"Error al enviar correo: {str(e)}")
 
     return redirect('tablas')
-
-def test_wasap(request):
-
-    import pyautogui
-    win = Tk()
-    screen_width = win.winfo_screenwidth()
-    screen_height = win.winfo_screenheight()
-
-    try:
-        import datetime
-        hora_envio = datetime.datetime.now()
-        envio = hora_envio + datetime.timedelta(minutes=3
-                                                )
-
-        hora = envio.hour
-        minuto = envio.minute
-
-        pywhatkit.sendwhatmsg_instantly("+526142520764", "?\r",30, True, 30)
-
-        pyautogui.moveTo(screen_width/2, screen_height/2)
-        pyautogui.click()
-
-        pyautogui.press('enter')
-        print("se mandó el mensaje")
-    except Exception as e:
-        print(f"Error al enviar el mensaje: {str(e)}")
-        messages.error(request, f"Error al enviar el mensaje: {str(e)}")
-
-    return render(request, 'wasap.html')
+"""
 
 # Create your views here.

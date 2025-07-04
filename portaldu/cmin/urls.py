@@ -9,6 +9,5 @@ urlpatterns = [
     path('save/', view.save_request, name='saveSoli'),
     path('send/', view.sendMail, name='send_mail'),
     path('logout/', view.logout_view, name='logout'),
-    path('test/', view.test_email, name='test'),
-    path('test2/', view.test_wasap, name='test_wasap'),
+    path('user_conf/', view.user_conf, name='user_conf'),
 ]
