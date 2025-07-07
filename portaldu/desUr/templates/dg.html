@@ -11,11 +11,11 @@
 <form method="post">
   <input type="hidden" name="uuid" value="{{ Uuid.uuid }}">
     {% csrf_token %}
-    <div class="main" id="solimain">
+    <div class="solimain" id="solimain">
         <div class="titulo"><h1><b>Documento generado</b></h1></div><br>
         <div class="soli">
             <p><strong>Solicitud</strong></p>
-            <button type="submit" name="action" value="wasap" class="wasap" id="wasap"></button>
+            <!--button type="submit" name="action" value="wasap" class="wasap" id="wasap"></button-->
             <button type="submit" class="down" name="action" value="descargar">
                 <span>
                     <img src="{% static 'images/download.png' %}" alt="dwnld" class="down">

@@ -557,13 +557,16 @@ def save_document(request):
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     uid = get_object_or_404(Uuid, uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
-    solicitud = soli.objects.filter(data_ID=datos)
+    solicitud = soli.objects.last()
+    print(solicitud)
+    if not solicitud:
+        return HttpResponse("no hay sikucitud", status=400)
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
     puo = request.session.get('puo', 'Sin PUO')
     print(puo)
-    num_folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'Sin PUO')
+    num_folio = gen_folio(datos.fuuid, solicitud.puo if solicitud else 'Sin PUO')
     print(asunto)
 
     match asunto:
@@ -590,12 +593,12 @@ def save_document(request):
         case "DOP00011":
             asunto = "Solicitud de material caliche - DOP00011"
 
-    ultima_solicitud = solicitud.last()
+    ultima_solicitud = solicitud
     if ultima_solicitud and ultima_solicitud.folio:
         puo_texto = num_folio[0]
         folio = ultima_solicitud.folio
     else:
-        puo_texto, folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'no hay puo')
+        puo_texto, folio = gen_folio(datos.fuuid, solicitud.puo if solicitud else 'no hay puo')
 
     context = {
         "asunto": asunto,
@@ -612,10 +615,10 @@ def save_document(request):
             "etnia": datos.etnia,
         },
         "soli": {
-            "dir": solicitud.last().dirr if solicitud.exists() else "",
-            "info": solicitud.last().info,
-            "desc": solicitud.last().descc if solicitud.exists() else "",
-            "foto": solicitud.last().foto,
+            "dir": solicitud.dirr if solicitud else "",
+            "info": solicitud.info,
+            "desc": solicitud.descc if solicitud else "",
+            "foto": solicitud.foto,
         },
         'puo': puo_texto,
         'documentos': documentos,
@@ -626,7 +629,7 @@ def save_document(request):
     pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
     pdf_file = ContentFile(buffer.getvalue())
     nomDoc = f'VS_{asunto}_{datos.nombre}_{datos.pApe}.pdf'
-    doc = Files(nomDoc=nomDoc, fuuid=uid)
+    doc = Files(nomDoc=nomDoc, fuuid=uid, soli_FK=ultima_solicitud)
     doc.finalDoc.save(nomDoc, pdf_file)
 
     return render(request, 'documet/save.html', {'doc':doc})
