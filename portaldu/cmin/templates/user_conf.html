@@ -62,16 +62,18 @@
               </div>
             {{form.foto}}
         </div>
-        <button type="button" class="back bbtn" id="back" data-url="{% url 'tablas' %}">Volver</button>
-        <button type="submit" class="next nbtn">Guadar cambios</button>
-    </form>
+        <div class="Ibottom" style="margin-bottom: 70px;">
+            <button type="button" class="back bbtn" id="back" data-url="{% url 'tablas' %}">Volver</button>
+            <button type="submit" class="next nbtn">Guadar cambios</button>
+        </div>
+        </form>
 </div>
 
 {% endblock %}
 
 
 {% block footer %}
-<div class="footer" style="height: 50px; background: rgb(0, 0, 78);"></div>
+<div class="footer" style="height: 50px; background: rgb(0, 0, 78); margin-top: 75px;"></div>
 <script src="{% static 'cminScripts/cminBtns.js' %}"></script>
 <script>
     document.getElementById("search").addEventListener('click', function(){

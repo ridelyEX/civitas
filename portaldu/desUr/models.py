@@ -5,7 +5,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 import uuid
 
 
-
 class Uuid(models.Model):
     prime =  models.AutoField(primary_key=True)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
