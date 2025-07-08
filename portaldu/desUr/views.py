@@ -143,6 +143,10 @@ def soliData(request):
         if not uuid:
             return redirect('home')
 
+        is_mobile = request.user_agent.is_mobile
+        is_tablet = request.user_agent.is_tablet
+        is_pc = request.user_agent.is_pc
+
         puo = ''
         solicitud = ''
         uid = get_object_or_404(Uuid, uuid=uuid)
@@ -258,6 +262,9 @@ def soliData(request):
             'soli':solicitudes,
             'google_key': settings.GOOGLE_API_KEY,
             'puo': puo,
+            'is_mobile': is_mobile,
+            'is_tablet': is_tablet,
+            'is_pc': is_pc,
         }
         return render(request, 'ds.html', context)
 

@@ -267,6 +267,28 @@
 </script>
 
 <script src="{% static 'sripts/modals.js' %}"></script>
-<script src="{% static 'sripts/fotos.js' %}"></script>
 
+{% if is_mobile or is_tablet %}
+<script>
+  document.getElementById('camera').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    const formdata = new FormData();
+    formData.append('camera', file);
+
+    fetch('/upload/', {
+      method: 'POST',
+      body: formdata
+    })
+    .then(response => response.json())
+    .then(data+> {
+      console.log('se hizo: ', data);
+    })
+    .catch((error) => {
+      console.error('Error', error);
+    });
+  });
+</script>
+{% else %}
+<script src="{% static 'sripts/fotos.js' %}"></script>
+{% endif %}
 {% endblock %}
