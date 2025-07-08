@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-+1cgdo&)u_qlg()^r5ukuyo7s*w%v=#(dxbuck2jq6uwfqejuu
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'portaldu.desUr.apps.DesurConfig',
     'portaldu.cmin.apps.CminConfig',
     'bootstrap5',
+    'django_user_agents',
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_user_agents.middleware.UserAgentMiddleware',
 ]
 
 ROOT_URLCONF = 'civitas.urls'
@@ -87,7 +89,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'civitas',
         'USER': 'root',
-        'PASSWORD': 'H0L4',
+        'PASSWORD': 'H0L4', #en la chamba admin, H0L4 en la lap y root en la compu
         'HOST': 'localhost',
         'PORT': '3306',
     }
@@ -143,6 +145,8 @@ AUTH_USER_MODEL = 'cmin.users'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

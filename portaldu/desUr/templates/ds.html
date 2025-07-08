@@ -116,13 +116,18 @@
               class="search sbtn"
               id="searchPhoto"
               name="foto"
+              {% if not is_mobile and not is_tablet %}
               onclick="modals('open', 'camaraD')"
-              >
+              {% endif %}
+            >
               <span class="addicon">
               <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
               </span>
               <span>Examinar</span>
             </button>
+            {% if is_mobile or is_tablet %}
+            <input type="file" accept="image/*" capture="camera" name="src" id="cameraInput" style="display:none;" hidden >
+            {% endif %}
           </div>
           <!-- fak -->
         </div>
@@ -269,25 +274,7 @@
 <script src="{% static 'sripts/modals.js' %}"></script>
 
 {% if is_mobile or is_tablet %}
-<script>
-  document.getElementById('camera').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    const formdata = new FormData();
-    formData.append('camera', file);
-
-    fetch('/upload/', {
-      method: 'POST',
-      body: formdata
-    })
-    .then(response => response.json())
-    .then(data+> {
-      console.log('se hizo: ', data);
-    })
-    .catch((error) => {
-      console.error('Error', error);
-    });
-  });
-</script>
+<script src="{% static 'sripts/mPhoto.js' %}"></script>
 {% else %}
 <script src="{% static 'sripts/fotos.js' %}"></script>
 {% endif %}

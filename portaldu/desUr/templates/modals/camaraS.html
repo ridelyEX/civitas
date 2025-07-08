@@ -6,11 +6,9 @@
             <video id="video"></video> <!-- muestra lo que se va a tomar -->
 
             <button id="start" type="button">Tomar foto</button> <!-- Toma la foto -->
-            {% if is_mobile or is_tablet %}
-            <input type="file" accept="image/*" capture="camera" name="src" id="cameraInput" style="display:none;" >
-            {% else %}
+
             <input type="hidden" value="" name="src" id="webimg"  >
-            {% endif %}
+
             <canvas id="canvas" hidden></canvas> <!-- muestra la foto tomada -->
             <!--img src="http://localhost:8000/desUr/soliData/" alt="foto" id="foto"> muestra la foto tomada x2 -->
         </div>
@@ -25,31 +23,4 @@
         <button id="save" type="button" class="btn btn-primary" onclick="modals('close', 'camaraD')">Guardar</button> <!-- Guarda la foto tomada -->
     </div>
 </div>
-<script>
-// Solo para móvil/tablet: el botón activa el input file
-{% if is_mobile or is_tablet %}
-document.addEventListener('DOMContentLoaded', function() {
-    var startBtn = document.getElementById('start');
-    var cameraInput = document.getElementById('cameraInput');
-    var fotoBase64Input = document.getElementById('foto_base64');
-    if (startBtn && cameraInput) {
-        startBtn.addEventListener('click', function() {
-            cameraInput.click();
-        });
-        cameraInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('photo').src = e.target.result;
-                    if (fotoBase64Input) {
-                        fotoBase64Input.value = e.target.result;
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-});
-{% endif %}
-</script>
+
