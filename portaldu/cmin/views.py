@@ -54,7 +54,7 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-
+@login_required
 def user_conf(request):
     usuario = request.user
     if request.method == 'POST':
@@ -216,6 +216,11 @@ def sendMail(request):
             messages.error(request, f"Error al procesar la solicitud: {str(e)}")
 
     return redirect('tablas')
+
+
+def custom_handler404(request, exception=None):
+    context = {}
+    return render(request, 'error404.html', context, status=404)
 
 """
 def test_email(request):
