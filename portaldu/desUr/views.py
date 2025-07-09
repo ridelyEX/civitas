@@ -484,7 +484,7 @@ def document(request):
 
     match asunto:
         case "DOP00001":
-            asunto = "Arrelgo de calles de terracería - DOP00001"
+            asunto = "Arreglo de calles de terracería - DOP00001"
         case "DOP00002":
             asunto = "Bacheo de calles - DOP00002"
         case "DOP00003":
@@ -496,7 +496,7 @@ def document(request):
         case "DOP00006":
             asunto = "Rehabilitación de calles - DOP00006"
         case "DOP00007":
-            asunto = "Retiro de escombro y materila de arrastre - DOP00007"
+            asunto = "Retiro de escombro y material de arrastre - DOP00007"
         case "DOP00008":
             asunto = "Solicitud de material caliche - DOP00008"
         case "DOP00009":
@@ -571,7 +571,7 @@ def save_document(request):
 
     match asunto:
         case "DOP00001":
-            asunto = "Arrelgo de calles de terracería - DOP00001"
+            asunto = "Arreglo de calles de terracería - DOP00001"
         case "DOP00002":
             asunto = "Bacheo de calles - DOP00002"
         case "DOP00003":
@@ -583,7 +583,7 @@ def save_document(request):
         case "DOP00006":
             asunto = "Rehabilitación de calles - DOP00006"
         case "DOP00007":
-            asunto = "Retiro de escombro y materila de arrastre - DOP00007"
+            asunto = "Retiro de escombro y material de arrastre - DOP00007"
         case "DOP00008":
             asunto = "Solicitud de material caliche - DOP00008"
         case "DOP00009":

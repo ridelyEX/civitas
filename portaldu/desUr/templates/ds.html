@@ -27,6 +27,9 @@
           name="dir"
           placeholder="Dirección del servicio: calle, colonia, número ex., C.P."
           value="{{dir}}"
+          required
+          oninvalid="this.setCustomValidity('Ingrese la dirección del servicio')"
+          oninput="this.setCustomValidity('')"
         />
         <br />
         <div class="plus">
@@ -69,7 +72,7 @@
           </div>
 
           <div class="checkbox-wrapper-46">
-            <input type="checkbox" name="check" id="cbx-46" class="inp-cbx" />
+            <input type="checkbox" name="check" id="cbx-46" class="inp-cbx" required />
             <label for="cbx-46" class="cbx">
               <span>
                 <svg viewBox="0 0 12 10" height="10px" width="12px">
@@ -92,7 +95,7 @@
 
           <div class="nPuesto">
             <label for="puo" class="text">Origen de solicitud</label>
-            <select class="select" name="puo" id="puo">
+            <select class="select" name="puo" id="puo" required oninvalid="this.setCustomValidity('Seleccione el origen de gestión')" oninput="this.setCustomValidity('')">
               <option value="">Origen de gestión</option>
               <option value="OFI">Oficio</option>
               <option value="CRC">CRC</option>
@@ -126,7 +129,7 @@
               <span>Examinar</span>
             </button>
             {% if is_mobile or is_tablet %}
-            <input type="file" accept="image/*" capture="camera" name="src" id="cameraInput" style="display:none;" hidden >
+            <input type="file" accept="image/*" capture="camera" name="src" id="cameraInput" style="display:none;" hidden required>
             {% endif %}
           </div>
           <!-- fak -->
