@@ -81,10 +81,12 @@
           <option value="DOP00007">
             Retiro de escombro y material de arrastre
           </option>
-          <option value="DOP00008">Solicitud de material caliche</option>
+          <option value="DOP00008">Solicitud de material caliche/Fresado (especificar)</option>
           <option value="DOP00009">Solicitud de pavimentación de calles</option>
           <option value="DOP00010">Solicitud de reductores de velocidad</option>
           <option value="DOP00011">Solicitud de pintura para señalamientos viales</option>
+          <option value="DOP00012">Arreglo de derrumbe de bardas</option>
+          <option value="DOP00013">Tapiado</option>
         </select>
       </div>
     </div>
@@ -98,6 +100,8 @@
           class="input"
           name="tel"
           placeholder="Teléfono"
+          pattern="[0-9]{10}"
+          title="El teléfono debe tener 10 dígitos numéricos."
         />
 
         <label for="curp" class="text">CURP:</label>
@@ -110,7 +114,7 @@
           placeholder="CURP"
         />
 
-        <label for="sexo" class="text">Sexo:</label>
+        <label for="sexo" class="text">Género:</label>
         <select class="select" id="sexo" name="sexo">
           <option value="">Seleccione un opción</option>
           <option value="hombre">Hombre</option>

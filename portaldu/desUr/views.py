@@ -90,9 +90,9 @@ def intData(request):
 
         if not data.objects.filter(fuuid=uid).exists():
             datos = data(
-                nombre=nombre,
-                pApe=pApe,
-                mApe=mApe,
+                nombre=nombre.upper(),
+                pApe=pApe.upper(),
+                mApe=mApe.upper(),
                 bDay=bDay,
                 asunto=asunto,
                 tel=tel,
