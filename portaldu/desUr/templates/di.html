@@ -62,19 +62,7 @@
             oninput="this.setCustomValidity('')"
         />
 
-        <div class="field">
-          <fieldset>
-            <legend>¿Pertenece a alguna etnia?</legend>
-            <label for="ets">
-            <input type="radio" id="ets" class="radio" name="et" onclick="habilitar(true)">
-              Sí</label>
-            <label for="etn">
-            <input type="radio" id="etn" class="radio" name="et" onclick="habilitar(false)">
-              No</label><br>
-            <label for="etnia" class="text">Etnia:</label>
-            <input type="text" id="etnia" name="etnia" class="input" placeholder="Etnia" disabled>
-          </fieldset>
-        </div>
+
 
         <label for="asunto" class="text">Asunto:</label>
         <select class="select" id="asunto" name="asunto" required oninvalid="this.setCustomValidity('Ingrese un asunto')" oninput="this.setCustomValidity('')">
@@ -101,6 +89,20 @@
           <option value="DOP00012">Arreglo de derrumbe de bardas</option>
           <option value="DOP00013">Tapiado</option>
         </select>
+
+         <div class="field">
+          <fieldset>
+            <legend>¿Pertenece a alguna etnia?</legend>
+            <label for="ets">
+            <input type="radio" id="ets" class="radio" name="et" onclick="habilitar(true)">
+              Sí</label>
+            <label for="etn">
+            <input type="radio" id="etn" class="radio" name="et" onclick="habilitar(false)">
+              No</label><br>
+            <label for="etnia" class="text">Etnia:</label>
+            <input type="text" id="etnia" name="etnia" class="input" placeholder="Etnia" disabled>
+          </fieldset>
+        </div>
       </div>
     </div>
     <div class="right">
@@ -141,19 +143,7 @@
           <option value="otro">Otro</option>
         </select>
 
-        <div class="field">
-          <fieldset>
-            <legend>¿Tiene alguna discapacidad?</legend>
-            <label for="discs">
-            <input type="radio" id="discs" name="disc" class="radio" onclick="habilitarD(true)">
-              Sí</label>
-            <label for="discn">
-            <input type="radio" id="discn" name="disc" class="radio" onclick="habilitarD(false)">
-              No</label><br>
-            <label for="disc" class="text">Discapacidad:</label>
-            <input type="text" name="discapacidad" id="disc" class="input" placeholder="Discapacidad" disabled>
-          </fieldset>
-        </div>
+
 
         <label for="dir" class="text" >Dirección:</label>
         <input
@@ -179,8 +169,52 @@
             <span class="txt">Añadir dirección</span>
           </button>
         </div>
+
+         <div class="field">
+          <fieldset>
+            <legend>¿Tiene alguna discapacidad?</legend>
+            <label for="discs">
+            <input type="radio" id="discs" name="disc" class="radio" onclick="habilitarD(true)">
+              Sí</label>
+            <label for="discn">
+            <input type="radio" id="discn" name="disc" class="radio" onclick="habilitarD(false)">
+              No</label><br>
+            <label for="disc" class="text">Discapacidad:</label>
+            <select name="discapacidad" id="disc" class="select" disabled>
+              <option value="">Seleccione una opción</option>
+              <option value="Persona con discapacidad motriz">Persona con discapacidad motriz</option>
+              <option value="Persona con discapacidad auditiva">Persona con discapacidad auditiva</option>
+              <option value="Persona con discapacidad visual">Persona con discapacidad visual</option>
+              <option value="Persona con discapacidad intelectual">Persona con discapacidad intelectual</option>
+              <option value="Persona con discapacidad psicosocial">Persona con discapacidad psicosocial</option>
+            </select>
+            <!--input type="text" name="discapacidad" id="disc" class="input" placeholder="Discapacidad" disabled-->
+          </fieldset>
+        </div>
       </div>
     </div>
+     <div class="field">
+          <fieldset>
+            <legend>¿Pertenece a algún grupo vulnerable?</legend>
+            <label for="vulnerabless">
+            <input type="radio" id="vulnerabless" name="vul" class="radio" onclick="habilitarV(true)">
+              Sí</label>
+            <label for="vulnerablesn">
+            <input type="radio" id="vulnerablesn" name="vul" class="radio" onclick="habilitarV(false)">
+              No</label><br>
+            <label for="vulnerables" class="text">Grupo vulnerable:</label>
+            <select name="vulnerables" id="vulnerables" class="select" disabled>
+              <option value="">Seleccione una opción</option>
+              <option value="Padre o madre soltero(a), divorciado(a) o viudo(a)">Padre o madre soltero(a), divorciado(a) o viudo(a)</option>
+              <option value="Personas mayores de 60 años">Personas mayores de 60 años</option>
+              <option value="Persona con discapacidad total permanente">Persona con discapacidad total permanente</option>
+              <option value="Persona pensionadas o jubiladas">Persona pensionadas o jubiladas</option>
+              <option value="Familiar de persona con discapacidad total o permanente">Familiar de persona con discapacidad total o permanente</option>
+              <option value="Víctimas indirectas del delito de feminicidio">Víctimas indirectas del delito de feminicidio</option>
+            </select>
+            <!--input type="text" name="discapacidad" id="disc" class="input" placeholder="Discapacidad" disabled-->
+          </fieldset>
+        </div>
   </div>
 
   <div class="Ibottom">
@@ -276,6 +310,15 @@
         console.log("aqui hay algo");
         }
     }
+
+    function habilitarV(estado){
+        document.getElementById("vulnerables").disabled = !estado;
+        if (estado == false){
+        console.log("aqui no hay nada");
+            }else{
+            console.log("aqui hay algo");
+            }
+        }
 </script>
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 <script>

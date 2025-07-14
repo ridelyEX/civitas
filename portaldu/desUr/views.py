@@ -1,21 +1,21 @@
 import base64
 import uuid
 from io import BytesIO
+import re
 from tempfile import NamedTemporaryFile
-from urllib.request import urlopen
-
 import pywhatkit
-from django.core.files import File
 import googlemaps
+from django.core.files import File
 from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files
-from weasyprint import HTML
 from django.template.loader import render_to_string, get_template
-from datetime import date
+from weasyprint import HTML
+from datetime import date, datetime
 from tkinter import *
 
 
@@ -57,77 +57,71 @@ def home(request):
 def intData(request):
     direccion = request.GET.get('dir', '')
     uuid = request.COOKIES.get('uuid')
-
+    if not uuid:
+        return redirect('home')
 
     print(uuid)
 
-    uid = get_object_or_404(Uuid, uuid=uuid)
+    try:
+        uid = get_object_or_404(Uuid, uuid=uuid)
+    except:
+        return HttpResponse("Sesión inválida"), redirect('home')
 
     asunto = ''
 
     if request.method == 'POST':
-        asunto = request.POST.get('asunto')
-        request.session['asunto'] = asunto
 
+        errors = validar_datos(request.POST)
+        if errors:
+            return render(request, 'di.html', {
+                'errors': errors,
+                'datos': request.POST,
+                'dir': direccion,
+                'uuid': uuid,
+                'google_key': settings.GOOGLE_API_KEY,
+            })
 
-        nombre = request.POST.get('nombre')
-        pApe = request.POST.get('pApe')
-        mApe = request.POST.get('mApe')
-        bDay = request.POST.get('bDay')
-        tel = request.POST.get('tel')
-        curp = request.POST.get('curp')
-        sexo = request.POST.get('sexo')
-        dirr = request.POST.get('dir')
-        etnia = request.POST.get('etnia')
-        print(etnia)
-        if etnia is None:
-            print("sin etnia")
-            etnia = "sin etnia"
-        disc = request.POST.get('discapacidad')
-        if disc is None:
-            print("normal")
-            disc = "sin discapacidad"
+        try:
+            with transaction.atomic():
+                asunto = request.POST.get('asunto')
+                request.session['asunto'] = asunto
 
-        if not data.objects.filter(fuuid=uid).exists():
-            datos = data(
-                nombre=nombre.upper(),
-                pApe=pApe.upper(),
-                mApe=mApe.upper(),
-                bDay=bDay,
-                asunto=asunto,
-                tel=tel,
-                curp=curp,
-                sexo=sexo,
-                dirr=dirr,
-                fuuid=uid,
-                etnia=etnia,
-                disc=disc
-            )
-            datos.save()
-        else:
-            print("ya hay datos")
-            data.objects.update_or_create(
-                fuuid=uid,
-                defaults={
-                    'nombre' : nombre,
-                    'pApe' : pApe,
-                    'mApe' : mApe,
-                    'bDay' : bDay,
-                    'asunto' : asunto,
-                    'tel' : tel,
-                    'curp' : curp,
-                    'sexo' : sexo,
-                    'dirr' : dirr,
-                    'etnia' : etnia,
-                    'disc' : disc,
-                    }
+                datos_persona = {
+                    'nombre': request.POST.get('nombre').upper(),
+                    'pApe': request.POST.get('pApe').upper(),
+                    'mApe': request.POST.get('mApe').upper(),
+                    'bDay': request.POST.get('bDay'),
+                    'tel': request.POST.get('tel'),
+                    'curp': request.POST.get('curp').upper(),
+                    'sexo': request.POST.get('sexo'),
+                    'dirr': request.POST.get('dir'),
+                    'asunto': asunto,
+                    'etnia': request.POST.get('etnia', 'No pertenece a una etnia'),
+                    'disc': request.POST.get('discapacidad', 'sin discapacidad'),
+                    'vul': request.POST.get('vulnerables', 'No pertenece a un grupo vulnerable'),
+                    'fuuid': uid
+                }
+
+                if datos_persona['disc']:
+                    print("Discapacidad: ", datos_persona['disc'])
+
+                if datos_persona['vul']:
+                    print("Discapacidad: ", datos_persona['vul'])
+
+                data.objects.update_or_create(
+                    fuuid=uid,
+                    defaults=datos_persona
                 )
 
-        match asunto:
-            case "DOP00005":
-                return redirect('pago')
-            case _:
-                return redirect('soli')
+                match asunto:
+                    case "DOP00005":
+                        return redirect('pago')
+                    case _:
+                        return redirect('soli')
+
+        except Exception as e:
+            print("Error al procesar los datos:", str(e))
+            return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
 
     context = {
         'dir': direccion,
@@ -143,123 +137,48 @@ def soliData(request):
         if not uuid:
             return redirect('home')
 
-        is_mobile = request.user_agent.is_mobile
-        is_tablet = request.user_agent.is_tablet
-        is_pc = request.user_agent.is_pc
+        try:
 
-        puo = ''
-        solicitud = ''
-        uid = get_object_or_404(Uuid, uuid=uuid)
-        print(uid)
-        direccion = request.GET.get('dir', '')
-        asunto = request.session.get('asunto', '')
-        print(asunto)
-        dp = data.objects.filter(fuuid=uid).last()
-        if dp:
-            id_dp = dp.pk
-        print(id_dp)
-        context = dict()
-        if request.method == 'POST':
-            print(request.method)
-            dirr = request.POST.get('dir')
-            print("Sí es la dirección", dirr)
-            calle, colonia, cp = cut_direction(dirr)
-            descc = request.POST.get('descc')
-            if descc is None:
-                print("no hay nada")
-            info = request.POST.get('info')
-            if info is None:
-                print("sin información adicional")
-            puo = request.POST.get("puo")
-            request.session['puo'] = puo
-            img = None
-            imgpath = request.POST.get("src")
-            if 'src' in request.FILES:
-                img = request.FILES['src']
-            elif imgpath and imgpath.startswith("data:image"):
-                header, encoded = imgpath.split(",", 1)
-                datos = base64.b64decode(encoded)
-                img = NamedTemporaryFile(delete=False)
-                img.write(datos)
-                img.flush()
-                img = File(img)
-            else:
-                print("No hay imagen")
-                return JsonResponse({'error': 'sin imagen'}, status=400)
-            name = str(img.name).split("\\")[-1]
-            name += '.jpg'
-            img.name = name
-            #foto = request.FILES.get('file')
+            uid = get_object_or_404(Uuid, uuid=uuid)
 
-            if dp and img is not None:
-                try:
-                    solicitud = soli(data_ID=dp,
-                                     dirr=dirr,
-                                     calle=calle,
-                                     colonia=colonia,
-                                     cp=cp,
-                                     descc=descc,
-                                     info=info,
-                                     puo=puo,
-                                     foto=img,
-                                     )
-                    solicitud.save()
-                    context['imgpath'] = solicitud.foto.url
-                    print("se guardó todo", solicitud)
 
-                    if soli.objects.filter(pk=solicitud.pk).exists():
-                        print("registrado")
-                    else:
-                        print("no registrado")
-                except Exception as e:
-                    print("no se guarda fakin nada", str(e))
-            else:
-                print("no hay fakin nada ni en dp")
 
-            file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
+            is_mobile = request.user_agent.is_mobile
+            is_tablet = request.user_agent.is_tablet
+            is_pc = request.user_agent.is_pc
 
-            if file_keys:
-                for key in file_keys:
-                    index = key.split('_')[-1]
-                    file = request.FILES[key]
-                    desc = request.POST.get(f'tempdesc_{index}')
-                    if desc is None:
-                        print("no hay descripción del documento")
-                        desc = "Documento sin descripción"
+            print(str(is_mobile) + " " + str(is_tablet) + " " + str(is_pc))
 
-                    if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
-                        print("no existe el documento, se guardará")
-                    else:
-                        print("el documento ya existe, no se guardará de nuevo")
-                    documento = SubirDocs(
-                        descDoc=desc,
-                        doc=file,
-                        nomDoc=file.name,
-                        fuuid=uid
-                        )
-                    documento.save()
+            dir = request.GET.get('dir', '')
+            asunto = request.POST.get('asunto', '')
+            puo = request.POST.get('puo', '')
 
-            puo_texto, folio = gen_folio(uid, puo)
-            solicitud.folio = folio
-            solicitud.save()
-            print(folio)
-            print(puo_texto)
+            dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
+            if not dp:
+                return redirect('home')
 
-            return redirect('doc')
+            if request.method == 'POST':
+                return soli_processed(request, uid, dp)
 
-        solicitudes = soli.objects.filter(data_ID=dp)
-        context = {
-            'dir':direccion,
-            'asunto':asunto,
-            'uuid':uuid,
-            'soli':solicitudes,
-            'google_key': settings.GOOGLE_API_KEY,
-            'puo': puo,
-            'is_mobile': is_mobile,
-            'is_tablet': is_tablet,
-            'is_pc': is_pc,
-        }
-        return render(request, 'ds.html', context)
+            solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
+
+            context = {
+                'dir': dir,
+                'asunto': asunto,
+                'puo': puo,
+                'datos': dp,
+                'uuid': uuid,
+                'is_mobile': is_mobile,
+                'is_tablet': is_tablet,
+                'is_pc': is_pc,
+                'soli': solicitud,
+                'google_key': settings.GOOGLE_API_KEY,
+            }
+
+            return render(request, 'ds.html', context)
+        except Exception as e:
+
+            return user_errors(request, e)
 
 def doc(request):
     uuid = request.COOKIES.get('uuid')
@@ -294,97 +213,7 @@ def doc(request):
                'uuid':uuid}
     return render(request, 'dg.html', context)
 
-def wasap_msg(uid, num):
 
-    import pyautogui
-    win = Tk()
-
-    print(num)
-
-    dp = data.objects.filter(fuuid=uid).last()
-    if dp:
-        id_dp = dp.pk
-        print(id_dp)
-
-    screen_w = win.winfo_screenwidth()
-    screen_h = win.winfo_screenheight()
-
-    pdfile = Files.objects.filter(fuuid=uid).last()
-
-    if pdfile and pdfile.finalDoc:
-        file_path = pdfile.finalDoc.path
-        mensaje = "este es el tremendisimo mensaje"
-
-        try:
-            pywhatkit.sendwhats_image(
-                phone_no=num,
-                img_path=file_path,
-                caption=mensaje,
-                wait_time=15
-            )
-
-            pyautogui.moveTo(screen_w/2, screen_h/2)
-            pyautogui.click()
-            pyautogui.press('enter')
-            print("Se mandó el mensaje con todo y todo")
-            return redirect('doc')
-        except Exception as e:
-            print(f"No se pudo enviar nadota: {e}")
-            return redirect('doc')
-    else:
-        print("Sin documentos")
-        return redirect('doc')
-
-
-def gen_folio(uid, puo):
-    print(puo)
-    dp = data.objects.filter(fuuid=uid).last()
-    uid_str = str(uid.uuid)
-    folio = ''
-    if dp:
-        id_dp = dp.pk
-    print(id_dp)
-    fecha = date.today()
-    year_str = str(fecha.year)
-    year_slice = year_str[2:4]
-    match puo:
-        case 'OFI':
-            folio = f'GOP-OFI-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Oficio'
-        case 'CRC':
-            folio = f'GOP-CRC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'CRC'
-        case 'MEC':
-            folio = f'GOP-MEC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Marca el cambio'
-        case 'DLO':
-            folio = f'GOP-DLO-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Diputado Local'
-        case 'DFE':
-            folio = f'GOP-DFE-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Diputado Federal'
-        case 'REG':
-            folio = f'GOP-REG-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Regidores'
-        case 'DEA':
-            folio = f'GOP-DEA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Despacho del Alcalde'
-        case 'EVA':
-            folio = f'GOP-EVA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Evento con el Alcalde'
-        case 'PED':
-            folio = f'GOP-PED-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Presencial en Dirección'
-        case 'VIN':
-            folio = f'GOP-VIN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Vinculación'
-    ###
-    # Concatenar id al formato del folio y al año
-    # Separar la cadena de la fecha?
-    # Base de datos para el folio? naahhh
-    # ###
-
-    return puo, folio
 
 def adv(request):
     return render(request, 'adv.html')
@@ -473,7 +302,7 @@ def document(request):
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
-    solicitud = soli.objects.filter(data_ID=datos)
+    solicitud = soli.objects.filter(data_ID=datos).select_related('data_ID')
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
@@ -488,7 +317,7 @@ def document(request):
         case "DOP00002":
             asunto = "Bacheo de calles - DOP00002"
         case "DOP00003":
-            asunto = "Limpieza de arrollos al sur de la ciudad - DOP00003"
+            asunto = "Limpieza de arroyos al sur de la ciudad - DOP00003"
         case "DOP00004":
             asunto = "Limpieza o mantenimiento de rejillas pluviales - DOP00004"
         case "DOP00005":
@@ -498,13 +327,17 @@ def document(request):
         case "DOP00007":
             asunto = "Retiro de escombro y material de arrastre - DOP00007"
         case "DOP00008":
-            asunto = "Solicitud de material caliche - DOP00008"
+            asunto = "Solicitud de material caliche/fresado - DOP00008"
         case "DOP00009":
             asunto = "Solicitud de pavimentación de calles - DOP00009"
         case "DOP00010":
             asunto = "Solicitud de reductores de velocidad - DOP00010"
         case "DOP00011":
-            asunto = "Solicitud de material caliche - DOP00011"
+            asunto = "Solicitud de pintura para señalamientos viales - DOP00011"
+        case "DOP00012":
+            asunto = "Arreglo de derrumbe de bardas - DOP00012"
+        case "DOP00013":
+            asunto = "Tapiado - DOP00013"
 
     ultima_solicitud = solicitud.last()
     if ultima_solicitud and ultima_solicitud.folio:
@@ -526,6 +359,7 @@ def document(request):
             "dir": datos.dirr,
             "disc":datos.disc,
             "etnia":datos.etnia,
+            "vul": datos.vul if datos.vul else "No pertenece a un grupo vulnerable",
         },
         "soli": {
             "dir": solicitud.last().dirr if solicitud.exists() else "",
@@ -560,7 +394,7 @@ def save_document(request):
     solicitud = soli.objects.last()
     print(solicitud)
     if not solicitud:
-        return HttpResponse("no hay sikucitud", status=400)
+        return HttpResponse("no hay solicitud", status=400)
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
@@ -575,7 +409,7 @@ def save_document(request):
         case "DOP00002":
             asunto = "Bacheo de calles - DOP00002"
         case "DOP00003":
-            asunto = "Limpieza de arrollos al sur de la ciudad - DOP00003"
+            asunto = "Limpieza de arroyos al sur de la ciudad - DOP00003"
         case "DOP00004":
             asunto = "Limpieza o mantenimiento de rejillas pluviales - DOP00004"
         case "DOP00005":
@@ -585,13 +419,17 @@ def save_document(request):
         case "DOP00007":
             asunto = "Retiro de escombro y material de arrastre - DOP00007"
         case "DOP00008":
-            asunto = "Solicitud de material caliche - DOP00008"
+            asunto = "Solicitud de material caliche/fresado - DOP00008"
         case "DOP00009":
             asunto = "Solicitud de pavimentación de calles - DOP00009"
         case "DOP00010":
             asunto = "Solicitud de reductores de velocidad - DOP00010"
         case "DOP00011":
-            asunto = "Solicitud de material caliche - DOP00011"
+            asunto = "Solicitud de pintura para señalamientos viales - DOP00011"
+        case "DOP00012":
+            asunto = "Arreglo de derrumbe de bardas - DOP00012"
+        case "DOP00013":
+            asunto = "Tapiado - DOP00013"
 
     ultima_solicitud = solicitud
     if ultima_solicitud and ultima_solicitud.folio:
@@ -613,6 +451,7 @@ def save_document(request):
             "dir": datos.dirr,
             "disc": datos.disc,
             "etnia": datos.etnia,
+            "vul": datos.vul if datos.vul else "No pertenece a un grupo vulnerable",
         },
         "soli": {
             "dir": solicitud.dirr if solicitud else "",
@@ -670,6 +509,108 @@ def document2(request):
     return response
     #return render(request, "documet/document2.html")
 
+
+
+# Functions.
+
+def wasap_msg(uid, num):
+
+    import pyautogui
+    win = Tk()
+
+    print(num)
+
+    dp = data.objects.filter(fuuid=uid).last()
+    if dp:
+        id_dp = dp.pk
+        print(id_dp)
+
+    screen_w = win.winfo_screenwidth()
+    screen_h = win.winfo_screenheight()
+
+    pdfile = Files.objects.filter(fuuid=uid).last()
+
+    if pdfile and pdfile.finalDoc:
+        file_path = pdfile.finalDoc.path
+        mensaje = "este es el tremendisimo mensaje"
+
+        try:
+            pywhatkit.sendwhats_image(
+                phone_no=num,
+                img_path=file_path,
+                caption=mensaje,
+                wait_time=15
+            )
+
+            pyautogui.moveTo(screen_w/2, screen_h/2)
+            pyautogui.click()
+            pyautogui.press('enter')
+            print("Se mandó el mensaje con todo y todo")
+            return redirect('doc')
+        except Exception as e:
+            print(f"No se pudo enviar nadota: {e}")
+            return redirect('doc')
+    else:
+        print("Sin documentos")
+        return redirect('doc')
+
+
+def gen_folio(uid, puo):
+    print(puo)
+    dp = data.objects.filter(fuuid=uid).last()
+    uid_str = str(uid.uuid)
+    folio = ''
+    if dp:
+        id_dp = dp.pk
+    print(id_dp)
+    fecha = date.today()
+    year_str = str(fecha.year)
+    year_slice = year_str[2:4]
+    match puo:
+        case 'OFI':
+            folio = f'GOP-OFI-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Oficio'
+        case 'CRC':
+            folio = f'GOP-CRC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'CRC'
+        case 'MEC':
+            folio = f'GOP-MEC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Marca el cambio'
+        case 'DLO':
+            folio = f'GOP-DLO-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Diputado Local'
+        case 'DFE':
+            folio = f'GOP-DFE-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Diputado Federal'
+        case 'REG':
+            folio = f'GOP-REG-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Regidores'
+        case 'DEA':
+            folio = f'GOP-DEA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Despacho del Alcalde'
+        case 'EVA':
+            folio = f'GOP-EVA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Evento con el Alcalde'
+        case 'PED':
+            folio = f'GOP-PED-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Presencial en Dirección'
+        case 'VIN':
+            folio = f'GOP-VIN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Vinculación'
+        case 'PPA':
+            folio = f'GOP-PPA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Presupuesto participativo'
+        case 'CPC':
+            folio = f'GOP-CPC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+            puo = 'Coordinación de Participación Ciudadana'
+    ###
+    # Concatenar id al formato del folio y al año
+    # Separar la cadena de la fecha?
+    # Base de datos para el folio? naahhh
+    # ###
+
+    return puo, folio
+
 def cut_direction(dirreccion_completa):
     gmaps = googlemaps.Client(key=settings.GOOGLE_API_KEY)
 
@@ -701,7 +642,158 @@ def cut_direction(dirreccion_completa):
 
     return calle, colonia, cp
 
+def validar_curp(curp):
+    pattern = r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$'
+    return bool(re.match(pattern, curp))
+
+def validar_tel(tel):
+    pattern = r'^[0-9]{10}$'
+    return bool(re.match(pattern, tel))
+
+def validar_datos(request_data):
+
+        errors = []
+
+        mandatory_fields = ['nombre', 'pApe', 'mApe', 'bDay', 'tel', 'curp', 'sexo', 'dir']
+        for field in mandatory_fields:
+            if not request_data.get(field, '').strip():
+                errors.append({
+                    'field': field,
+                    'mensaje': f'El campo {field} es obligatorio.',
+                    'codigo': f'{field.upper()}_required',
+                })
+
+        curp = request_data.get('curp', '').strip().upper()
+        if curp and not validar_curp(curp):
+            errors.append({
+                'field': 'curp',
+                'mensaje': 'El CURP no es válido.',
+                'codigo': 'CURP_invalid'
+                })
+
+        tel = request_data.get('tel', '').strip()
+        if tel and not validar_tel(tel):
+            errors.append({
+                'field': 'tel',
+                'mensaje': 'El número debe tener 10 digitos.',
+                'codigo': 'TEL_FORMAT',
+            })
+
+        return errors
+
+def soli_processed(request, uid, dp):
+    try:
+        with transaction.atomic():
+            dirr = request.POST.get('dir')
+            print('Dirección: ', dirr)
+            calle, colonia, cp = cut_direction(dirr)
+            descc = request.POST.get('descc')
+            if descc is None:
+                print("Sin descripción")
+
+            info = request.POST.get('info')
+            if info is None:
+                print("Sin información adicional")
+
+            puo = request.POST.get('puo')
+            request.session['puo'] = puo
+
+            img = img_processed(request)
+            if not img:
+                return JsonResponse({'error': 'No hay imagen que rollo'}, status=400)
+
+            solicitud = soli(
+                data_ID=dp,
+                dirr=dirr,
+                calle=calle,
+                colonia=colonia,
+                cp=cp,
+                descc=descc,
+                info=info,
+                puo=puo,
+                foto=img,
+            )
+
+            solicitud.save()
+            print("Todo guardado fak yea", solicitud)
+
+            if soli.objects.filter(pk=solicitud.pk).exists():
+                print("Solicitud registrada")
+            else:
+                print("Solicitud no registrada")
+
+            files_processed(request, uid)
+
+            puo_txt, folio = gen_folio(uid, puo)
+            solicitud.folio = folio
+            solicitud.save()
+            print(folio)
+            print(puo_txt)
+
+            return redirect('doc')
+
+    except Exception as e:
+        print("No se ha guardado nada", str(e))
+        return user_errors(request, e)
+
+def img_processed(request):
+    img = None
+    imgpath = request.POST.get('src')
+
+    if 'src' in request.FILES:
+        img = request.FILES['src']
+    elif imgpath and imgpath.startswith("data:image"):
+        header, encoded = imgpath.split(",", 1)
+        datos = base64.b64decode(encoded)
+        img = NamedTemporaryFile(delete=False)
+        img.write(datos)
+        img.flush()
+        img = File(img)
+    else:
+        print("No hay foto, no like")
+        return None
+
+    name = str(img.name).split("\\")[-1]
+    name += '.jpg'
+    img.name = name
+
+    return img
+
+def files_processed(request, uid):
+    file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
+
+    if file_keys:
+        for key in file_keys:
+            index = key.split('_')[-1]
+            file = request.FILES[key]
+            desc = request.POST.get(f'tempdesc_{index}')
+
+            if desc is None:
+                print("No hay descripción pal documento")
+                desc = "Documento sin descripción"
+
+                if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
+                    print("no existe documentoc como este, procede a guardarlo papu")
+                    documento = SubirDocs(
+                        descDoc=desc,
+                        doc=file,
+                        nomDoc=file.name,
+                        fuuid=uid,
+                    )
+                else:
+                    print("NO se guardará un documento repetido")
 
 
+def user_errors(request, error):
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"Error en vista: {error}", exc_info=True)
 
-# Create your views here.
+    return render(request, 'error.html', {
+        'error': {
+            'titulo': "Error del sistema",
+            'mensaje': 'Volver a intentar más tarde',
+            'codigo': 'SYS_ERROR',
+            'accion': 'Reintentar'
+        }
+    })

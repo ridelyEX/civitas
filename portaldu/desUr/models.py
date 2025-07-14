@@ -29,8 +29,9 @@ class data(models.Model):
     curp    = models.CharField(max_length=18)
     sexo    = models.CharField(max_length=10)
     dirr    = models.TextField()
-    disc    = models.CharField(max_length=30, verbose_name="discapacidad")
-    etnia   = models.CharField(max_length=30, verbose_name="etnia")
+    disc    = models.CharField(max_length=100, verbose_name="discapacidad")
+    etnia   = models.CharField(max_length=100, verbose_name="etnia")
+    vul     = models.CharField(max_length=100, verbose_name="vulnerabilidad")
 
     class Meta:
         db_table = 'dataT'

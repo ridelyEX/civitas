@@ -90,6 +90,23 @@ form .main {
     border-color: var(--primary-hover);
 }
 
+.main select.select{
+    padding: 10px;
+    font-size: 0.8rem;
+    border: 2px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    background: #ffffff;
+    width: 100%;
+    height: 4rem;
+    box-sizing: border-box;
+    margin-bottom: 3rem;
+}
+
+.main select.select:focus{
+    outline: none;
+    border-color: var(--primary-hover);
+}
+
 /* TEXTAREA */
 .form textarea.tArea {
     padding: 10px;
@@ -245,6 +262,23 @@ input[type="file"] {
         width: 85%;
         margin-left: 0.8rem;
     }
+    
+    .main select.select {
+        padding: 10px;
+        font-size: 0.8rem;
+        border: 2px solid var(--primary-color);
+        border-radius: var(--border-radius);
+        background: #ffffff;
+        width: 100%;
+        height: 4rem;
+        box-sizing: border-box;
+        margin-bottom: 3rem;
+    }
+
+    .main select.select:focus {
+        outline: none;
+        border-color: var(--primary-hover);
+    }
 }
 
 /* TABLETS (769px - 1024px) - Diseño de dos columnas optimizado */
@@ -304,6 +338,21 @@ input[type="file"] {
         transform: scale(1.02);
     }
     
+    .main select.select{
+        height: 8rem;
+        font-size: 3rem;
+        padding: 14px 16px;
+        margin-bottom: 2.25rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .main select.select:focus{
+        box-shadow: 0 0 0 3px rgba(0, 81, 148, 0.15);
+        transform: scale(1.02);
+    }
+
+
     .form textarea.tArea1 {
         height: 300px !important; /* Altura fija controlada */
         max-height: 300px !important;
@@ -541,6 +590,26 @@ input[type="file"] {
         transform: scale(1.01);
     }
     
+    /* Estilos para .main select.select en móviles */
+    .main select.select {
+        height: 3.75rem;
+        font-size: 1.1rem;
+        padding: 14px 16px;
+        margin-bottom: 1.75rem;
+        border: 2px solid var(--primary-color);
+        border-radius: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+        background: #ffffff;
+    }
+    
+    .main select.select:focus {
+        border-color: var(--primary-hover);
+        box-shadow: 0 0 0 3px rgba(0, 81, 148, 0.1);
+        transform: scale(1.01);
+    }
+    
     /* Ngrid en una columna limpia para móviles */
     .ngrid {
         display: flex !important;
@@ -742,6 +811,26 @@ input[type="file"] {
         padding: 12px 14px;
         margin-bottom: 1.5rem;
         border-radius: 10px;
+    }
+    
+    .main select.select {
+        height: 3.5rem;
+        font-size: 1rem;
+        padding: 12px 14px;
+        margin-bottom: 1.5rem;
+        border: 2px solid var(--primary-color);
+        border-radius: 10px;
+        background: #ffffff;
+        width: 100%;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+    }
+
+    .main select.select:focus {
+        outline: none;
+        border-color: var(--primary-hover);
+        box-shadow: 0 0 0 3px rgba(0, 81, 148, 0.1);
+        transform: scale(1.01);
     }
     
     .form textarea.tArea {
