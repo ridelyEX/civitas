@@ -6,6 +6,7 @@ html, body {
   background-color: #cdcdcd;
   display: flex;
   flex-direction: column;
+  width: 100vw;
 }
 
 .navbar {
@@ -27,6 +28,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   padding: 6rem;
+  width: 100%;
 }
 
 .cards {
@@ -104,7 +106,7 @@ html, body {
     color: #aaa;
     float: right;
     font-size: 28px;
-    font_weight: bold;
+    font-weight: bold;
     cursor: pointer;
 }
 
@@ -127,4 +129,24 @@ html, body {
     border-radius: 4px;
     cursor: pointer;
     margin-left: 10px;
+}
+
+.menus{
+
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.menus .ver{
+  dosplay: flex;
+  background-color: thistle;
+  width: 80vw;
+  min-height: 30vh;
+  border-radius: 10px;
+  border: solid rgb(0, 0, 0) 1px;
+  padding-bottom: 10px; 
+}
+
+.menus .seguimiento{
+  background-color: rgb(240, 0, 240);
 }

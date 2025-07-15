@@ -126,6 +126,10 @@ def seguimiento(request):
 
     return render(request, 'send.html', context)
 
+@login_required
+def menu(request):
+    return render(request, 'menu.html')
+
 
 @login_required
 def sendMail(request):
