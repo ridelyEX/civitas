@@ -1,0 +1,48 @@
+{% extends 'master.html' %}{% load static %}
+
+
+{% block head %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <link rel="stylesheet" href="{% static 'cminStyles/tableStyle2.css' %}?v=1">
+{% endblock %}
+
+
+{% block content %}{% include 'navmin.html' %}
+
+<main class="container">
+    <div class="card">
+        <h3>Seguimiento</h3>
+        <div class="fin">
+            <ul class="asuntos">
+                {% for solicitud in solicitudesE %}
+                <li>
+                    <strong>{{ solicitud.nomSolicitud }}</strong>
+                    <p>Enviado: {{ solicitud.fechaEnvio|date:"d/m/y" }}</p>
+                    <p>Folio: {{ solicitud.doc_FK.soli_FK.folio }}</p>
+                    <p>Destinatario: {{ solicitud.solicitud_FK.destinatario }}</p>
+                    <p>Enviado por: {{ solicitud.user_FK.username }}</p>
+
+                  <!--
+                   campos:
+                   Destinatario
+                   Folio  (a ver cómo mando el folio a la base de datos)
+                   -->
+                    <div class="buttons">
+                        <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
+                        <button class="send" id="send" name="send" onclick="">Seguimiento</button>
+                    </div>
+                </li>
+                {% empty %}
+                <li><strong>No hay asuntos enviados</strong><p>No hay solicitudes enviadas.</p></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</main>
+
+{% endblock %}
+
+
+{% block footer %}{% endblock %}

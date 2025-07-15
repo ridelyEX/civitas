@@ -110,7 +110,21 @@ def save_request(request): #saveSoli
             messages.error(request, "El documento no existe.")
         except Exception as e:
             messages.error(request, f"Error al guardar: {str(e)}")
+
     return redirect('tablas')
+
+@login_required
+def seguimiento(request):
+    solictudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
+
+    solicitudes = soli.objects.all()
+
+    context = {
+        'solicitudesE': solictudesE,
+        'solicitudes': solicitudes,
+    }
+
+    return render(request, 'send.html', context)
 
 
 @login_required

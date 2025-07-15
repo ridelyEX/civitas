@@ -1,0 +1,29 @@
+{% extends 'master.html' %}{% load static %}
+
+
+{% block head %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}?v=1">
+{% endblock %}
+
+
+{% block content %}{% include 'navmin.html' %}
+
+<main class="container">
+    <div class="menus">
+        <div class="ver">
+
+        </div>
+        <div class="seguimiento">
+
+        </div>
+    </div>
+</main>
+
+
+{% endblock %}
+
+
+{% block footer %}{% endblock %}

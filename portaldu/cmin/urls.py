@@ -10,4 +10,7 @@ urlpatterns = [
     path('send/', view.sendMail, name='send_mail'),
     path('logout/', view.logout_view, name='logout'),
     path('user_conf/', view.user_conf, name='user_conf'),
+    path('seguimiento/', view.seguimiento, name='seguimiento'),
+    #path('menu/', view.menu, name='menu'),
 ]
+
