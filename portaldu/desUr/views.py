@@ -644,6 +644,11 @@ def cut_direction(dirreccion_completa):
 
 def validar_curp(curp):
     pattern = r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$'
+    if pattern != r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$':
+        print('uhhhhhh Está mal')
+        raise ValidationError("El formato del CURP es incorrecto.")
+
+
     return bool(re.match(pattern, curp))
 
 def validar_tel(tel):

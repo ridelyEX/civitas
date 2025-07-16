@@ -211,11 +211,26 @@ input[type="file"] {
 /* GRID NUEVO */
 .ngrid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     grid-template-rows: repeat(2, 1fr);
     gap: 3rem;
     justify-content: center;
     align-items: center;
+    width: max-content;
+    margin: auto;
+    margin-bottom: 3rem;
+}
+
+/* otro grid jaja */
+.ngrid2 {
+   display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 3rem;
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+    align-content: center;
     width: max-content;
     margin: auto;
     margin-bottom: 3rem;
@@ -245,6 +260,13 @@ input[type="file"] {
     height: 3rem;
 }
 
+
+.nFoto .mono{
+    width: 10rem;
+    height: 10rem;
+    border-radius: 12px;
+    background-color: black;
+}
 /* RESPONSIVE DESIGN - OPTIMIZADO PARA MÓVILES Y TABLETS */
 
 /* DESKTOP - Mantener diseño original (1025px+) */
@@ -279,6 +301,16 @@ input[type="file"] {
         outline: none;
         border-color: var(--primary-hover);
     }
+
+    .ngrid2 .search.sbtn {
+    width: 20rem;          /* O el ancho que desees */
+    max-width: 100%;
+    height: 5rem;
+    font-size: 1.5rem;
+    padding: 0 2rem;
+    border-radius: 16px;
+    box-sizing: border-box;
+}
 }
 
 /* TABLETS (769px - 1024px) - Diseño de dos columnas optimizado */
@@ -435,7 +467,13 @@ input[type="file"] {
         font-size: 1.1rem;
         border-radius: 12px;
         font-weight: 600;
+        width: 100%;
         transition: all 0.3s ease;
+         white-space: nowrap; /* Evita que el texto se divida en múltiples líneas */
+        overflow: hidden; /* Oculta el contenido que se desborda */
+        text-overflow: ellipsis; /* Muestra puntos suspensivos (...) cuando hay desbordamiento */
+        padding: 0 1rem; /* Añade padding interno para evitar que el texto toque los bordes */
+        box-sizing: border-box;
     }
     
     .search.sbtn:hover {

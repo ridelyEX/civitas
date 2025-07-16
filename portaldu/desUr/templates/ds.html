@@ -56,6 +56,52 @@
           placeholder="Descripción del servicio"
         ></textarea>
         <br />
+        <div class="ngrid2">
+
+          <div class="checkbox-wrapper-46">
+            <input type="checkbox" name="check" id="cbx-46" class="inp-cbx" required />
+            <label for="cbx-46" class="cbx">
+              <span>
+                <svg viewBox="0 0 12 10" height="10px" width="12px">
+                  <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+                </svg>
+              </span>
+              <div class="p1">Declaración bajo protesta</div>
+            </label>
+            <div>
+            <span class="p2">
+              Manifiesto bajo protesta de decir verdad que la información
+              proporcionada en esta solicitud es verdadera,
+              y que si me condujera con falsedad incurriría en una conducta
+              tipificada en la Ley Penal de la cual seré acreedor a una medida de conformidad
+              con las disposiciones aplicables en la materia.
+            </span>
+            </div>
+          </div>
+
+          <div class="nFoto">
+            Ejemplo:
+            <img src="{% static 'images/EjemploFoto.png' %}" alt="mono" class="mono">
+            <label for="searchPhoto" class="text">Añadir foto</label>
+            <button
+              type="button"
+              class="search sbtn"
+              id="searchPhoto"
+              name="foto"
+              {% if not is_mobile and not is_tablet %}
+              onclick="modals('open', 'camaraD')"
+              {% endif %}
+            >
+              <span class="addicon">
+              <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
+              </span>
+              <span>Tomar foto con identificación</span>
+            </button>
+            {% if is_mobile or is_tablet %}
+            <input type="file" accept="image/*" capture="camera" name="src" id="cameraInput" style="display:none;" hidden required>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
 
@@ -71,27 +117,7 @@
             </button>
           </div>
 
-          <div class="checkbox-wrapper-46">
-            <input type="checkbox" name="check" id="cbx-46" class="inp-cbx" required />
-            <label for="cbx-46" class="cbx">
-              <span>
-                <svg viewBox="0 0 12 10" height="10px" width="12px">
-                  <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-                </svg>
-              </span>
-              <div class="p1">Declaración bajo protesta
-              </div>
-            </label>
-            <div>
-            <span class="p2">
-              Manifiesto bajo protesta de decir verdad que la información
-              proporcionada en esta solicitud es verdadera,
-              y que si me condujera con falsedad incurriría en una conducta
-              tipificada en la Ley Penal de la cual seré acreedor a una medida de conformidad
-              con las disposiciones aplicables en la materia.
-            </span>
-          </div>
-          </div>
+
 
           <div class="nPuesto">
             <label for="puo" class="text">Origen de solicitud</label>
@@ -110,30 +136,20 @@
               <option value="PPA">Presupuesto participativo</option>
               <option value="CPC">Coordinación de Participación Ciudadana</option>
             </select>
+
+          <label for="ofi" class="text">Número de oficio:</label>
+          <input
+            type="text"
+            id="ofi"
+            class="input"
+            name="ofi"
+            placeholder="Número de oficio"
+          />
           </div>
 
           <!-- este botón debe abrir el modal -->
 
-          <div class="nFoto">
-            <label for="searchPhoto" class="text">Añadir foto</label>
-            <button
-              type="button"
-              class="search sbtn"
-              id="searchPhoto"
-              name="foto"
-              {% if not is_mobile and not is_tablet %}
-              onclick="modals('open', 'camaraD')"
-              {% endif %}
-            >
-              <span class="addicon">
-              <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
-              </span>
-              <span>Examinar</span>
-            </button>
-            {% if is_mobile or is_tablet %}
-            <input type="file" accept="image/*" capture="camera" name="src" id="cameraInput" style="display:none;" hidden required>
-            {% endif %}
-          </div>
+
           <!-- fak -->
         </div>
         <label for="info" class="text">Referencias:</label>
