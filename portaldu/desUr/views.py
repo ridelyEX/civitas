@@ -17,6 +17,8 @@ from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
 from datetime import date, datetime
 from tkinter import *
+from rest_framework import viewsets
+from .serializers import FilesSerializer
 
 
 def base(request):
@@ -802,3 +804,10 @@ def user_errors(request, error):
             'accion': 'Reintentar'
         }
     })
+
+
+#API
+class FilesViewSet(viewsets.ModelViewSet):
+    queryset = Files.objexts.all()
+    serializer_class = FilesSerializer
+
