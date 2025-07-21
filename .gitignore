@@ -9,3 +9,37 @@ vrtl/
 VinculacionSocial/
 civitas/portaldu/desUr/static/videos/fondo.mp4
 media/
+
+# Archivos de desarrollo y pruebas
+analyze_size.py
+storage_analysis.md
+
+# Logs de desarrollo
+logs/*.log
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Backup files
+*.bak
+*.backup
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Static files collected (producción)
+staticfiles/
+
+# Certificados SSL (si los usas localmente)
+*.crt
+*.key
+*.pem

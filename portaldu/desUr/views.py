@@ -779,16 +779,17 @@ def files_processed(request, uid):
                 print("No hay descripción pal documento")
                 desc = "Documento sin descripción"
 
-                if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
-                    print("no existe documentoc como este, procede a guardarlo papu")
-                    documento = SubirDocs(
-                        descDoc=desc,
-                        doc=file,
-                        nomDoc=file.name,
-                        fuuid=uid,
-                    )
-                else:
-                    print("NO se guardará un documento repetido")
+            if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
+                print("no existe documentoc como este, procede a guardarlo papu")
+                documento = SubirDocs(
+                    descDoc=desc,
+                    doc=file,
+                    nomDoc=file.name,
+                    fuuid=uid,
+                )
+                documento.save()
+            else:
+                print("NO se guardará un documento repetido")
 
 
 def user_errors(request, error):
@@ -808,6 +809,6 @@ def user_errors(request, error):
 
 #API
 class FilesViewSet(viewsets.ModelViewSet):
-    queryset = Files.objexts.all()
+    queryset = Files.objects.all()
     serializer_class = FilesSerializer
 

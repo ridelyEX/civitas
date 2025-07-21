@@ -83,6 +83,53 @@ html, body {
 }
 
 
+/* BACK BUTTON  */
+.back {
+    width: 170px;
+    height: 50px;
+    color: #fff;
+    border-radius: 5px;
+    padding: 10px 25px;
+    font-weight: 500;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
+    7px 7px 20px 0 rgba(0,0,0,.1),
+    4px 4px 5px 0 rgba(0,0,0,.1);
+    outline: none;
+    font-size: 15px;
+}
+
+.bbtn{
+    background: #666d7e;
+    background: linear-gradient(0deg, #666d7e 0%, #666d7e 100%);
+    border: none;
+}
+
+.bbtn:before{
+    height: 0%;
+    width: 2px;
+}
+
+.bbtn:hover{
+    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
+    -4px -4px 6px 0 rgba(116,125,136,.5),
+    inset -4px -4px 6px 0 rgba(255,255,255,.2),
+    inset 4px 4px 6px 0 rgba(0,0,0,.4);
+}
+
+.Ibottom{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(1, 1fr);
+    gap: 5rem;
+    justify-content: center;
+    width:max-content;
+}
+
 .modal{
     position: fixed;
     z-index: 1000;
@@ -132,21 +179,62 @@ html, body {
 }
 
 .menus{
-
   justify-content: space-between;
   padding: 20px;
 }
 
+/* ver */
 .menus .ver{
-  dosplay: flex;
-  background-color: thistle;
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(226, 226, 226);
   width: 80vw;
-  min-height: 30vh;
+  min-height: 20vh;
   border-radius: 10px;
   border: solid rgb(0, 0, 0) 1px;
   padding-bottom: 10px; 
+  justify-content: space-between;
 }
 
+.menus .txt{
+  padding-left: 5%;
+}
+
+.menus .btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  padding-bottom: 15px;
+}
+
+.menus .btn .ver-btn, .menus .btn .fllw-btn{
+  width: 75%;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  background-color: #ddd;
+  transition: all 0.2s ease;
+}
+
+.menus .btn .ver-btn:hover, .menus .btn .fllw-btn:hover{
+  background-color: #014c8c;
+  transform: scale(1.05);
+  color: white;
+}
+
+
+/* Seguimiento */
 .menus .seguimiento{
-  background-color: rgb(240, 0, 240);
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(226, 226, 226);
+  width: 80vw;
+  min-height: 20vh;
+  border-radius: 10px;
+  border: solid rgb(0, 0, 0) 1px;
+  padding-bottom: 10px; 
+  justify-content: space-between;
 }

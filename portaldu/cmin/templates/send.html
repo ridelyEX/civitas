@@ -6,43 +6,175 @@
     {% bootstrap_css %}
     {% bootstrap_javascript %}
     <link rel="stylesheet" href="{% static 'cminStyles/tableStyle2.css' %}?v=1">
+    <style>
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+
+        .status-active {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .status-closed {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .solicitud-item {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            padding-left: 15px;
+        }
+
+        .solicitud-item.closed {
+            background-color: #f8f9fa;
+            border-left-color: #dc3545;
+            opacity: 0.8;
+        }
+
+        .solicitud-item.active {
+            border-left-color: #28a745;
+        }
+
+        .buttons .finish:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .closed-info {
+            background-color: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+            border-left: 3px solid #dc3545;
+        }
+    </style>
 {% endblock %}
 
 
 {% block content %}{% include 'navmin.html' %}
-
 <main class="container">
     <div class="card">
         <h3>Seguimiento</h3>
         <div class="fin">
             <ul class="asuntos">
                 {% for solicitud in solicitudesE %}
-                <li>
+                {% if solicitud.close_set.exists %}
+                    {% with cierre=solicitud.close_set.first %}
+                    <li class="solicitud-item closed">
+                        <strong>{{ solicitud.nomSolicitud }}</strong>
+                        <span class="status-badge status-closed">🔒 Cerrada</span>
+                        <p>Enviado: {{ solicitud.fechaEnvio|date:"d/m/y" }}</p>
+                        <p>Folio: {{ solicitud.doc_FK.soli_FK.folio }}</p>
+                        <p>Destinatario: {{ solicitud.solicitud_FK.destinatario }}</p>
+                        <p>Enviado por: {{ solicitud.user_FK.username }}</p>
+                        <div class="closed-info">
+                            <strong>📋 Solicitud cerrada el {{ cierre.fechaCierre|date:"d/m/Y" }}</strong><br>
+                            <small>Cerrada por: {{ cierre.user_FK.username }}</small>
+                            {% if cierre.comentario %}
+                                <br><small>Comentario: {{ cierre.comentario }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="buttons">
+                            <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
+                            {% if solicitud.seguimiento_set.count %}
+                                <a href="#" onclick="showFollowUpHistory('{{ solicitud.solicitud_ID }}')" class="send" style="background-color: #6c757d;">Ver seguimiento</a>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endwith %}
+                {% else %}
+                <li class="solicitud-item active">
                     <strong>{{ solicitud.nomSolicitud }}</strong>
+                    <span class="status-badge status-active">🟢 Activa</span>
                     <p>Enviado: {{ solicitud.fechaEnvio|date:"d/m/y" }}</p>
                     <p>Folio: {{ solicitud.doc_FK.soli_FK.folio }}</p>
                     <p>Destinatario: {{ solicitud.solicitud_FK.destinatario }}</p>
                     <p>Enviado por: {{ solicitud.user_FK.username }}</p>
-
-                  <!--
-                   campos:
-                   Destinatario
-                   Folio  (a ver cómo mando el folio a la base de datos)
-                   -->
                     <div class="buttons">
                         <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
-                        <button class="send" id="send" name="send" onclick="">Seguimiento</button>
+                        <div class="Ibottom">
+                            {% if solicitud.seguimiento_set.count %}
+                            <p>✅ Con seguimiento</p>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="finish">
+                                <input type="hidden" name="solicitud_id" value="{{ solicitud.solicitud_ID }}">
+                                <button type="submit" class="finish" aria-label="Cerrar solicitud">Cerrar solicitud</button>
+                            </form>
+                            <button type="button" class="send" onclick="openFollowUpModal('{{ solicitud.solicitud_ID }}')">Seguimiento</button>
+                            {% else %}
+                            <p>⏳ Sin seguimiento</p>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="finish">
+                                <input type="hidden" name="solicitud_id" value="{{ solicitud.solicitud_ID }}">
+                                <button type="submit" class="finish" aria-label="Cerrar solicitud" disabled>Cerrar solicitud</button>
+                            </form>
+                            <button type="button" class="send" onclick="openFollowUpModal('{{ solicitud.solicitud_ID }}')">Seguimiento</button>
+                            {% endif %}
+                        </div>
                     </div>
                 </li>
+                {% endif %}
                 {% empty %}
                 <li><strong>No hay asuntos enviados</strong><p>No hay solicitudes enviadas.</p></li>
                 {% endfor %}
             </ul>
         </div>
     </div>
+
+    <div class="Ibottom">
+        <button class="back bbtn" id="bback" type="button" data-url="{% url 'menu' %}">regresar</button>
+    </div>
 </main>
+
+<div class="modal hidden" id="upFiles">
+    {% include 'modals/ModalupFiles.html' %}
+</div>
 
 {% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script src="{% static 'cminScripts/cminModal.js' %}"></script>
+<script src="{% static 'cminScripts/cminBtns.js' %}"></script>
+<script>
+    const searchBtn = document.getElementById('up-btn');
+    const fileInput = document.getElementById('documento');
+
+    if (searchBtn && fileInput) {
+        searchBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (this.files[0]) {
+                const fileName = this.files[0].name;
+                searchBtn.textContent = fileName;
+            }
+        });
+    }
+
+    // Función para abrir el modal y establecer el solicitud_id
+    function openFollowUpModal(solicitudId) {
+        document.getElementById('modal-solicitud-id').value = solicitudId;
+        modals('open', 'upFiles');
+    }
+
+    // Función para mostrar historial de seguimiento (placeholder)
+    function showFollowUpHistory(solicitudId) {
+        alert('Función para mostrar historial de seguimiento de la solicitud ' + solicitudId);
+        // Aquí puedes implementar un modal o redirection para mostrar el historial
+    }
+</script>
+
+{% endblock %}

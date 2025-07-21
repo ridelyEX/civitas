@@ -12,5 +12,7 @@ urlpatterns = [
     path('cmin/', include('portaldu.cmin.urls')),
 ]
 
+handler404 = 'portaldu.cmin.views.custom_handler404'
+
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.core.mail import EmailMessage
 import os
 from .forms import UsersRender, Login, UsersConfig
-from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas
+from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close
 import pywhatkit
 from tkinter import *
 
@@ -44,9 +44,9 @@ def login_view(request):
             print(user)
             login(request, user)
             LoginDate.objects.create(user_FK=user)
-            return redirect('tablas')
+            return redirect('menu')
         else:
-            return HttpResponse("no jalo padre")
+            return HttpResponse("no jalo, padre")
 
     return render(request, 'login.html', {'form':form})
 
@@ -104,7 +104,7 @@ def save_request(request): #saveSoli
 
             new_req.save()
 
-            messages.success(request, "SOlicitud guardada")
+            messages.success(request, "Solicitud guardada")
 
         except Files.DoesNotExist:
             messages.error(request, "El documento no existe.")
@@ -119,12 +119,47 @@ def seguimiento(request):
 
     solicitudes = soli.objects.all()
 
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'upload':
+            solicitud_id = request.POST.get('solicitud_id')
+            if solicitud_id:
+                seguimiento_docs(request, solicitud_id)
+        elif action == 'finish':
+            solicitud_id = request.POST.get('solicitud_id')
+            print(f"Action: {action}")
+            print(f"POST data: {request.POST}")
+            print(f"Solicitud ID recibido: {solicitud_id}")
+            if solicitud_id:
+                try:
+                    solicitud = get_object_or_404(SolicitudesEnviadas, solicitud_ID=solicitud_id)
+                    us = Seguimiento.objects.filter(
+                        solicitud_FK=solicitud
+                    ).order_by('-fechaSeguimiento').first()
+
+                    if us:
+                        close = Close.objects.create(
+                            solicitud_FK=get_object_or_404(SolicitudesEnviadas, solicitud_ID=solicitud_id),
+                            user_FK=request.user,
+                            comentario=request.POST.get('comentario', ''),
+                            seguimiento_FK=us,
+                        )
+                        print(f"Solicitud cerrada con ID: {us.seguimiento_ID}")
+                except Exception as e:
+                    messages.error(request, f"Error al cerrar la solicitud: {str(e)}")
+                    print(f"Error al cerrar la solicitud: {str(e)}")
+            else:
+                print("No se recibió solicitud_id")
+                messages.error(request, "No se pudo identificar la solicitud a cerrar")
+
     context = {
         'solicitudesE': solictudesE,
         'solicitudes': solicitudes,
     }
 
     return render(request, 'send.html', context)
+
+
 
 @login_required
 def menu(request):
@@ -234,6 +269,52 @@ def sendMail(request):
             messages.error(request, f"Error al procesar la solicitud: {str(e)}")
 
     return redirect('tablas')
+
+
+def seguimiento_docs(request, solicitud_id):
+    if request.method == 'POST':
+        comentario = request.POST.get('comentario', '')
+        nomSeg = request.POST.get('nomSeg', '')
+
+        print(f"Procesando seguimiento para solicitud ID: {solicitud_id}")
+        print(f"Comentario: {comentario}")
+        print(f"Archivos en request: {list(request.FILES.keys())}")
+
+        if 'documento' in request.FILES:
+            archivo = request.FILES['documento']
+
+            # Validar el archivo
+            if archivo.size > 5 * 1024 * 1024:  # 5MB
+                messages.error(request, "El archivo es demasiado grande. Máximo 5MB.")
+                return redirect('seguimiento')
+
+            if not archivo.name.lower().endswith('.pdf'):
+                messages.error(request, "Solo se permiten archivos PDF.")
+                return redirect('seguimiento')
+
+            try:
+                solicitud = get_object_or_404(SolicitudesEnviadas, solicitud_ID=solicitud_id)
+
+                seguimiento = Seguimiento.objects.create(
+                    solicitud_FK=solicitud,
+                    user_FK=request.user,
+                    comentario=comentario,
+                    documento=archivo,
+                    nomSeg=nomSeg or f"seguimiento_{solicitud_id}_{timezone.now().strftime('%Y%m%d_%H%M%S')}"
+                )
+
+                messages.success(request, f"Documento de seguimiento guardado correctamente")
+                print(f"Seguimiento guardado con ID: {seguimiento.seguimiento_ID}")
+
+            except Exception as e:
+                messages.error(request, f"Error al procesar el documento: {str(e)}")
+                print(f"Error al guardar seguimiento: {str(e)}")
+
+        else:
+            messages.warning(request, "No se ha seleccionado ningún documento")
+            print("No se encontró archivo en request.FILES")
+
+    return redirect('seguimiento')
 
 
 def custom_handler404(request, exception=None):

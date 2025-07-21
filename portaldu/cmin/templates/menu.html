@@ -15,12 +15,16 @@
     <div class="menus">
         <h4>Bienvenido</h4>
         <div class="ver">
-            <h2>Ver asunto</h2>
-            <button class="ver-btn" id="ver-btn">Ver</button>
+            <h2 class="txt">Ver asuntos</h2>
+            <div class="btn">
+                <button class="ver-btn" id="ver-btn" data-url="{% url 'tablas' %}">Ver</button>
+            </div>
         </div><br>
         <div class="seguimiento">
-            <h2>Seguimiento</h2>
-            <button class="fllw-btn" id="fllw-btn">Ver</button>
+            <h2 class="txt">Seguimiento</h2>
+            <div class="btn">
+                <button class="fllw-btn" id="fllw-btn" data-url="{% url 'seguimiento' %}">Ver</button>
+            </div>
         </div>
     </div>
 </main>
@@ -29,4 +33,7 @@
 {% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script src="{% static 'cminScripts/cminBtns.js' %}"></script>
+
+{% endblock %}

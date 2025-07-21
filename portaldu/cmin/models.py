@@ -86,4 +86,36 @@ class SolicitudesEnviadas(models.Model):
 
     def __str__(self):
         return self.nomSolicitud
+
+class Seguimiento(models.Model):
+    seguimiento_ID = models.AutoField(primary_key=True)
+    solicitud_FK = models.ForeignKey(SolicitudesEnviadas, on_delete=models.CASCADE, verbose_name='solicitudes')
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
+    fechaSeguimiento = models.DateField(auto_now_add=True)
+    comentario = models.TextField()
+    documento = models.FileField(upload_to='seguimiento_docs/')
+    nomSeg = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = 'Seguimiento'
+        ordering = ['seguimiento_ID']
+
+    def __str__(self):
+        return f"Seguimiento {self.seguimiento_ID} - {self.solicitud_FK.nomSolicitud}"
+
+class Close(models.Model):
+    close_ID = models.AutoField(primary_key=True)
+    solicitud_FK = models.ForeignKey(SolicitudesEnviadas, on_delete=models.CASCADE, verbose_name='solicitudes')
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
+    seguimiento_FK = models.ForeignKey(Seguimiento, on_delete=models.CASCADE, verbose_name='seguimiento')
+    fechaCierre = models.DateField(auto_now_add=True)
+    comentario = models.TextField()
+
+    class Meta:
+        db_table = 'Close'
+        ordering = ['close_ID']
+
+    def __str__(self):
+        return f"Cierre {self.close_ID} - {self.solicitud_FK.nomSolicitud}"
+
 # Create your models here.
