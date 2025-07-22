@@ -1,0 +1,9 @@
+# Incluir dependencias de producción
+-r requirements.txt
+
+# Dependencias adicionales para desarrollo
+django-debug-toolbar>=4.0.0
+django-extensions>=3.2.0
+black>=22.0.0
+flake8>=5.0.0
+pytest-django>=4.5.0

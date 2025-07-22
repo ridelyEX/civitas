@@ -1,0 +1,167 @@
+{% extends 'auth/auth_base.html' %}{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/auth-styles.css' %}?v=1">
+    <style>
+        .search-form {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: var(--auth-border-radius);
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--auth-primary-color);
+            border-radius: var(--auth-border-radius);
+            font-size: 1rem;
+        }
+
+        .search-btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .results-table th {
+            background-color: var(--auth-secondary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .results-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .search-tips {
+            background: #e3f2fd;
+            padding: 1rem;
+            border-radius: var(--auth-border-radius);
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--auth-primary-color);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <h3>Buscar Trámites - {{ user.get_full_name|default:user.username }}</h3>
+        </div>
+        <div class="auth-card-body">
+            <!-- Botón volver -->
+            <div style="margin-bottom: 1rem;">
+                <a href="{% url 'desur_menu' %}" class="auth-btn-secondary">← Volver al Menú</a>
+                <a href="{% url 'desur_historial' %}" class="auth-btn-secondary">Ver Historial Completo</a>
+            </div>
+
+            <!-- Formulario de búsqueda -->
+            <form method="get" class="search-form">
+                <h5 style="margin-top: 0; color: var(--auth-primary-color);">Buscar Trámites</h5>
+                <input type="text"
+                       name="q"
+                       value="{{ query|default:'' }}"
+                       placeholder="Ingresa folio, nombre del ciudadano, CURP, tipo de trámite..."
+                       class="search-input"
+                       autofocus>
+                <button type="submit" class="auth-btn-primary search-btn">Buscar</button>
+            </form>
+
+            <!-- Consejos de búsqueda -->
+            <div class="search-tips">
+                <h6 style="margin-top: 0;">💡 Consejos de búsqueda:</h6>
+                <ul style="margin-bottom: 0;">
+                    <li>Puedes buscar por <strong>folio</strong> del trámite (ej: GOP-OFI-00123)</li>
+                    <li>Buscar por <strong>nombre</strong> del ciudadano (ej: Juan Pérez)</li>
+                    <li>Buscar por <strong>CURP</strong> (ej: PERJ800101HMCLMN09)</li>
+                    <li>Buscar por <strong>tipo de trámite</strong> (ej: OFI, CRC, MEC)</li>
+                </ul>
+            </div>
+
+            <!-- Resultados de búsqueda -->
+            {% if query %}
+                <div style="margin-bottom: 1rem;">
+                    <p><strong>Resultados para:</strong> "{{ query }}"</p>
+                </div>
+
+                {% if tramites %}
+                    <p><strong>{{ tramites|length }} resultado(s) encontrado(s)</strong></p>
+
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Ciudadano</th>
+                                <th>CURP</th>
+                                <th>Tipo (PUO)</th>
+                                <th>Fecha</th>
+                                <th>Ubicación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tramite in tramites %}
+                            <tr>
+                                <td><strong>{{ tramite.folio|default:"Sin folio" }}</strong></td>
+                                <td>
+                                    {{ tramite.data_ID.nombre }} {{ tramite.data_ID.pApe }} {{ tramite.data_ID.mApe }}
+                                </td>
+                                <td>
+                                    <small>{{ tramite.data_ID.curp }}</small>
+                                </td>
+                                <td>
+                                    <span style="background: var(--auth-primary-color); color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.8rem;">
+                                        {{ tramite.puo|default:"N/A" }}
+                                    </span>
+                                </td>
+                                <td>{{ tramite.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    {{ tramite.calle|default:"" }}
+                                    {% if tramite.colonia %}, {{ tramite.colonia }}{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="no-results">
+                        <h5>🔍 No se encontraron resultados</h5>
+                        <p>No se encontraron trámites que coincidan con "<strong>{{ query }}</strong>"</p>
+                        <p>Verifica que la información esté correcta o intenta con otros términos de búsqueda.</p>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="no-results">
+                    <h5>🔍 Buscar en mi historial</h5>
+                    <p>Utiliza el formulario de arriba para buscar trámites específicos en tu historial.</p>
+                    <p>Solo verás los trámites que tú hayas procesado.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="auth-footer"></div>
+{% endblock %}

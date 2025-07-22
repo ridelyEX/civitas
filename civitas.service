@@ -1,23 +1,29 @@
 [Unit]
-Description=Civitas Django App
-After=network.target
+Description=Civitas Django Application
+After=network.target postgresql.service redis.service
+Requires=postgresql.service
 
 [Service]
-Type=notify
-User=www-data
-Group=www-data
-RuntimeDirectory=gunicorn
-WorkingDirectory=/path/to/civitas
+Type=exec
+User=civitas
+Group=civitas
+WorkingDirectory=/opt/civitas
 Environment=DJANGO_SETTINGS_MODULE=civitas.settings_production
-ExecStart=/path/to/venv/bin/gunicorn \
-          --access-logfile - \
-          --workers 3 \
-          --bind unix:/run/gunicorn/civitas.sock \
-          civitas.wsgi:application
+Environment=PATH=/opt/civitas/venv/bin
+ExecStart=/opt/civitas/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:8000 civitas.wsgi:application
 ExecReload=/bin/kill -s HUP $MAINPID
-KillMode=mixed
-TimeoutStopSec=5
+Restart=always
+RestartSec=10
+
+# Límites de recursos
+LimitNOFILE=65536
 PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/civitas/media /opt/civitas/logs
+NoNewPrivileges=true
+
+# Variables de entorno de producción
+EnvironmentFile=/opt/civitas/.env
 
 [Install]
 WantedBy=multi-user.target

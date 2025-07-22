@@ -1,0 +1,170 @@
+{% extends 'auth/auth_base.html' %}{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/auth-styles.css' %}?v=1">
+    <style>
+        .historial-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .historial-table th,
+        .historial-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .historial-table th {
+            background-color: var(--auth-secondary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .historial-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: var(--auth-border-radius);
+            text-align: center;
+            border-left: 4px solid var(--auth-primary-color);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--auth-primary-color);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .pagination a,
+        .pagination .current {
+            padding: 8px 16px;
+            margin: 0 4px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: var(--auth-border-radius);
+        }
+
+        .pagination .current {
+            background-color: var(--auth-primary-color);
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <h3>Mi Historial de Trámites - {{ empleado.get_full_name|default:empleado.username }}</h3>
+        </div>
+        <div class="auth-card-body">
+            <!-- Estadísticas rápidas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_tramites }}</div>
+                    <div>Total Procesados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ tramites_hoy }}</div>
+                    <div>Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ stats_by_puo.0.count|default:0 }}</div>
+                    <div>Tipo Principal</div>
+                    <small>{{ stats_by_puo.0.puo|default:"N/A" }}</small>
+                </div>
+            </div>
+
+            <!-- Botones de navegación -->
+            <div style="margin-bottom: 1rem;">
+                <a href="{% url 'desur_menu' %}" class="auth-btn-secondary">← Volver al Menú</a>
+                <a href="{% url 'desur_buscar' %}" class="auth-btn-secondary">Buscar Trámite</a>
+            </div>
+
+            <!-- Tabla de trámites -->
+            {% if page_obj %}
+                <table class="historial-table">
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Ciudadano</th>
+                            <th>Tipo (PUO)</th>
+                            <th>Fecha</th>
+                            <th>Ubicación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tramite in page_obj %}
+                        <tr>
+                            <td><strong>{{ tramite.folio|default:"Sin folio" }}</strong></td>
+                            <td>
+                                {{ tramite.data_ID.nombre }} {{ tramite.data_ID.pApe }} {{ tramite.data_ID.mApe }}
+                                <br>
+                                <small>{{ tramite.data_ID.curp }}</small>
+                            </td>
+                            <td>
+                                <span style="background: var(--auth-primary-color); color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.8rem;">
+                                    {{ tramite.puo|default:"N/A" }}
+                                </span>
+                            </td>
+                            <td>{{ tramite.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {{ tramite.calle|default:"" }}
+                                {% if tramite.colonia %}, {{ tramite.colonia }}{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Paginación -->
+                {% if page_obj.has_other_pages %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">Primera</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% else %}
+                <div style="text-align: center; padding: 2rem;">
+                    <p>No has procesado ningún trámite aún.</p>
+                    <a href="{% url 'home' %}" class="auth-btn-primary">Procesar Primer Trámite</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="auth-footer"></div>
+{% endblock %}

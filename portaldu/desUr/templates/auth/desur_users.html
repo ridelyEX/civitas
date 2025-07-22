@@ -1,0 +1,118 @@
+{% extends 'auth/auth_base.html' %}{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/auth-styles.css' %}?v=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <h3>Crear Usuario - DesUr</h3>
+        </div>
+        <div class="auth-card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="auth-form-grid">
+                    <div>
+                        <div class="auth-form-group">
+                            <label for="{{ form.email.id_for_label }}" class="auth-form-label">Correo electrónico</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="auth-error">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="auth-form-group">
+                            <label for="{{ form.first_name.id_for_label }}" class="auth-form-label">Nombre(s)</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="auth-error">{{ form.first_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="auth-form-group">
+                            <label for="{{ form.last_name.id_for_label }}" class="auth-form-label">Apellido(s)</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="auth-error">{{ form.last_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="auth-form-group">
+                            <div class="nFoto">
+                                <label for="search" class="auth-form-label">Añadir foto</label>
+                                    <button
+                                        type="button"
+                                        class="search sbtn"
+                                        id="search"
+                                        name="foto"
+                                        >
+                                        <span class="addicon">
+                                        <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
+                                        </span>
+                                        <span>Foto</span>
+                                    </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="auth-form-group">
+                            <label for="{{ form.username.id_for_label }}" class="auth-form-label">Nombre de usuario</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="auth-error">{{ form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="auth-form-group">
+                            <label for="{{ form.bday.id_for_label }}" class="auth-form-label">Fecha de nacimiento</label>
+                            {{ form.bday }}
+                            {% if form.bday.errors %}
+                                <div class="auth-error">{{ form.bday.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="auth-form-group">
+                            <label for="{{ form.password.id_for_label }}" class="auth-form-label">Contraseña</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}
+                                <div class="auth-error">{{ form.password.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="auth-form-group">
+                            <label for="{{ form.confirmP.id_for_label }}" class="auth-form-label">Confirmar contraseña</label>
+                            {{ form.confirmP }}
+                            {% if form.confirmP.errors %}
+                                <div class="auth-error">{{ form.confirmP.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="auth-form-group">
+                    <button type="submit" class="auth-btn-primary">Crear Usuario</button>
+                    <a href="{% url 'desur_login' %}" class="auth-btn-secondary">¿Ya tienes cuenta? Inicia sesión</a>
+                </div>
+                {{ form.foto }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="auth-footer"></div>
+<script>
+    document.getElementById("search").addEventListener('click', function(){
+    console.log("click");
+        document.getElementById("id_foto").click();
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+<script>
+  flatpickr("#id_bday",{
+    dateFormat: "Y-m-d",
+    locale: "es",
+    altInput: "true",
+    altFormat: "F j, Y",
+  });
+</script>
+{% endblock %}

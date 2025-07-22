@@ -12,7 +12,13 @@ from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import models  # Agregar esta importación para Q
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files
+from portaldu.cmin.models import Users, LoginDate  # Usar modelos de cmin
+from .forms import DesUrUsersRender, DesUrLogin, DesUrUsersConfig
 from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
 from datetime import date, datetime
@@ -21,22 +27,149 @@ from rest_framework import viewsets
 from .serializers import FilesSerializer
 
 
+# Vistas de autenticación - PÚBLICAS (obviamente)
+def desur_users_render(request):
+    # NO login_required - necesario para que administradores creen cuentas de empleados
+    if request.method == 'POST':
+        print(request.POST)
+        form = DesUrUsersRender(request.POST, request.FILES)
+        if form.is_valid():
+            print("estamos dentro")
+            cleaned_data = form.cleaned_data
+            form.save()
+            return redirect('desur_login')
+    else:
+        print("no estamos dentro")
+        form = DesUrUsersRender()
+    return render(request, 'auth/desur_users.html', {'form':form})
+
+
+def desur_login_view(request):
+    # NO login_required - necesario para que empleados inicien sesión
+    form = DesUrLogin(request.POST)
+
+    if request.method == 'POST' and form.is_valid():
+        usuario = form.cleaned_data['usuario']
+        contrasena = form.cleaned_data['contrasena']
+        user = authenticate(request, username=usuario, password=contrasena)
+        if user is not None:
+            print(user)
+            login(request, user)
+            LoginDate.objects.create(user_FK=user)  # Usar LoginDate de cmin
+            return redirect('desur_menu')  # Ir al menú del empleado
+        else:
+            messages.error(request, "Usuario o contraseña incorrectos")
+
+    return render(request, 'auth/desur_login.html', {'form':form})
+
+
+def desur_logout_view(request):
+    # NO login_required - aunque podrías argumentar que sí
+    logout(request)
+    return redirect('desur_login')
+
+
+@login_required
+def desur_user_conf(request):
+    # SÍ login_required - solo usuarios autenticados pueden configurar perfil
+    usuario = request.user
+    if request.method == 'POST':
+        form = DesUrUsersConfig(request.POST, request.FILES, instance=usuario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil actualizado correctamente.")
+            return redirect('desur_menu')  # Cambiar a menu en lugar de login
+    else:
+        form = DesUrUsersConfig(instance=usuario)
+    return render(request, 'auth/desur_user_conf.html', {'form': form})
+
+
+@login_required
+def desur_menu(request):
+    # SÍ login_required - menú personal
+    return render(request, 'auth/desur_menu.html')
+
+
+@login_required
+def desur_historial(request):
+    """Vista para mostrar el historial de trámites procesados por el empleado actual"""
+    # Obtener todos los trámites procesados por el usuario actual
+    tramites = soli.objects.filter(processed_by=request.user).select_related(
+        'data_ID', 'processed_by'
+    ).order_by('-fecha')
+
+    # Paginación para manejar muchos resultados
+    from django.core.paginator import Paginator
+    paginator = Paginator(tramites, 10)  # 10 trámites por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Estadísticas básicas
+    total_tramites = tramites.count()
+    tramites_hoy = tramites.filter(fecha__date=date.today()).count()
+
+    # Estadísticas por tipo de trámite (PUO)
+    from django.db.models import Count
+    stats_by_puo = tramites.values('puo').annotate(
+        count=Count('soli_ID')
+    ).order_by('-count')
+
+    context = {
+        'page_obj': page_obj,
+        'total_tramites': total_tramites,
+        'tramites_hoy': tramites_hoy,
+        'stats_by_puo': stats_by_puo,
+        'empleado': request.user,
+    }
+
+    return render(request, 'auth/desur_historial.html', context)
+
+
+@login_required
+def desur_buscar_tramite(request):
+    """Vista para buscar trámites específicos"""
+    tramites = None
+    query = None
+
+    if request.method == 'GET' and 'q' in request.GET:
+        query = request.GET.get('q')
+        if query:
+            # Buscar en múltiples campos
+            tramites = soli.objects.filter(
+                processed_by=request.user
+            ).filter(
+                # Buscar por folio, nombre del ciudadano, CURP, etc.
+                models.Q(folio__icontains=query) |
+                models.Q(data_ID__nombre__icontains=query) |
+                models.Q(data_ID__pApe__icontains=query) |
+                models.Q(data_ID__mApe__icontains=query) |
+                models.Q(data_ID__curp__icontains=query) |
+                models.Q(puo__icontains=query)
+            ).select_related('data_ID', 'processed_by').order_by('-fecha')
+
+    context = {
+        'tramites': tramites,
+        'query': query,
+    }
+
+    return render(request, 'auth/desur_buscar.html', context)
+
+
+# Vistas del sistema de trámites requieren autenticación
+# Solo empleados/funcionarios autorizados pueden operar el sistema
+
+@login_required
 def base(request):
+    # SÍ login_required - solo empleados pueden acceder al sistema
     uuid = request.COOKIES.get('uuid')
 
     if not uuid:
         return redirect('home')
     return render(request, 'documet/save.html',{'uuid':uuid})
 
-def nav(request):
-    return render(request, 'navmin.html')
-
-def clear(request):
-    response = redirect('home')
-    response.delete_cookie('uuid')
-    return response
-
+@login_required
 def home(request):
+    # SÍ login_required - punto de entrada solo para empleados autenticados
     if request.method == 'POST':
         uuidM = request.COOKIES.get('uuid')
 
@@ -55,8 +188,9 @@ def home(request):
         return response
     return render(request, 'main.html')
 
-
+@login_required
 def intData(request):
+    # SÍ login_required - empleados capturan datos de ciudadanos
     direccion = request.GET.get('dir', '')
     uuid = request.COOKIES.get('uuid')
     if not uuid:
@@ -134,7 +268,9 @@ def intData(request):
     return render(request, 'di.html', context)
 
 
+@login_required
 def soliData(request):
+    # SÍ login_required - empleados procesan solicitudes de ciudadanos
         uuid = request.COOKIES.get('uuid')
         if not uuid:
             return redirect('home')
@@ -182,7 +318,9 @@ def soliData(request):
 
             return user_errors(request, e)
 
+@login_required
 def doc(request):
+    # SÍ login_required - empleados gestionan documentación
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
@@ -217,21 +355,9 @@ def doc(request):
 
 
 
-def adv(request):
-    return render(request, 'adv.html')
-
-def mapa(request):
-
-    origen = request.GET.get('origen', '')
-    if request.method == 'GET':
-
-        print(origen)
-    return render(request, 'mapa.html', {
-        'google_key':settings.GOOGLE_API_KEY,
-        'origen': origen,
-    })
-    
+@login_required
 def docs(request):
+    # SÍ login_required - empleados suben documentos del ciudadano
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
@@ -247,7 +373,9 @@ def docs(request):
         'count':count,
         'uuid':uuid,})
 
+@login_required
 def dell(request, id):
+    # SÍ login_required - empleados eliminan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
@@ -261,7 +389,9 @@ def dell(request, id):
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Método inválido'}, status=405)
 
+@login_required
 def docs2(request):
+    # SÍ login_required - empleados gestionan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
@@ -282,7 +412,9 @@ def docs2(request):
         return render(request, 'docs2.html')
 
 
+@login_required
 def pago(request):
+    # SÍ login_required - empleados procesan pagos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
@@ -297,7 +429,9 @@ def pago(request):
 
     return render(request, 'pago.html')
 
+@login_required
 def document(request):
+    # SÍ login_required - empleados generan documentos oficiales
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
@@ -385,7 +519,9 @@ def document(request):
     #return render(request, "documet/document.html", context)
 
 
+@login_required
 def save_document(request):
+    # SÍ login_required - empleados guardan documentos oficiales
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
@@ -475,7 +611,9 @@ def save_document(request):
 
     return render(request, 'documet/save.html', {'doc':doc})
 
+@login_required
 def document2(request):
+    # SÍ login_required - empleados generan documentos de pago
     uuid = request.COOKIES.get('uuid')
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     pago = get_object_or_404(Pagos, data_ID=datos)
@@ -511,6 +649,12 @@ def document2(request):
     return response
     #return render(request, "documet/document2.html")
 
+@login_required
+def clear(request):
+    # SÍ login_required - solo empleados limpian sesiones
+    response = redirect('desur_login')  # Cambiar redirect a login de empleados
+    response.delete_cookie('uuid')
+    return response
 
 
 # Functions.
@@ -719,6 +863,7 @@ def soli_processed(request, uid, dp):
                 info=info,
                 puo=puo,
                 foto=img,
+                processed_by=request.user  # Registrar qué empleado procesó el trámite
             )
 
             solicitud.save()
@@ -811,4 +956,3 @@ def user_errors(request, error):
 class FilesViewSet(viewsets.ModelViewSet):
     queryset = Files.objects.all()
     serializer_class = FilesSerializer
-

@@ -25,6 +25,13 @@
         .status-closed {
             background-color: #dc3545;
             color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
         }
 
         .solicitud-item {
@@ -37,6 +44,21 @@
             background-color: #f8f9fa;
             border-left-color: #dc3545;
             opacity: 0.8;
+            position: relative;
+        }
+
+        .solicitud-item.closed::before {
+            content: "CERRADA";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            transform: rotate(15deg);
+            border-radius: 3px;
         }
 
         .solicitud-item.active {
@@ -117,7 +139,8 @@
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="finish">
                                 <input type="hidden" name="solicitud_id" value="{{ solicitud.solicitud_ID }}">
-                                <button type="submit" class="finish" aria-label="Cerrar solicitud" disabled>Cerrar solicitud</button>
+                                <button type="submit" class="finish" aria-label="Cerrar solicitud"
+                                        onclick="return confirm('¿Desea cerrar esta solicitud sin seguimiento?')">Cerrar solicitud</button>
                             </form>
                             <button type="button" class="send" onclick="openFollowUpModal('{{ solicitud.solicitud_ID }}')">Seguimiento</button>
                             {% endif %}

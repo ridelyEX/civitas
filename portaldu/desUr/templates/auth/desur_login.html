@@ -1,0 +1,51 @@
+{% extends 'auth/auth_base.html' %}{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/auth-styles.css' %}?v=1">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <h3>Iniciar Sesión - DesUr</h3>
+        </div>
+        <div class="auth-card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="auth-alert auth-alert-error">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="auth-form-group">
+                    <label for="id_usuario" class="auth-form-label">Usuario:</label>
+                    {{ form.usuario }}
+                    {% if form.usuario.errors %}
+                        <div class="auth-error">{{ form.usuario.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="auth-form-group">
+                    <label for="id_contrasena" class="auth-form-label">Contraseña:</label>
+                    {{ form.contrasena }}
+                    {% if form.contrasena.errors %}
+                        <div class="auth-error">{{ form.contrasena.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="auth-form-group">
+                    <button type="submit" class="auth-btn-primary">Iniciar Sesión</button>
+                    <a href="{% url 'desur_users' %}" class="auth-btn-secondary">Crear Cuenta</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="auth-footer"></div>
+{% endblock %}

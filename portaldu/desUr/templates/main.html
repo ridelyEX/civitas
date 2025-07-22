@@ -14,8 +14,13 @@
     <form method="post">
             {% csrf_token %}
         <input type="hidden" name="uuid" value="{{ uuid }}">
+            <div class="encabezado" id="encabezado">
+                <h1>Seleccione el tipo de solicitud que desea realizar</h1>
+            </div>
         <div class="boton" id="btn">
-            <button type="submit" class="btn btn-primary btn-lg">Iniciar</button>
+
+            <button type="submit" class="btn btn-primary btn-lg" name="action" value="op">Obras Públicas</button>
+            <button type="submit" class="btn btn-primary btn-lg" name="action" value="pp">Presupuesto Participativo</button>
         </div>
         <div class="vid" id="vid">
             <video src="{% static 'videos/fondo.mp4' %}" autoplay muted loop></video>

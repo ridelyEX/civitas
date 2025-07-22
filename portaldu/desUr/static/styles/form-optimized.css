@@ -140,7 +140,8 @@ form .main {
     border-color: var(--primary-hover);
 }
 
-/* BOTONES ESPECÍFICOS DEL FORMULARIO */
+/* 
+ES ESPECÍFICOS DEL FORMULARIO */
 
 /* POSICIONAMIENTO DE BOTONES */
 .right .addbtn {
@@ -1019,4 +1020,3 @@ button:active,
 .form textarea:valid:not(:placeholder-shown) {
     border-color: #27ae60;
 }
-

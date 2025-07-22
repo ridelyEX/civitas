@@ -1,0 +1,56 @@
+{% extends 'auth/auth_base.html' %}{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/auth-styles.css' %}?v=1">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <h3>Panel de Empleado - {{ user.first_name|default:user.username }}</h3>
+        </div>
+        <div class="auth-card-body">
+            <div class="auth-form-grid">
+                <div class="auth-menu-card">
+                    <h5>Nuevo Trámite</h5>
+                    <p>Iniciar un nuevo trámite para un ciudadano</p>
+                    <a href="{% url 'home' %}" class="auth-btn-primary">Nuevo Trámite</a>
+                </div>
+                <div class="auth-menu-card">
+                    <h5>Mi Historial</h5>
+                    <p>Ver todos los trámites que he procesado</p>
+                    <a href="{% url 'desur_historial' %}" class="auth-btn-secondary">Ver Historial</a>
+                </div>
+                <div class="auth-menu-card">
+                    <h5>Búsqueda</h5>
+                    <p>Buscar trámites por folio o datos del ciudadano</p>
+                    <a href="{% url 'desur_buscar' %}" class="auth-btn-secondary">Buscar</a>
+                </div>
+                <div class="auth-menu-card">
+                    <h5>Configuración</h5>
+                    <p>Actualizar perfil y configuración personal</p>
+                    <a href="{% url 'desur_user_conf' %}" class="auth-btn-secondary">Configurar</a>
+                </div>
+            </div>
+
+            <div class="auth-user-info">
+                <h5 style="color: var(--auth-primary-color); margin-bottom: 1rem;">Información de Sesión</h5>
+                <p><strong>Empleado:</strong> {{ user.get_full_name|default:user.username }}</p>
+                <p><strong>Usuario:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Último acceso:</strong> {{ user.last_login|default:"Primer acceso" }}</p>
+
+                <div style="margin-top: 1.5rem;">
+                    <a href="{% url 'desur_logout' %}" class="auth-btn-secondary" style="background: #ca0000;">Cerrar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="auth-footer"></div>
+{% endblock %}

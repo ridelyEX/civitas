@@ -1,0 +1,67 @@
+{% extends 'auth/auth_base.html' %}{% load static %}
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'styles/auth-styles.css' %}?v=1">
+
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-card-header">
+            <h3>Configuración de Perfil</h3>
+        </div>
+        <div class="auth-card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="auth-alert auth-alert-success">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="auth-form-group">
+                    <label for="{{ form.username.id_for_label }}" class="auth-form-label">Nombre de usuario</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="auth-error">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="auth-form-group">
+                    <label for="{{ form.foto.id_for_label }}" class="auth-form-label">Foto de perfil</label>
+                    {{ form.foto }}
+                    {% if form.foto.errors %}
+                        <div class="auth-error">{{ form.foto.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="auth-form-group">
+                    <label for="{{ form.password.id_for_label }}" class="auth-form-label">Nueva contraseña (opcional)</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="auth-error">{{ form.password.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="auth-form-group">
+                    <label for="{{ form.confirmP.id_for_label }}" class="auth-form-label">Confirmar nueva contraseña</label>
+                    {{ form.confirmP }}
+                    {% if form.confirmP.errors %}
+                        <div class="auth-error">{{ form.confirmP.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="auth-form-group">
+                    <button type="submit" class="auth-btn-primary">Actualizar Perfil</button>
+                    <a href="{% url 'desur_menu' %}" class="auth-btn-secondary">Volver al Menú</a>
+                    <a href="{% url 'desur_logout' %}" class="auth-btn-secondary" style="background: #ca0000;">Cerrar Sesión</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<div class="auth-footer"></div>
+{% endblock %}

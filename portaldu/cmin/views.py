@@ -137,14 +137,21 @@ def seguimiento(request):
                         solicitud_FK=solicitud
                     ).order_by('-fechaSeguimiento').first()
 
+                    # Permitir cerrar solicitudes con o sin seguimiento
+                    close = Close.objects.create(
+                        solicitud_FK=solicitud,
+                        user_FK=request.user,
+                        comentario=request.POST.get('comentario', ''),
+                        seguimiento_FK=us,  # Puede ser None si no hay seguimiento
+                    )
+
                     if us:
-                        close = Close.objects.create(
-                            solicitud_FK=get_object_or_404(SolicitudesEnviadas, solicitud_ID=solicitud_id),
-                            user_FK=request.user,
-                            comentario=request.POST.get('comentario', ''),
-                            seguimiento_FK=us,
-                        )
-                        print(f"Solicitud cerrada con ID: {us.seguimiento_ID}")
+                        print(f"Solicitud cerrada con seguimiento ID: {us.seguimiento_ID}")
+                        messages.success(request, "Solicitud cerrada exitosamente con seguimiento.")
+                    else:
+                        print(f"Solicitud cerrada sin seguimiento previo")
+                        messages.success(request, "Solicitud cerrada exitosamente (sin seguimiento previo).")
+
                 except Exception as e:
                     messages.error(request, f"Error al cerrar la solicitud: {str(e)}")
                     print(f"Error al cerrar la solicitud: {str(e)}")

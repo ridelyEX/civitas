@@ -1,99 +1,134 @@
+#!/usr/bin/env python3
+"""
+Análisis de espacio de almacenamiento para Civitas
+"""
 import os
 import sys
-from collections import defaultdict
+from pathlib import Path
 
-def get_size(path):
-    """Obtiene el tamaño de un archivo o directorio"""
-    if os.path.isfile(path):
-        return os.path.getsize(path)
-    elif os.path.isdir(path):
-        total = 0
-        for dirpath, dirnames, filenames in os.walk(path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                try:
-                    total += os.path.getsize(fp)
-                except (OSError, IOError):
-                    pass
-        return total
-    return 0
+def get_folder_size(path):
+    """Calcula el tamaño de una carpeta en bytes"""
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            try:
+                total_size += os.path.getsize(filepath)
+            except (OSError, FileNotFoundError):
+                pass
+    return total_size
 
-def analyze_project():
-    """Analiza el tamaño del proyecto por categorías"""
-    base_path = os.getcwd()
-    categories = {
-        'Código fuente': ['.py', '.html', '.css', '.js'],
-        'Base de datos': ['.sqlite3', '.db'],
-        'Imágenes': ['.jpg', '.jpeg', '.png', '.gif', '.bmp'],
-        'PDFs': ['.pdf'],
-        'Archivos de configuración': ['.txt', '.json', '.yml', '.yaml', '.ini'],
-        'Otros': []
+def bytes_to_mb(bytes_size):
+    """Convierte bytes a MB"""
+    return bytes_size / (1024 * 1024)
+
+def analyze_storage():
+    """Analiza el uso de almacenamiento del proyecto"""
+    base_dir = Path(__file__).parent
+
+    print("=== ANÁLISIS DE ALMACENAMIENTO CIVITAS ===\n")
+
+    # Analizar carpetas principales
+    folders_to_analyze = {
+        'media/': 'Archivos subidos por usuarios',
+        'media/documents/': 'Documentos procesados',
+        'media/fotos/': 'Fotografías subidas',
+        'media/seguimiento_docs/': 'Documentos de seguimiento',
+        'media/solicitudes/': 'Solicitudes generadas',
+        'staticfiles/': 'Archivos estáticos (si existe)',
+        'logs/': 'Archivos de log',
+        'db.sqlite3': 'Base de datos SQLite'
     }
 
-    sizes = defaultdict(int)
-    file_counts = defaultdict(int)
     total_size = 0
 
-    for root, dirs, files in os.walk(base_path):
-        # Excluir directorios de Python cache y virtual env
-        dirs[:] = [d for d in dirs if d not in ['__pycache__', 'vrtl', '.git', 'node_modules']]
+    for folder, description in folders_to_analyze.items():
+        folder_path = base_dir / folder
+        if folder_path.exists():
+            if folder_path.is_file():
+                size = folder_path.stat().st_size
+            else:
+                size = get_folder_size(folder_path)
 
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                file_size = os.path.getsize(file_path)
-                total_size += file_size
+            size_mb = bytes_to_mb(size)
+            total_size += size
 
-                # Categorizar archivo
-                file_ext = os.path.splitext(file)[1].lower()
-                categorized = False
+            print(f"📁 {folder}")
+            print(f"   {description}")
+            print(f"   Tamaño: {size_mb:.2f} MB")
 
-                for category, extensions in categories.items():
-                    if category == 'Otros':
-                        continue
-                    if file_ext in extensions:
-                        sizes[category] += file_size
-                        file_counts[category] += 1
-                        categorized = True
-                        break
+            # Análisis detallado para media
+            if folder == 'media/' and folder_path.is_dir():
+                file_count = len(list(folder_path.rglob('*')))
+                print(f"   Archivos: {file_count}")
+            print()
+        else:
+            print(f"❌ {folder} - No existe")
+            print()
 
-                if not categorized:
-                    sizes['Otros'] += file_size
-                    file_counts['Otros'] += 1
-
-            except (OSError, IOError):
-                continue
-
-    # Mostrar resultados
-    print("="*60)
-    print("ANÁLISIS DE ESPACIO DE ALMACENAMIENTO DEL PROYECTO")
-    print("="*60)
-    print(f"Tamaño total del proyecto: {total_size:,} bytes ({total_size/1024/1024:.2f} MB)")
+    print(f"💾 TOTAL ACTUAL: {bytes_to_mb(total_size):.2f} MB")
     print()
 
-    print("Desglose por categorías:")
-    print("-" * 40)
-    for category in categories.keys():
-        if sizes[category] > 0:
-            mb_size = sizes[category] / 1024 / 1024
-            percentage = (sizes[category] / total_size) * 100
-            print(f"{category}: {sizes[category]:,} bytes ({mb_size:.2f} MB) - {percentage:.1f}% - {file_counts[category]} archivos")
+    # Proyecciones
+    print("=== PROYECCIONES DE CRECIMIENTO ===\n")
 
-    # Análisis específico de media
-    print("\n" + "="*60)
-    print("ANÁLISIS DETALLADO DE ARCHIVOS MEDIA")
-    print("="*60)
+    # Estimaciones basadas en uso típico
+    avg_document_size = 0.5  # MB por documento
+    avg_photo_size = 2.0     # MB por foto
+    avg_followup_size = 0.3  # MB por seguimiento
 
-    media_path = os.path.join(base_path, 'media')
-    if os.path.exists(media_path):
-        for subdir in ['documents', 'fotos', 'seguimiento_docs', 'solicitudes']:
-            subdir_path = os.path.join(media_path, subdir)
-            if os.path.exists(subdir_path):
-                subdir_size = get_size(subdir_path)
-                file_count = len([f for f in os.listdir(subdir_path) if os.path.isfile(os.path.join(subdir_path, f))])
-                print(f"{subdir}/: {subdir_size:,} bytes ({subdir_size/1024/1024:.2f} MB) - {file_count} archivos")
+    scenarios = {
+        "Uso bajo (50 solicitudes/mes)": {
+            "docs": 50 * avg_document_size,
+            "photos": 100 * avg_photo_size,
+            "followups": 25 * avg_followup_size
+        },
+        "Uso medio (200 solicitudes/mes)": {
+            "docs": 200 * avg_document_size,
+            "photos": 400 * avg_photo_size,
+            "followups": 100 * avg_followup_size
+        },
+        "Uso alto (500 solicitudes/mes)": {
+            "docs": 500 * avg_document_size,
+            "photos": 1000 * avg_photo_size,
+            "followups": 250 * avg_followup_size
+        }
+    }
 
-    return total_size, sizes
+    for scenario, sizes in scenarios.items():
+        monthly_growth = sum(sizes.values())
+        yearly_growth = monthly_growth * 12
+
+        print(f"📊 {scenario}")
+        print(f"   Crecimiento mensual: {monthly_growth:.1f} MB")
+        print(f"   Crecimiento anual: {yearly_growth:.1f} MB ({yearly_growth/1024:.1f} GB)")
+        print()
+
+    # Recomendaciones
+    print("=== RECOMENDACIONES DE ALMACENAMIENTO ===\n")
+
+    current_gb = bytes_to_mb(total_size) / 1024
+
+    if current_gb < 0.5:
+        storage_rec = "10-20 GB"
+        reason = "Proyecto pequeño, amplio margen de crecimiento"
+    elif current_gb < 2:
+        storage_rec = "50-100 GB"
+        reason = "Crecimiento moderado esperado"
+    else:
+        storage_rec = "200+ GB"
+        reason = "Alto volumen de archivos actual"
+
+    print(f"💡 Almacenamiento recomendado: {storage_rec}")
+    print(f"   Razón: {reason}")
+    print()
+
+    print("📋 ESTRATEGIAS DE OPTIMIZACIÓN:")
+    print("   • Implementar compresión automática de imágenes")
+    print("   • Establecer política de retención de archivos")
+    print("   • Migrar archivos antiguos a almacenamiento frío")
+    print("   • Implementar CDN para archivos estáticos")
+    print("   • Monitoreo automático de espacio en disco")
 
 if __name__ == "__main__":
-    analyze_project()
+    analyze_storage()

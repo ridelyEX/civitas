@@ -1,8 +1,87 @@
 from django.db import models
 from django.db.models import AutoField
-from django.forms import FileField
 from phonenumber_field.modelfields import PhoneNumberField
+from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
+from django.conf import settings
 import uuid
+
+
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Ingrese email")
+
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self.create_user(email, password, **extra_fields)
+
+
+class DesUrUsers(AbstractUser, PermissionsMixin):
+    email = models.EmailField(unique=True)
+    bday = models.DateField(null=True, blank=True)
+    foto = models.ImageField(upload_to='fotos', null=True, blank=True)
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
+
+    objects = CustomUserManager()
+
+    # Agregando related_name únicos para evitar conflictos con cmin.Users
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        related_name='desur_users_set',
+        related_query_name='desur_user',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name='desur_users_set',
+        related_query_name='desur_user',
+    )
+
+    class Meta:
+        db_table = 'desur_users'
+        ordering = ['username']
+
+    def __str__(self):
+        return self.username
+
+
+class DesUrLoginDate(models.Model):
+    login_ID = models.AutoField(primary_key=True)
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'DesUrLoginDate'
+        ordering = ['user_FK']
+
+    def __str__(self):
+        return str(self.date)
+
+    @classmethod
+    def create(cls, user):
+        return cls.objects.create(
+            user_FK=user
+        )
 
 
 class Uuid(models.Model):
@@ -91,6 +170,9 @@ class soli(models.Model):
                                 verbose_name="Datos")
     doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, verbose_name="Documentos",
                                 blank=True, null=True)
+    # Agregar referencia al empleado que procesó el trámite
+    processed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+                                   verbose_name="Procesado por", null=True, blank=True)
     dirr   = models.TextField()
     calle = models.CharField(max_length=50, null=True, blank=True)
     colonia = models.CharField(max_length=50, null=True, blank=True)
@@ -124,8 +206,3 @@ class Files(models.Model):
 
     def __str__(self):
         return str(self.nomDoc)
-
-
-
-
-
