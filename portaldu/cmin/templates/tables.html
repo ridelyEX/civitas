@@ -77,14 +77,14 @@
                         <option value="{{ solicitud.fDoc_ID }}">{{ solicitud.nomDoc }}</option>
                         {% endfor %}
                     </select>
-                    <select name="categorias" id="cat" class="cat">
-                        <option value="">-- Seleccione una opción --</option>
-                        <option value="">Infraestructura vial</option>
-                        <option value="">Infraestructura hidráulica</option>
-                        <option value="">Infraestructura eléctrica</option>
-                        <option value="">Parques y áreas verdes</option>
-                        <option value="">Infraestructura de transporte</option>
-                        <option value="">Infraestructura comunicaciones</option>
+                    <label for="cat">Seleccione una categoría:</label>
+                    <select name="categorias" id="cat" class="form-control">
+                        <option value="">-- Categorías de obras --</option>
+                        <option value="Construcción">Construcción</option>
+                        <option value="Rehabilitación">Rehabilitación</option>
+                        <option value="Equipamiento">Equipamiento</option>
+                        <option value="Elaboración">Elaboración</option>
+                        <option value="Programa">Programa</option>
                     </select>
                 </div>
                 <div class="form-group">
