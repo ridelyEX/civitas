@@ -206,3 +206,204 @@ class Files(models.Model):
 
     def __str__(self):
         return str(self.nomDoc)
+
+
+
+class PpGeneral(models.Model):
+
+    CHOICES_STATE = [
+        ('bueno', 'Bueno'),
+        ('regular', 'Regular'),
+        ('malo', 'Malo'),
+    ]
+
+    pp_ID = models.AutoField(primary_key=True)
+    nombre_promovente = models.CharField(max_length=100, verbose_name="Nombre del Promovente", null=True, blank=True)
+    telefono = PhoneNumberField(region="MX", verbose_name="Teléfono", null=True, blank=True)
+    direccion_proyecto = models.TextField(verbose_name="Dirección del Proyecto", null=True, blank=True)
+    calle_p = models.CharField(max_length=50, null=True, blank=True)
+    colonia_p = models.CharField(max_length=50, null=True, blank=True)
+    cp_p = models.CharField(max_length=5, null=True, blank=True)
+    desc_p = models.TextField(verbose_name="Descripción del Proyecto", null=True, blank=True)
+
+    #choices menu
+
+    cfe = models.CharField(max_length=50, verbose_name="CFE", null=True, blank=True, choices=CHOICES_STATE)
+    agua = models.CharField(max_length=50, verbose_name="Agua", null=True, blank=True, choices=CHOICES_STATE)
+    drenaje = models.CharField(max_length=50, verbose_name="Drenaje", null=True, blank=True, choices=CHOICES_STATE)
+    impermabilizacion = models.CharField(max_length=50, verbose_name="Impermeabilización", null=True, blank=True, choices=CHOICES_STATE)
+    climas = models.CharField(max_length=50, verbose_name="Climas", null=True, blank=True, choices=CHOICES_STATE)
+    alumbrado = models.CharField(max_length=50, verbose_name="Alumbrado", null=True, blank=True, choices=CHOICES_STATE)
+
+    notas_importantes = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
+
+    class Meta:
+        db_table = 'pp_general'
+        ordering = ['pp_ID']
+        verbose_name = "Propuesta General"
+
+    def __str__(self):
+        return self.nombre_promovente or "Propuesta sin nombre"
+
+class PpParque(models.Model):
+    # Campos para Cancha
+
+    p_parque_ID = models.AutoField(primary_key=True)
+    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Propuesta General", null=True, blank=True)
+
+    cancha_futbol_rapido = models.BooleanField(verbose_name="Fútbol Rápido", default=False)
+    cancha_futbol_soccer = models.BooleanField(verbose_name="Fútbol Soccer", default=False)
+    cancha_futbol_7x7 = models.BooleanField(verbose_name="Fútbol 7x7", default=False)
+    cancha_beisbol = models.BooleanField(verbose_name="Beisbol", default=False)
+    cancha_usos_multiples = models.BooleanField(verbose_name="Usos Múltiples", default=False)
+    cancha_otro = models.BooleanField(verbose_name="Otro tipo de cancha", default=False)
+
+    # Campos para Alumbrado
+    alumbrado_rehabilitacion = models.BooleanField(verbose_name="Rehabilitación de alumbrado", default=False)
+    alumbrado_nuevo = models.BooleanField(verbose_name="Alumbrado nuevo", default=False)
+
+    # Campos para Juegos
+    juegos_dog_park = models.BooleanField(verbose_name="Dog park", default=False)
+    juegos_infantiles = models.BooleanField(verbose_name="Juegos infantiles", default=False)
+    juegos_ejercitadores = models.BooleanField(verbose_name="Ejercitadores", default=False)
+    juegos_otro = models.BooleanField(verbose_name="Otro tipo de juegos", default=False)
+
+    # Campos para Techumbre
+    techumbre_domo = models.BooleanField(verbose_name="Domo", default=False)
+    techumbre_kiosko = models.BooleanField(verbose_name="Techo tipo kiosko", default=False)
+
+    # Campos para Equipamiento
+    equipamiento_botes = models.BooleanField(verbose_name="Botes de basura", default=False)
+    equipamiento_bancas = models.BooleanField(verbose_name="Bancas", default=False)
+    equipamiento_andadores = models.BooleanField(verbose_name="Andadores", default=False)
+    equipamiento_rampas = models.BooleanField(verbose_name="Rampas", default=False)
+
+    notas_parque = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
+
+    class Meta:
+        db_table = 'pp_parque'
+        ordering = ['p_parque_ID']
+        verbose_name = "Propuesta parque"
+
+    def __str__(self):
+        return str(self.p_parque_ID) or None
+
+class PpEscuela(models.Model):
+    # Campos para Rehabilitación
+
+    p_escuela_ID = models.AutoField(primary_key=True)
+    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Propuesta General", null=True, blank=True)
+
+    nom_escuela = models.CharField(max_length=100, verbose_name="Nombre de la Escuela", null=True, blank=True)
+
+    rehabilitacion_baños = models.BooleanField(verbose_name="Baños", default=False)
+    rehabilitacion_salones = models.BooleanField(verbose_name="Salones", default=False)
+    rehabilitacion_electricidad = models.BooleanField(verbose_name="Instalación eléctrica", default=False)
+    rehabilitacion_gimnasio = models.BooleanField(verbose_name="Gimnasio", default=False)
+    rehabilitacion_otro = models.BooleanField(verbose_name="Otro tipo de rehabilitación", default=False)
+
+    # Campos para Construcción Nueva
+    construccion_domo = models.BooleanField(verbose_name="Domo", default=False)
+    construccion_aula = models.BooleanField(verbose_name="Aula", default=False)
+
+    # Campos para Cancha
+    cancha_futbol_rapido = models.BooleanField(verbose_name="Fútbol Rápido", default=False)
+    cancha_futbol_7x7 = models.BooleanField(verbose_name="Fútbol 7x7", default=False)
+    cancha_usos_multiples = models.BooleanField(verbose_name="Usos Múltiples", default=False)
+
+    notas_escuela = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
+
+    class Meta:
+        db_table = 'pp_escuela'
+        ordering = ['p_escuela_ID']
+        verbose_name = "Propuesta Escuela"
+
+    def __str__(self):
+        return self.nom_escuela or None
+
+class PpCS(models.Model):
+    # Campos para Rehabilitación
+
+    p_cs_ID = models.AutoField(primary_key=True)
+    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Propuesta General", null=True, blank=True)
+
+    rehabilitacion_baños = models.BooleanField(verbose_name="Baños", default=False)
+    rehabilitacion_salones = models.BooleanField(verbose_name="Salones", default=False)
+    rehabilitacion_electricidad = models.BooleanField(verbose_name="Instalación eléctrica", default=False)
+    rehabilitacion_gimnasio = models.BooleanField(verbose_name="Gimnasio", default=False)
+
+    # Campos para Construcción Nueva
+    construccion_salon = models.BooleanField(verbose_name="Salón", default=False)
+    construccion_domo = models.BooleanField(verbose_name="Domo", default=False)
+    construccion_otro = models.BooleanField(verbose_name="Otro tipo de construcción", default=False)
+
+    notas_propuesta = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
+
+    class Meta:
+        db_table = 'pp_CS'
+        ordering = ['p_cs_ID']
+        verbose_name = "Propuesta Centro comunitario"
+
+    def __str__(self):
+        return str(self.p_cs_ID) or None
+
+class PpInfraestructura(models.Model):
+    # Campos para Infraestructura
+
+    pp_infraestructura_ID = models.AutoField(primary_key=True)
+    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Propuesta General", null=True, blank=True)
+
+    infraestructura_barda = models.BooleanField(verbose_name="Barda perimetral", default=False)
+    infraestructura_banquetas = models.BooleanField(verbose_name="Banquetas", default=False)
+    infraestructura_muro = models.BooleanField(verbose_name="Muro de contención", default=False)
+    infraestructura_camellon = models.BooleanField(verbose_name="Intervención en camellón", default=False)
+    infraestructura_crucero = models.BooleanField(verbose_name="Crucero seguro / cruce peatonal", default=False)
+    infraestructura_ordenamiento = models.BooleanField(verbose_name="Ordenamiento vehicular en calle", default=False)
+    infraestructura_er = models.BooleanField(verbose_name="Escalinatas / rampas", default=False)
+    infraestructura_mejora = models.BooleanField(verbose_name="Mejoramiento de imagen vehicular (pintura)", default=False)
+    infraestructura_peatonal = models.BooleanField(verbose_name="Paso peatonal", default=False)
+    infraestructura_bayoneta = models.BooleanField(verbose_name="Bayoneta / retorno", default=False)
+    infraestructura_topes = models.BooleanField(verbose_name="Pasos pompeyanos / reductores de velocidad", default=False)
+    infraestructura_puente = models.BooleanField(verbose_name="Puente vehicular", default=False)
+
+    # Campos para Pavimentación
+    pavimentacion_asfalto = models.BooleanField(verbose_name="Asfalto", default=False)
+    pavimentacion_rehabilitacion = models.BooleanField(verbose_name="Rehabilitación", default=False)
+
+    # Campos para Señalamiento Vial
+    señalamiento_pintura = models.BooleanField(verbose_name="Pintura", default=False)
+    señalamiento_señales = models.BooleanField(verbose_name="Señales verticales", default=False)
+
+    class Meta:
+        db_table = 'pp_infraestructura'
+        ordering = ['p_infraestructura_ID']
+        verbose_name = "Propuesta Infraestructura"
+
+    def __str__(self):
+        return str(self.pp_infraestructura_ID) or None
+
+class PpPluvial(models.Model):
+    # Campos para Soluciones Pluviales
+
+    pp_pluvial_ID = models.AutoField(primary_key=True)
+    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Propuesta General", null=True, blank=True)
+
+    pluvial_muro_contencion = models.BooleanField(verbose_name="Muro de contención", default=False)
+    pluvial_canalizacion = models.BooleanField(verbose_name="Canalización de arroyo", default=False)
+    pluvial_puente_peatonal = models.BooleanField(verbose_name="Puente peatonal sobre arroyo", default=False)
+    pluvial_vado = models.BooleanField(verbose_name="Construcción de vado", default=False)
+    pluvial_puente = models.BooleanField(verbose_name="Puente", default=False)
+    pluvial_desalojo = models.BooleanField(verbose_name="Solución de desalojo pluvial / descargas pluviales", default=False)
+    pluvial_rejillas = models.BooleanField(verbose_name="Rejillas pluviales", default=False)
+    pluvial_lavaderos = models.BooleanField(verbose_name="Lavaderos (para evitar socavación / inundaciones)", default=False)
+    pluvial_obra_hidraulica = models.BooleanField(verbose_name="Rehabilitación de obra hidráulica", default=False)
+    pluvial_reposicion_piso = models.BooleanField(verbose_name="Reposición de piso de arroyo", default=False)
+    pluvial_proteccion_inundaciones = models.BooleanField(verbose_name="Protección contra inundaciones", default=False)
+
+    class Meta:
+        db_table = 'pp_pluvial'
+        ordering = ['p_pluvial_ID']
+        verbose_name = "Propuesta Pluviales"
+
+    def __str__(self):
+        return str(self.pp_pluvial_ID) or None

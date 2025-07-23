@@ -1,5 +1,8 @@
 from django import forms
-from portaldu.cmin.models import Users  # Usar el modelo de usuario de cmin
+from portaldu.cmin.models import Users  # Importar el modelo Users de cmin
+from .models import (PpCS, PpEscuela, PpGeneral, PpPluvial, PpParque, PpInfraestructura)
+
+# Usar el modelo de usuario de cmin
 
 
 class DesUrUsersRender(forms.ModelForm):
@@ -75,3 +78,14 @@ class DesUrUsersConfig(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+class GeneralRender(forms.ModelForm):
+
+    class Meta:
+        model = PpGeneral
+        exclude = ['pp_ID']
+
+        widgets = {
+
+        }
+
