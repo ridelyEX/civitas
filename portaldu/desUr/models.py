@@ -225,13 +225,14 @@ class PpGeneral(models.Model):
     colonia_p = models.CharField(max_length=50, null=True, blank=True)
     cp_p = models.CharField(max_length=5, null=True, blank=True)
     desc_p = models.TextField(verbose_name="Descripción del Proyecto", null=True, blank=True)
+    fecha_pp = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     #choices menu
 
     cfe = models.CharField(max_length=50, verbose_name="CFE", null=True, blank=True, choices=CHOICES_STATE)
     agua = models.CharField(max_length=50, verbose_name="Agua", null=True, blank=True, choices=CHOICES_STATE)
     drenaje = models.CharField(max_length=50, verbose_name="Drenaje", null=True, blank=True, choices=CHOICES_STATE)
-    impermabilizacion = models.CharField(max_length=50, verbose_name="Impermeabilización", null=True, blank=True, choices=CHOICES_STATE)
+    impermeabilizacion = models.CharField(max_length=50, verbose_name="Impermeabilización", null=True, blank=True, choices=CHOICES_STATE)
     climas = models.CharField(max_length=50, verbose_name="Climas", null=True, blank=True, choices=CHOICES_STATE)
     alumbrado = models.CharField(max_length=50, verbose_name="Alumbrado", null=True, blank=True, choices=CHOICES_STATE)
 
@@ -376,7 +377,7 @@ class PpInfraestructura(models.Model):
 
     class Meta:
         db_table = 'pp_infraestructura'
-        ordering = ['p_infraestructura_ID']
+        ordering = ['pp_infraestructura_ID']
         verbose_name = "Propuesta Infraestructura"
 
     def __str__(self):
@@ -402,7 +403,7 @@ class PpPluvial(models.Model):
 
     class Meta:
         db_table = 'pp_pluvial'
-        ordering = ['p_pluvial_ID']
+        ordering = ['pp_pluvial_ID']
         verbose_name = "Propuesta Pluviales"
 
     def __str__(self):

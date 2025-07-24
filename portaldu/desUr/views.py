@@ -18,7 +18,8 @@ from django.contrib import messages
 from django.db import models  # Agregar esta importación para Q
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files
 from portaldu.cmin.models import Users, LoginDate  # Usar modelos de cmin
-from .forms import DesUrUsersRender, DesUrLogin, DesUrUsersConfig
+from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
+                    ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
 from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
 from datetime import date, datetime
@@ -950,6 +951,89 @@ def user_errors(request, error):
             'accion': 'Reintentar'
         }
     })
+
+# Presupuesto participativo
+
+
+def gen_render(request):
+    if request.method == 'POST':
+        form = GeneralRender(request.POST or None)
+        if form.is_valid():
+            print("si chambea")
+            form.save()
+            return redirect('')
+    else:
+        print("no chambea")
+        form = GeneralRender()
+    return render(request, 'pp/datos_generales.html', {'form': form})
+
+
+def escuela_render(request):
+    if request.method == 'POST':
+        form = EscuelaRender(request.POST or None)
+        if form.is_valid():
+            print("si chambea")
+            form.save()
+            return redirect('')
+    else:
+        print("no chambea")
+        form = EscuelaRender()
+
+    return render(request, 'pp/escuela.html', {'form': form})
+
+
+def parque_render(request):
+    if request.method == 'POST':
+        form = ParqueRender(request.POST or None)
+        if form.is_valid():
+            print("si chambea")
+            form.save()
+            return redirect('')
+    else:
+        print("no chambea")
+        form = ParqueRender()
+    return render(request, 'pp/parque.html', {'form': form})
+
+
+def cs_render(request):
+    if request.method == 'POST':
+        form = CsRender(request.POST or None)
+        if form.is_valid():
+            print("si chambea")
+            form.save()
+            return redirect('')
+    else:
+        print("no chambea")
+        form = CsRender()
+
+    return render(request, 'pp/centro_salon.html', {'form': form})
+
+
+def infraestructura_render(request):
+    if request.method == 'POST':
+        form = InfraestructuraRender(request.POST or None)
+        if form.is_valid():
+            print("si chambea")
+            form.save()
+            return redirect('')
+    else:
+        print("no chambea")
+        form = InfraestructuraRender()
+    return render(request, 'pp/infraestructura.html', {'form': form})
+
+
+def pluvial_render(request):
+    if request.method == 'POST':
+        form = PluvialRender(request.POST or None)
+        if form.is_valid():
+            print("si chambea")
+            form.save()
+            return redirect('')
+    else:
+        print("no chambea")
+        form = PluvialRender()
+
+    return render(request, 'pp/pluviales.html', {'form': form})
 
 
 #API

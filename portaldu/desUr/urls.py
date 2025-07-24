@@ -19,6 +19,14 @@ urlpatterns = [
     path('auth/historial/', views.desur_historial, name='desur_historial'),
     path('auth/buscar/', views.desur_buscar_tramite, name='desur_buscar'),
 
+    # URLs presupuesto particicpativo
+    path('pp/general', views.gen_render, name='general'),
+    path('pp/escuelas', views.escuela_render, name='escuelas'),
+    path('pp/parques', views.parque_render, name='parques'),
+    path('pp/centros', views.cs_render, name='centros'),
+    path('pp/infraestructura', views.infraestructura_render, name='infraestructura'),
+    path('pp/pluviales', views.pluvial_render, name='pluviales'),
+
     # URLs existentes de desUr
     path('base/', views.base, name='base'),
     path('nada/', views.document, name="document"),

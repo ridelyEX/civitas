@@ -10,8 +10,44 @@
 {% block body %}
 
 <main>
-    <form action="">
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="container">
+            <h1>Datos generales</h1>
+            <p>Por favor, completa los siguientes datos para participar en el presupuesto participativo.</p>
+            <div class="row-md-6">
+                <label for="id_nombre_promovente">Nombre del promovente:</label>
+                {{form.nombre_promovente}}
+                <label for="id_telefono">Celular:</label>
+                {{form.telefono}}
+            </div>
+            <br>
+            <div class="row-md-8">
+                <label for="id_direccion_proyecto">Dirección del proyecto:</label>
+                {{form.direccion_proyecto}}
+            </div>
+            <br>
+            <div class="row-md-6">
+                <label for="id_desc_p">Descripción del estado actual de la instalación</label>
+                {{form.desc_p}}
+            </div>
+            <br>
+            <div class="col-md-6 check-group">
+                <div class="check">
+                    <label for="id_cfe">Instalación CFE</label>
+                    {{form.cfe}}
+                </div>
+                <div class="check">
+                    <label for="id_agua">Instalación agua potable</label>
+                    {{form.agua}}
+                </div>
+                <div class="check">
+                    <label for="id_drenaje">Instalación drenaje</label>
+                    {{form.drenaje}}
+                </div>
+            </div>
 
+        </div>
     </form>
 
 </main>

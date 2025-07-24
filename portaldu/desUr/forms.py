@@ -1,9 +1,15 @@
 from django import forms
+
 from portaldu.cmin.models import Users  # Importar el modelo Users de cmin
 from .models import (PpCS, PpEscuela, PpGeneral, PpPluvial, PpParque, PpInfraestructura)
 
 # Usar el modelo de usuario de cmin
 
+CHOICES_STATE = [
+    ("bueno", "Bueno"),
+    ("regular", "Regular"),
+    ("malo", "Malo"),
+]
 
 class DesUrUsersRender(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
@@ -79,13 +85,208 @@ class DesUrUsersConfig(forms.ModelForm):
             user.save()
         return user
 
+
 class GeneralRender(forms.ModelForm):
 
     class Meta:
         model = PpGeneral
-        exclude = ['pp_ID']
+        exclude = ['pp_ID', 'fecha_pp', 'calle_p', 'colonia_p', 'cp_p']
 
         widgets = {
-
+            'nombre_promovente':forms.TextInput(attrs={'class':'form-control'}),
+            'telefono':forms.NumberInput(attrs={'class':'form-control', 'pattern':'[0-9}{10}'}),
+            'direccion_proyecto':forms.TextInput(attrs={'class':'form-control'}),
+            'desc_p':forms.Textarea(attrs={'class':'text-form-cotrol'}),
+            'cfe':forms.CheckboxSelectMultiple(attrs={'class':'check-form-control'},
+                                               choices=CHOICES_STATE
+                                               ),
+            'agua': forms.CheckboxSelectMultiple(
+                attrs={'class': 'check-form-control'},
+                choices=CHOICES_STATE
+                ),
+            'drenaje': forms.CheckboxSelectMultiple(
+               attrs={'class': 'check-form-control'},
+                choices=CHOICES_STATE
+                ),
+            'impermeabilizacion': forms.CheckboxSelectMultiple(
+               attrs={'class': 'check-form-control'},
+                choices=CHOICES_STATE
+                ),
+            'climas': forms.CheckboxSelectMultiple(
+                attrs={'class': 'check-form-control'},
+                choices=CHOICES_STATE
+                ),
+            'alumbrado': forms.CheckboxSelectMultiple(
+               attrs={'class': 'check-form-control'},
+                choices=CHOICES_STATE
+                ),
+            'notas_importantes':forms.Textarea(attrs={'class':'text-form-controll'},
+                                               ),
         }
 
+class ParqueRender(forms.ModelForm):
+
+    class Meta:
+        model = PpParque
+        exclude = ['p_parque_ID', 'fk_pp']
+
+        widgets = {
+            'cancha_futbol_rapido':forms.CheckboxInput(attrs={'class':'check-form-control'}),
+            'cancha_futbol_soccer': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'cancha_futbol_7x7': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'cancha_beisbol': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'cancha_usos_multiples': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'cancha_otro': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'alumbrado_rehabilitacion': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'alumbrado_nuevo': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'juegos_dog_park': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'juegos_infantiles': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'juegos_ejercitadores': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'juegos_otros': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'techumbre_domo': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'techumbre_kiosko': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'equipamiento_botes': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'equipamiento_bancas': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'equipamiento_andadores': forms.CheckboxInput(
+              attrs={'class': 'check-form-control'}),
+            'equipamiento_rampas': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'notas_parque':forms.Textarea(attrs={'class':'text-form-control'}),
+        }
+
+class EscuelaRender(forms.ModelForm):
+    class Meta:
+        model = PpEscuela
+        exclude = ['p_escuela_ID', 'fk_pp']
+
+        widgets = {
+            'nom_escuela':forms.TextInput(attrs={'class':'form-control'}),
+            'rehabilitacion_baños':forms.CheckboxInput(attrs={'class':'check-form-control'}),
+            'rehabilitacion_salones': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'rehabilitacion_electricidad': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'rehabilitacion_gimnasio': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'rehabilitacion_otro': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'contruccion_domo': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'construccion_aula': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'cancha_futbol_rapido': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'cancha_futbol_soccer': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'cancha_futbol_7x7': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'notas_escuela': forms.Textarea(attrs={'class': 'text-form-control'}),
+        }
+
+class CsRender(forms.ModelForm):
+    class Meta:
+        model = PpCS
+        exclude = ['p_cs_ID', 'fk_pp']
+
+        widgets = {
+            'rehabilitacion_baños': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'rehabilitacion_salones': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'rehabilitacion_electricidad': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'rehabilitacion_gimnasio': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'contruccion_domo': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'construccion_salon': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'construccion_otro': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'notas_propuesta': forms.Textarea(attrs={'class': 'text-form-control'}),
+        }
+
+class InfraestructuraRender(forms.ModelForm):
+    class Meta:
+        model = PpInfraestructura
+        exclude = ['pp_infraestructura_id', 'fk_pp']
+
+        widgets = {
+            'infraestructura_barda':forms.CheckboxInput(attrs={'class':'check-form-control'}),
+            'infraestructura_baquetas': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_muo': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_camellon': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_crucero': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_ordenamiento': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_er': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_mejora': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_peatonal': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_bayoneta': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_topes': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'infraestructura_puente': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pavimentacion_asfalto': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'paviemntacion_rehabilitacion': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'señalamiento_pintura': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'señalamiento_señales': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+        }
+
+class PluvialRender(forms.ModelForm):
+    class Meta:
+        model = PpPluvial
+        exclude = ['pp_pluvial_ID', 'fk_pp']
+
+
+        widgets = {
+            'pluvial_muro_contencion':forms.CheckboxInput(attrs={'class':'check-form-control'}),
+            'pluvial_canaliazacion': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_puente_peatonal': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_vado': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_puente': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_desalojo': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_rejillas': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_lavaderos': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_obra_hidraulica': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_reposicion_piso': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+            'pluvial_proteccion_inundaciones': forms.CheckboxInput(
+                attrs={'class': 'check-form-control'}),
+
+        }
