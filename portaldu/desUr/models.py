@@ -216,6 +216,15 @@ class PpGeneral(models.Model):
         ('regular', 'Regular'),
         ('malo', 'Malo'),
     ]
+    
+    INSTALATION_CHOICES = [
+        ('cfe', 'CFE'),
+        ('agua', 'Agua'),
+        ('drenaje', 'Drenaje'),
+        ('impermeabilizacion', 'Impermeabilización'),
+        ('climas', 'Climas'),
+        ('alumbrado', 'Alumbrado'),
+    ]
 
     pp_ID = models.AutoField(primary_key=True)
     nombre_promovente = models.CharField(max_length=100, verbose_name="Nombre del Promovente", null=True, blank=True)
@@ -229,12 +238,13 @@ class PpGeneral(models.Model):
 
     #choices menu
 
-    cfe = models.CharField(max_length=50, verbose_name="CFE", null=True, blank=True, choices=CHOICES_STATE)
-    agua = models.CharField(max_length=50, verbose_name="Agua", null=True, blank=True, choices=CHOICES_STATE)
-    drenaje = models.CharField(max_length=50, verbose_name="Drenaje", null=True, blank=True, choices=CHOICES_STATE)
-    impermeabilizacion = models.CharField(max_length=50, verbose_name="Impermeabilización", null=True, blank=True, choices=CHOICES_STATE)
-    climas = models.CharField(max_length=50, verbose_name="Climas", null=True, blank=True, choices=CHOICES_STATE)
-    alumbrado = models.CharField(max_length=50, verbose_name="Alumbrado", null=True, blank=True, choices=CHOICES_STATE)
+    instalation_choices = models.JSONField(
+        verbose_name="isntalaciones",
+        default=dict,
+        null=True,
+        blank=True,
+        help_text="Seleccione las instalaciones necesarias para la propuesta.",
+    )
 
     notas_importantes = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
 

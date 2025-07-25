@@ -653,7 +653,7 @@ def document2(request):
 @login_required
 def clear(request):
     # SÍ login_required - solo empleados limpian sesiones
-    response = redirect('desur_login')  # Cambiar redirect a login de empleados
+    response = redirect('desur_menu')  # Cambiar redirect a login de empleados
     response.delete_cookie('uuid')
     return response
 

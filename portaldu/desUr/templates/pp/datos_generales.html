@@ -3,11 +3,14 @@
 {% block title %}Vinculación social - Presupuesto participativo{% endblock %}
 
 {% block head %}
-
+{% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+<link rel="stylesheet" href="{% static 'styles/ppStyles.css' %}?=v1">
 {% endblock %}
 
 
-{% block body %}
+{% block body %}{% include 'nav.html' %}
 
 <main>
     <form method="post" action="">
@@ -32,7 +35,7 @@
                 {{form.desc_p}}
             </div>
             <br>
-            <div class="col-md-6 check-group">
+            <div class="form-check check-group">
                 <div class="check">
                     <label for="id_cfe">Instalación CFE</label>
                     {{form.cfe}}
@@ -45,6 +48,18 @@
                     <label for="id_drenaje">Instalación drenaje</label>
                     {{form.drenaje}}
                 </div>
+                <div class="check">
+                    <label for="id_impermeabilizacion">Impermeabilización</label>
+                    {{form.impermeabilizacion}}
+                </div>
+                <div class="check">
+                    <label for="id_climas">Climas</label>
+                    {{form.climas}}
+                </div>
+                <div class="check">
+                    <label for="id_alumbrado">Alumbrado</label>
+                    {{form.alumbrado}}
+                </div>
             </div>
 
         </div>
@@ -55,4 +70,24 @@
 {% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function(){
+        // Ocultar todos los elementos con id que terminen en "_0" (primera opción de los checkbox)
+        var elementos = document.querySelectorAll('[id$="_0"]');
+        elementos.forEach(function(elemento) {
+            // Verificar si es un input tipo checkbox o radio
+            if (elemento.type === 'checkbox' || elemento.type === 'radio') {
+                elemento.style.display = 'none';
+                // También ocultar el label asociado si existe
+                var label = document.querySelector('label[for="' + elemento.id + '"]');
+                if (label) {
+                    label.style.display = 'none';
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

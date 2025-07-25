@@ -1,4 +1,21 @@
+@import url('global-base.css');
+@import url('buttons-common.css');
+
 .check-group{
     display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
 
+.check-group label{
+    margin-right: 5px;
+}
+
+.check-group .check{
+    width: 12rem;
+    height: 7rem;
+    display: inline-block;
+    
+    
 }

@@ -88,6 +88,49 @@ class DesUrUsersConfig(forms.ModelForm):
 
 class GeneralRender(forms.ModelForm):
 
+    cfe = forms.ChoiceField(   
+        choices=[('','-----')] + PpGeneral.CHOICES_STATE,
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+
+        label="Instalación CFE",
+    )
+
+    agua = forms.ChoiceField(
+        choices=[('', '-----')] + PpGeneral.CHOICES_STATE,
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+
+        label="Instalación agua porable",
+    )
+    drenaje = forms.ChoiceField(
+        choices=[('','-----')] + PpGeneral.CHOICES_STATE,
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+
+        label="Instalación drenaje",
+    )
+    impermeabilizacion = forms.ChoiceField(
+        choices=[('','-----')] + PpGeneral.CHOICES_STATE,
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+
+        label="Impermeabilización",
+    )
+    climas = forms.ChoiceField(
+        choices=[('','-----')] + PpGeneral.CHOICES_STATE,
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+
+        label="climas",
+    )
+    alumbrado = forms.ChoiceField(
+        choices=[('', '-----')] + PpGeneral.CHOICES_STATE,
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label="alumbrado",
+    )
+
     class Meta:
         model = PpGeneral
         exclude = ['pp_ID', 'fecha_pp', 'calle_p', 'colonia_p', 'cp_p']
@@ -97,32 +140,33 @@ class GeneralRender(forms.ModelForm):
             'telefono':forms.NumberInput(attrs={'class':'form-control', 'pattern':'[0-9}{10}'}),
             'direccion_proyecto':forms.TextInput(attrs={'class':'form-control'}),
             'desc_p':forms.Textarea(attrs={'class':'text-form-cotrol'}),
-            'cfe':forms.CheckboxSelectMultiple(attrs={'class':'check-form-control'},
-                                               choices=CHOICES_STATE
-                                               ),
-            'agua': forms.CheckboxSelectMultiple(
-                attrs={'class': 'check-form-control'},
-                choices=CHOICES_STATE
-                ),
-            'drenaje': forms.CheckboxSelectMultiple(
-               attrs={'class': 'check-form-control'},
-                choices=CHOICES_STATE
-                ),
-            'impermeabilizacion': forms.CheckboxSelectMultiple(
-               attrs={'class': 'check-form-control'},
-                choices=CHOICES_STATE
-                ),
-            'climas': forms.CheckboxSelectMultiple(
-                attrs={'class': 'check-form-control'},
-                choices=CHOICES_STATE
-                ),
-            'alumbrado': forms.CheckboxSelectMultiple(
-               attrs={'class': 'check-form-control'},
-                choices=CHOICES_STATE
-                ),
-            'notas_importantes':forms.Textarea(attrs={'class':'text-form-controll'},
-                                               ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance.pk and self.instance.instalation_choices:
+            for instalacion, estado in self.instance.instlation_choices.items():
+                if instalacion in self.fields:
+                    self.fields[instalacion].initial = estado
+
+    def save(self, commit = True):
+        instance = super().save(commit=False)
+
+        instalation_choices = {}
+
+        instalaciones = ['cfe', 'agua', 'drenaje', 'impermeabilizacion', 'climas', 'alumbrado']
+
+        for instalacion in instalaciones:
+            estado = self.cleaned_data.get(instalacion)
+            if estado:
+                instalation_choices[instalacion] = estado
+
+        instance.instalation_choices = instalation_choices
+
+        if commit:
+            instance.save()
+        return instance
 
 class ParqueRender(forms.ModelForm):
 
