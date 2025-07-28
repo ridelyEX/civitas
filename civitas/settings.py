@@ -89,7 +89,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'civitas',
         'USER': 'root',
-        'PASSWORD': 'H0L4', #en la chamba admin, H0L4 en la lap y root en la compu
+        'PASSWORD': 'admin',  #en la chamba es admim, en la laptop es H0L4 y en la compu es root
         'HOST': 'localhost',
         'PORT': '3306',
     }
@@ -147,6 +147,8 @@ AUTH_USER_MODEL = 'cmin.users'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
+#LOGIN_URL = 'login'
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

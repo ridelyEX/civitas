@@ -1,11 +1,57 @@
 {% extends 'base.html' %}{% load static %}
 
-{% block title %}{% endblock %}
+{% block title %}Vinculación social - Presupuesto participativo{% endblock %}
 
-{% block head %}{% endblock %}
+{% block head %}
+{% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+<link rel="stylesheet" href="{% static 'styles/ppStyles.css' %}?=v1">
+{% endblock %}
 
 
-{% block body %}{% endblock %}
+{% block body %}{% include 'nav.html' %}
+    <main>
+        <form method="post">
+            {% csrf_token %}
+            <div class="container">
+                <h1>Parques</h1>
+                <div class="form-group">
+                    <div class="dropdown">
+                        <button class="dropdown-toggle">Cancha</button>
+                        <div class="dropdown-menu">
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha de fútbol rápido
+                            </label>
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha de fútbol sóccer
+                            </label>
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha de fútbol 7x7
+                            </label>
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha de beisbol
+                            </label>
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha de softbol
+                            </label>
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha de usos múltiples
+                            </label>
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha (otro)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+
+{% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+
+{% endblock %}

@@ -13,55 +13,69 @@
 {% block body %}{% include 'nav.html' %}
 
 <main>
-    <form method="post" action="">
+    <form method="post" action="{% url 'general' %}">
         {% csrf_token %}
         <div class="container">
             <h1>Datos generales</h1>
             <p>Por favor, completa los siguientes datos para participar en el presupuesto participativo.</p>
-            <div class="row-md-6">
-                <label for="id_nombre_promovente">Nombre del promovente:</label>
+            <div class="row-md-6 form-group">
+                <label for="id_nombre_promovente" class="label">Nombre del promovente:</label>
                 {{form.nombre_promovente}}
-                <label for="id_telefono">Celular:</label>
+                <label for="id_telefono" class="label">Celular:</label>
                 {{form.telefono}}
-            </div>
             <br>
-            <div class="row-md-8">
-                <label for="id_direccion_proyecto">Dirección del proyecto:</label>
+                <label for="categoria">Categoria</label>
+                <select name="categoria" id="categoria" class="form-cat">
+                    <option value="">-- Seleccione una opción --</option>
+                    <option value="parque">Parques</option>
+                    <option value="escuela">Escuelas</option>
+                    <option value="cs">Centro comunitario / Salón de usos múltiples</option>
+                    <option value="infraestructura">Infraestructura urbana</option>
+                    <option value="pluviales">Arroyos / Solución pluvial</option>
+                </select>
+            <br>
+                <label for="id_direccion_proyecto" class="label">Dirección del proyecto:</label>
                 {{form.direccion_proyecto}}
-            </div>
             <br>
-            <div class="row-md-6">
-                <label for="id_desc_p">Descripción del estado actual de la instalación</label>
+                <label for="id_desc_p" class="label">Descripción del estado actual de la instalación</label>
                 {{form.desc_p}}
             </div>
             <br>
             <div class=" check-group">
                 <div class="check">
-                    <label for="id_cfe">Instalación CFE</label>
+                    <label for="id_cfe" class="label">Instalación CFE</label>
                     {{form.cfe}}
                 </div>
                 <div class="check">
-                    <label for="id_agua">Instalación agua potable</label>
+                    <label for="id_agua" class="label">Instalación agua potable</label>
                     {{form.agua}}
                 </div>
                 <div class="check">
-                    <label for="id_drenaje">Instalación drenaje</label>
+                    <label for="id_drenaje" class="label">Instalación drenaje</label>
                     {{form.drenaje}}
                 </div>
                 <div class="check">
-                    <label for="id_impermeabilizacion">Impermeabilización</label>
+                    <label for="id_impermeabilizacion" class="label">Impermeabilización</label>
                     {{form.impermeabilizacion}}
                 </div>
                 <div class="check">
-                    <label for="id_climas">Climas</label>
+                    <label for="id_climas" class="label">Climas</label>
                     {{form.climas}}
                 </div>
                 <div class="check">
-                    <label for="id_alumbrado">Alumbrado</label>
+                    <label for="id_alumbrado" class="label">Alumbrado</label>
                     {{form.alumbrado}}
                 </div>
             </div>
 
+        </div>
+        <div class="Ibottom">
+            <div class="lBtn">
+              <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
+            </div>
+            <div class="rBtn">
+              <button type="submit" class="next nbtn" id="next">Siguiente</button>
+            </div>
         </div>
     </form>
 
@@ -89,5 +103,8 @@
         });
     });
 </script>
+
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+
 
 {% endblock %}

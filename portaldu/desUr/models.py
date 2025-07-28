@@ -229,6 +229,7 @@ class PpGeneral(models.Model):
     pp_ID = models.AutoField(primary_key=True)
     nombre_promovente = models.CharField(max_length=100, verbose_name="Nombre del Promovente", null=True, blank=True)
     telefono = PhoneNumberField(region="MX", verbose_name="Teléfono", null=True, blank=True)
+    categoria = models.CharField(max_length=100, verbose_name="Categoria del Proyecto", null=True, blank=True)
     direccion_proyecto = models.TextField(verbose_name="Dirección del Proyecto", null=True, blank=True)
     calle_p = models.CharField(max_length=50, null=True, blank=True)
     colonia_p = models.CharField(max_length=50, null=True, blank=True)
@@ -266,6 +267,7 @@ class PpParque(models.Model):
     cancha_futbol_soccer = models.BooleanField(verbose_name="Fútbol Soccer", default=False)
     cancha_futbol_7x7 = models.BooleanField(verbose_name="Fútbol 7x7", default=False)
     cancha_beisbol = models.BooleanField(verbose_name="Beisbol", default=False)
+    cancha_softbol = models.BooleanField(verbose_name="Softbol", default=False)
     cancha_usos_multiples = models.BooleanField(verbose_name="Usos Múltiples", default=False)
     cancha_otro = models.BooleanField(verbose_name="Otro tipo de cancha", default=False)
 

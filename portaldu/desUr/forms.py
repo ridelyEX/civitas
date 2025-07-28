@@ -136,10 +136,10 @@ class GeneralRender(forms.ModelForm):
         exclude = ['pp_ID', 'fecha_pp', 'calle_p', 'colonia_p', 'cp_p']
 
         widgets = {
-            'nombre_promovente':forms.TextInput(attrs={'class':'form-control'}),
-            'telefono':forms.NumberInput(attrs={'class':'form-control', 'pattern':'[0-9}{10}'}),
-            'direccion_proyecto':forms.TextInput(attrs={'class':'form-control'}),
-            'desc_p':forms.Textarea(attrs={'class':'text-form-cotrol'}),
+            'nombre_promovente':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Nombre del promovente'}),
+            'telefono':forms.NumberInput(attrs={'class':'form-control', 'pattern':'[0-9}{10}', 'max-length':'10', 'placeholder':'Número de teléfono'}),
+            'direccion_proyecto':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Dirección del proyecto'}),
+            'desc_p':forms.Textarea(attrs={'class':'text-form-control', 'placeholder':'Descripción del proyecto'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -181,6 +181,8 @@ class ParqueRender(forms.ModelForm):
             'cancha_futbol_7x7': forms.CheckboxInput(
                attrs={'class': 'check-form-control'}),
             'cancha_beisbol': forms.CheckboxInput(
+               attrs={'class': 'check-form-control'}),
+            'cancha_softbol': forms.CheckboxInput(
                attrs={'class': 'check-form-control'}),
             'cancha_usos_multiples': forms.CheckboxInput(
                attrs={'class': 'check-form-control'}),

@@ -957,11 +957,29 @@ def user_errors(request, error):
 
 def gen_render(request):
     if request.method == 'POST':
+        categoria = request.POST.get('categoria')
+        cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluvial']
+        if categoria and categoria in cat_values:
+            request.session['categoria'] = categoria
+        else:
+            messages.error(request, "El valor mandado no vale nada")
         form = GeneralRender(request.POST or None)
         if form.is_valid():
             print("si chambea")
             form.save()
-            return redirect('')
+
+            match categoria:
+                case 'parque':
+                    return redirect('parques')
+                case 'cs':
+                    return redirect('centros')
+                case 'escuela':
+                    return redirect('escuelas')
+                case 'infraestructura':
+                    return redirect('infraestructura')
+                case 'pluvial':
+                    return redirect('pluviales')
+
     else:
         print("no chambea")
         form = GeneralRender()
@@ -970,11 +988,11 @@ def gen_render(request):
 
 def escuela_render(request):
     if request.method == 'POST':
+
         form = EscuelaRender(request.POST or None)
         if form.is_valid():
             print("si chambea")
             form.save()
-            return redirect('')
     else:
         print("no chambea")
         form = EscuelaRender()
@@ -988,7 +1006,7 @@ def parque_render(request):
         if form.is_valid():
             print("si chambea")
             form.save()
-            return redirect('')
+
     else:
         print("no chambea")
         form = ParqueRender()
