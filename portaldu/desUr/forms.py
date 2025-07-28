@@ -91,43 +91,43 @@ class GeneralRender(forms.ModelForm):
     cfe = forms.ChoiceField(   
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        widget=forms.RadioSelect(),
 
-        label="Instalación CFE",
+
     )
 
     agua = forms.ChoiceField(
         choices=[('', '-----')] + PpGeneral.CHOICES_STATE,
         required=False,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        widget=forms.RadioSelect(),
 
-        label="Instalación agua porable",
+        label="Instalación agua potable",
     )
     drenaje = forms.ChoiceField(
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        widget=forms.RadioSelect(),
 
         label="Instalación drenaje",
     )
     impermeabilizacion = forms.ChoiceField(
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        widget=forms.RadioSelect(),
 
         label="Impermeabilización",
     )
     climas = forms.ChoiceField(
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        widget=forms.RadioSelect(),
 
         label="climas",
     )
     alumbrado = forms.ChoiceField(
         choices=[('', '-----')] + PpGeneral.CHOICES_STATE,
         required=False,
-        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        widget=forms.RadioSelect(),
         label="alumbrado",
     )
 
