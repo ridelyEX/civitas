@@ -173,6 +173,7 @@ def home(request):
     # SÍ login_required - punto de entrada solo para empleados autenticados
     if request.method == 'POST':
         uuidM = request.COOKIES.get('uuid')
+        action = request.POST.get('action')
 
         if not uuidM:
             uuidM = str(uuid.uuid4())
@@ -183,8 +184,10 @@ def home(request):
                 new = Uuid(uuid=uuidM)
                 new.save()
                 print(new)
-
-        response = redirect('data')
+        if action == 'op':
+            response = redirect('data')
+        else:
+            response = redirect('general')
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
     return render(request, 'main.html')
@@ -977,7 +980,7 @@ def gen_render(request):
                     return redirect('escuelas')
                 case 'infraestructura':
                     return redirect('infraestructura')
-                case 'pluvial':
+                case 'pluviales':
                     return redirect('pluviales')
 
     else:
@@ -1006,7 +1009,6 @@ def parque_render(request):
         if form.is_valid():
             print("si chambea")
             form.save()
-
     else:
         print("no chambea")
         form = ParqueRender()
@@ -1019,7 +1021,6 @@ def cs_render(request):
         if form.is_valid():
             print("si chambea")
             form.save()
-            return redirect('')
     else:
         print("no chambea")
         form = CsRender()

@@ -387,6 +387,9 @@ class PpInfraestructura(models.Model):
     señalamiento_pintura = models.BooleanField(verbose_name="Pintura", default=False)
     señalamiento_señales = models.BooleanField(verbose_name="Señales verticales", default=False)
 
+    notas_propuesta = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
+
+
     class Meta:
         db_table = 'pp_infraestructura'
         ordering = ['pp_infraestructura_ID']
@@ -412,6 +415,10 @@ class PpPluvial(models.Model):
     pluvial_obra_hidraulica = models.BooleanField(verbose_name="Rehabilitación de obra hidráulica", default=False)
     pluvial_reposicion_piso = models.BooleanField(verbose_name="Reposición de piso de arroyo", default=False)
     pluvial_proteccion_inundaciones = models.BooleanField(verbose_name="Protección contra inundaciones", default=False)
+    pluvial_otro = models.BooleanField(verbose_name="Otro", default=False)
+
+    notas_propuesta = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
+
 
     class Meta:
         db_table = 'pp_pluvial'

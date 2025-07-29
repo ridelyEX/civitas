@@ -1,11 +1,87 @@
 {% extends 'base.html' %}{% load static %}
 
-{% block title %}{% endblock %}
+{% block title %}Vinculación social - Presupuesto participativo{% endblock %}
 
-{% block head %}{% endblock %}
+{% block head %}
+{% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+<link rel="stylesheet" href="{% static 'styles/ppStyles.css' %}?=v1">
+{% endblock %}
 
 
-{% block body %}{% endblock %}
+{% block body %}{% include 'nav.html' %}
+<main>
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="container">
+            <h1>Centro comunitario / Salón de usos múltiples</h1>
+            <div class="form-group">
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Rehabilitación</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_baños}} Rehabilitación de baños
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_salones}} Rehabilitación de salones
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_electricidad}} Rehabilitación de electricidad
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_gimnasio}} Rehabilitación de gimnasio
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Nueva construcción</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.construccion_salon}} Construcción de salón
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.construccion_domo}} Construcción de domo
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.construccion_otro}} Construcción (otro)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <br>
+                <label for="id_desc_p" class="label">Notas importantes sobre la propuesta</label>
+                {{form.notas_propuesta}}
+            </div>
+        </div>
+        <div class="Ibottom">
+                <div class="lBtn">
+                    <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
+                </div>
+                <div class="rBtn">
+                    <button type="submit" class="next nbtn" id="next">Siguiente</button>
+                </div>
+            </div>
+    </form>
+</main>
+{% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+<script src="{% static 'sripts/acordeon.js' %}"></script>
+{% endblock %}

@@ -1,11 +1,109 @@
 {% extends 'base.html' %}{% load static %}
 
-{% block title %}{% endblock %}
+{% block title %}Vinculación social - Presupuesto participativo{% endblock %}
 
-{% block head %}{% endblock %}
+{% block head %}
+{% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+<link rel="stylesheet" href="{% static 'styles/ppStyles.css' %}?=v1">
+{% endblock %}
 
 
-{% block body %}{% endblock %}
+{% block body %}{% include 'nav.html' %}
+<main>
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="container">
+            <h1>Soluciones pluviales</h1>
+            <div class="form-group">
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Rehabilitación</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_muro_contencion}} Muro de contención
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_canalizacion}} Canalización de arroyo
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_puente_peatonal}} Puente peatonal sobre arroyo
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_vado}} Construcción de vado
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_puente}} Construcción de puente
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_desalojo}} Solución para desalojo pluvial / descargas pluviales
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_rejillas}} Rejillas pluviales
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_lavaderos}} Lavaderos (para evitar socavación / inundaciones)
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_obra_hidraulica}} Rehabilitación de obra hidráulica
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_reposicion_piso}} Reposición de piso de arroyo
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_proteccion_inundaciones}} Protección contra inundaciones
+                            </label>
+                        </div>
+
+                        <div class="simple-item">
+                            <label>
+                                {{form.pluvial_otro}} Otro
+                            </label>
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+                </div>
+                <br>
+                <label for="id_desc_p" class="label">Notas importantes sobre la propuesta</label>
+                {{form.notas_propuesta}}
+            </div>
+        </div>
+        <div class="Ibottom">
+                <div class="lBtn">
+                    <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
+                </div>
+                <div class="rBtn">
+                    <button type="submit" class="next nbtn" id="next">Siguiente</button>
+                </div>
+            </div>
+    </form>
+</main>
+{% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+<script src="{% static 'sripts/acordeon.js' %}"></script>
+{% endblock %}

@@ -17,32 +17,138 @@
             <div class="container">
                 <h1>Parques</h1>
                 <div class="form-group">
-                    <div class="dropdown">
-                        <button class="dropdown-toggle">Cancha</button>
-                        <div class="dropdown-menu">
-                            <label>
-                                {{form.cancha_futbol_rapido}} Cancha de fútbol rápido
-                            </label>
-                            <label>
-                                {{form.cancha_futbol_rapido}} Cancha de fútbol sóccer
-                            </label>
-                            <label>
-                                {{form.cancha_futbol_rapido}} Cancha de fútbol 7x7
-                            </label>
-                            <label>
-                                {{form.cancha_futbol_rapido}} Cancha de beisbol
-                            </label>
-                            <label>
-                                {{form.cancha_futbol_rapido}} Cancha de softbol
-                            </label>
-                            <label>
-                                {{form.cancha_futbol_rapido}} Cancha de usos múltiples
-                            </label>
-                            <label>
-                                {{form.cancha_futbol_rapido}} Cancha (otro)
-                            </label>
+                    <div class="simple-dropdown">
+                        <button class="simple-toggle">Cancha</button>
+                        <div class="simple-menu">
+                            <div class="simple-item">
+                                <label>
+                                    {{form.cancha_futbol_rapido}} Cancha de fútbol rápido
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.cancha_futbol_soccer}} Cancha de fútbol sóccer
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.cancha_futbol_7x7}} Cancha de fútbol 7x7
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.cancha_beisbol}} Cancha de beisbol
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.cancha_softbol}} Cancha de softbol
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.cancha_usos_multiples}} Cancha de usos múltiples
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.cancha_otro}} Cancha (otro)
+                                </label>
+                            </div>
+
                         </div>
                     </div>
+                    <div class="simple-dropdown">
+                        <button class="simple-toggle">Alumbrado</button>
+                        <div class="simple-menu">
+                            <div class="simple-item">
+                                <label>
+                                    {{form.alumbrado_rehabilitacion}} Rehabilitación de alumbrado
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.alumbrado_nuevo}} Instalación de alumbrado nuevo
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="simple-dropdown">
+                        <button class="simple-toggle">Juegos</button>
+                        <div class="simple-menu">
+                            <div class="simple-item">
+                                <label>
+                                    {{form.juegos_dog_park}} Dog park
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.juegos_infantiles}} Juegos infantiles
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.juegos_ejercitadores}} Juegos ejercitadores
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.juegos_otro}} Juegos (otro)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="simple-dropdown">
+                        <button class="simple-toggle">Techumbre</button>
+                        <div class="simple-menu">
+                            <div class="simple-item">
+                                <label>
+                                    {{form.techumbre_domo}} Domo
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.techumbre_kiosko}} Kiosco
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="simple-dropdown">
+                        <button class="simple-toggle">Equipamiento</button>
+                        <div class="simple-menu">
+                            <div class="simple-item">
+                                <label>
+                                    {{form.equipamiento_botes}} Botes de basura
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.equipamiento_bancas}} Bancas
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.equipamiento_andadores}} Andadores
+                                </label>
+                            </div>
+                            <div class="simple-item">
+                                <label>
+                                    {{form.equipamiento_rampas}} Rampas
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                        <label for="id_desc_p" class="label">Descripción del estado actual de la instalación</label>
+                        {{form.notas_parque}}
+                </div>
+            </div>
+            <div class="Ibottom">
+                <div class="lBtn">
+                    <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
+                </div>
+                <div class="rBtn">
+                    <button type="submit" class="next nbtn" id="next">Siguiente</button>
                 </div>
             </div>
         </form>
@@ -53,5 +159,5 @@
 
 {% block footer %}
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
-
+<script src="{% static 'sripts/acordeon.js' %}"></script>
 {% endblock %}

@@ -304,6 +304,8 @@ class InfraestructuraRender(forms.ModelForm):
                 attrs={'class': 'check-form-control'}),
             'señalamiento_señales': forms.CheckboxInput(
                 attrs={'class': 'check-form-control'}),
+            'notas_propuesta': forms.Textarea(attrs={'class': 'text-form-control'}),
+
         }
 
 class PluvialRender(forms.ModelForm):
@@ -334,5 +336,6 @@ class PluvialRender(forms.ModelForm):
                 attrs={'class': 'check-form-control'}),
             'pluvial_proteccion_inundaciones': forms.CheckboxInput(
                 attrs={'class': 'check-form-control'}),
+            'notas_propuesta': forms.Textarea(attrs={'class': 'text-form-control'}),
 
         }

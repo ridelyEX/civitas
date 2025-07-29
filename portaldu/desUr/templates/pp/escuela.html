@@ -1,11 +1,108 @@
 {% extends 'base.html' %}{% load static %}
 
-{% block title %}{% endblock %}
+{% block title %}Vinculación social - Presupuesto participativo{% endblock %}
 
-{% block head %}{% endblock %}
+{% block head %}
+{% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+<link rel="stylesheet" href="{% static 'styles/ppStyles.css' %}?=v1">
+{% endblock %}
 
 
-{% block body %}{% endblock %}
+{% block body %}{% include 'nav.html' %}
+<main>
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="container">
+            <h1>Escuelas</h1>
+            <div class="form-group">
+                <label for="id_nom_escuela">Nombre de la escuela</label>
+                {{form.nom_escuela}}
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Rehabilitación</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_baños}} Rehabilitación de baños
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_salones}} Rehabilitación de salones
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_electricidad}} Rehabilitación de electricidad
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_gimnasio}} Rehabilitación de gimnasio
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.rehabilitacion_otro}} Rehabilitación (otro)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Nueva construcción</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.construccion_domo}} Construcción de domo
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.construccion_aula}} Construcción de aula
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Cancha</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.cancha_futbol_rapido}} Cancha de fútbol rápido
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.cancha_futbol_7x7}} Cancha de fútbol 7x7
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.cancha_usos_multiples}} Cancha de usos múltiples
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <label for="id_desc_p" class="label">Notas importantes sobre la propuesta</label>
+                {{form.notas_escuela}}
+            </div>
+        </div>
+        <div class="Ibottom">
+                <div class="lBtn">
+                    <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
+                </div>
+                <div class="rBtn">
+                    <button type="submit" class="next nbtn" id="next">Siguiente</button>
+                </div>
+            </div>
+    </form>
+</main>
+{% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+<script src="{% static 'sripts/acordeon.js' %}"></script>
+{% endblock %}

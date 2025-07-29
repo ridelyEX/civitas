@@ -99,6 +99,9 @@
     margin: 0 auto;
 }
 
+.form-group .dropdown{
+    width: 100%;
+}
 
  .dropdown {
         position: relative;
@@ -111,6 +114,7 @@
         padding: 10px;
         border: none;
         cursor: pointer;
+        width: 100%;
     }
 
     .dropdown-menu {
@@ -119,6 +123,7 @@
         background-color: white;
         box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
         padding: 10px;
+        width: 100%;
         z-index: 1;
     }
 
@@ -130,3 +135,181 @@
         display: block;
         margin: 5px 0;
     }
+
+/* DROPDOWN SIMPLE - SIN COMPLICACIONES */
+.simple-dropdown {
+    position: relative;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.simple-toggle {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: left;
+}
+
+.simple-toggle:hover {
+    background-color: #0056b3;
+}
+
+.simple-menu {
+    display: none;
+    position: static;
+    background: white;
+    border: 2px solid #007bff;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-top: 2px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    z-index: 1000;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.simple-dropdown.open .simple-menu {
+    display: block;
+    max-height: 300px;
+    padding: 0;
+    animation: slideDown 0.3s ease;
+}
+
+.simple-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.simple-item:last-child {
+    border-bottom: none;
+}
+
+.simple-item:hover {
+    background-color: #f8f9fa;
+}
+
+.simple-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.simple-item label {
+    cursor: pointer;
+    margin: 0;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* MANTENER estilos existentes */
+.Ibottom {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(1, 1fr);
+    gap: 5rem;
+    justify-content: center;
+    width: max-content;
+    margin: 0 auto;
+}
+
+.container h1 {
+    margin-top: 0.65rem;
+    padding: 0.75rem;
+    width: 70%;
+    font-size: 3rem;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 4px;
+}
+
+.text-form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.simple-toggle {
+    position: relative;
+}
+
+.simple-toggle:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.simple-toggle::after {
+    content: '▼';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.3s ease;
+}
+
+.simple-dropdown.open .simple-toggle::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Mejorar área clickeable de checkboxes */
+.simple-item {
+    transition: background-color 0.2s ease;
+}
+
+.simple-item label {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+.simple-item input[type="checkbox"] {
+    margin-right: 12px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Indicador visual para focus */
+.simple-item input[type="checkbox"]:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 1px;
+}
+
+/* Hover más suave */
+.simple-item:hover {
+    background-color: #e3f2fd;
+}
+
+.simple-dropdown:hover .simple-menu {
+    display: block;
+    max-height: 300px;
+    padding: 0;
+    animation: slideDown 0.3s ease;
+}
+
+.simple-dropdown:hover .simple-toggle {
+    background-color: #0056b3;
+}
+
+.simple-dropdown:hover .simple-toggle::after {
+    transform: translateY(-50%) rotate(180deg);
+}

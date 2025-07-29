@@ -1,11 +1,138 @@
 {% extends 'base.html' %}{% load static %}
 
-{% block title %}{% endblock %}
+{% block title %}Vinculación social - Presupuesto participativo{% endblock %}
 
-{% block head %}{% endblock %}
+{% block head %}
+{% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+<link rel="stylesheet" href="{% static 'styles/ppStyles.css' %}?=v1">
+{% endblock %}
 
 
-{% block body %}{% endblock %}
+{% block body %}{% include 'nav.html' %}
+<main>
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="container">
+            <h1>Infraestructura</h1>
+            <div class="form-group">
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Infraestructura</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_barda}}  Barda perimetral
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_banquetas}} Banquetas
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_muro}} Muro de contención
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_camellon}} Intervención de camellón
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_crucero}} Crucero seguro / Cruce peatonal
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_ordenamiento}} Ordenamiento vehicular en calle
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_er}} Escalinas / rampas
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_mejora}} Mejoramiento de imagen vehicular (pintura)
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_peatonal}} Paso peatonal
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_bayoneta}} Bayoneta / retorno
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_topes}} Pasos pompeyanos / reductores de velocidad
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.infraestructura_puente}} Puente vehicular
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Pavimentación</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.pavimentacion_asfalto}} Asfalto
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pavimentacion_rehabilitacion}} Rehabilitación
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="simple-dropdown">
+                    <button class="simple-toggle">Rehabilitación</button>
+                    <div class="simple-menu">
+                        <div class="simple-item">
+                            <label>
+                                {{form.señalamiento_pintura}} Pintura
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.señalamiento_señales}} Señales verticales
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+                <br>
+                <label for="id_desc_p" class="label">Notas importantes sobre la propuesta</label>
+                {{form.notas_propuesta}}
+            </div>
+        </div>
+        <div class="Ibottom">
+                <div class="lBtn">
+                    <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
+                </div>
+                <div class="rBtn">
+                    <button type="submit" class="next nbtn" id="next">Siguiente</button>
+                </div>
+            </div>
+    </form>
+</main>
+{% endblock %}
 
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script src="{% static 'sripts/btnScripts.js' %}"></script>
+<script src="{% static 'sripts/acordeon.js' %}"></script>
+{% endblock %}
