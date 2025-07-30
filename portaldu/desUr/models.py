@@ -227,6 +227,8 @@ class PpGeneral(models.Model):
     ]
 
     pp_ID = models.AutoField(primary_key=True)
+    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="ides")
+
     nombre_promovente = models.CharField(max_length=100, verbose_name="Nombre del Promovente", null=True, blank=True)
     telefono = PhoneNumberField(region="MX", verbose_name="Teléfono", null=True, blank=True)
     categoria = models.CharField(max_length=100, verbose_name="Categoria del Proyecto", null=True, blank=True)

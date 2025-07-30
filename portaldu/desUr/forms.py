@@ -92,36 +92,31 @@ class GeneralRender(forms.ModelForm):
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
         widget=forms.RadioSelect(),
-
-
+        label="Instalación CFE",
     )
 
     agua = forms.ChoiceField(
         choices=[('', '-----')] + PpGeneral.CHOICES_STATE,
         required=False,
         widget=forms.RadioSelect(),
-
         label="Instalación agua potable",
     )
     drenaje = forms.ChoiceField(
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
         widget=forms.RadioSelect(),
-
         label="Instalación drenaje",
     )
     impermeabilizacion = forms.ChoiceField(
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
         widget=forms.RadioSelect(),
-
         label="Impermeabilización",
     )
     climas = forms.ChoiceField(
         choices=[('','-----')] + PpGeneral.CHOICES_STATE,
         required=False,
         widget=forms.RadioSelect(),
-
         label="climas",
     )
     alumbrado = forms.ChoiceField(
@@ -137,16 +132,18 @@ class GeneralRender(forms.ModelForm):
 
         widgets = {
             'nombre_promovente':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Nombre del promovente'}),
-            'telefono':forms.NumberInput(attrs={'class':'form-control', 'pattern':'[0-9}{10}', 'max-length':'10', 'placeholder':'Número de teléfono'}),
+            'telefono':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Número de teléfono'}),
+            'categoria':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Categoría del proyecto'}),
             'direccion_proyecto':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Dirección del proyecto'}),
-            'desc_p':forms.Textarea(attrs={'class':'text-form-control', 'placeholder':'Descripción del proyecto'}),
+            'desc_p':forms.Textarea(attrs={'class':'form-control', 'placeholder':'Descripción del proyecto'}),
+            'notas_importantes':forms.Textarea(attrs={'class':'form-control', 'placeholder':'Notas importantes'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         if self.instance.pk and self.instance.instalation_choices:
-            for instalacion, estado in self.instance.instlation_choices.items():
+            for instalacion, estado in self.instance.instalation_choices.items():
                 if instalacion in self.fields:
                     self.fields[instalacion].initial = estado
 

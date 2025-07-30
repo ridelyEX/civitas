@@ -16,7 +16,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para Q
-from .models import SubirDocs, soli, data, Uuid, Pagos, Files
+from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque
 from portaldu.cmin.models import Users, LoginDate  # Usar modelos de cmin
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
@@ -616,6 +616,38 @@ def save_document(request):
     return render(request, 'documet/save.html', {'doc':doc})
 
 @login_required
+def pp_document(request):
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
+
+    gen_data = get_object_or_404(PpGeneral, fuuid__uuid=uuid)
+    cat = request.session.get('categoria', 'sin categoria')
+    propuesta = None
+    num_folio = gen_pp_folio(gen_data.fuuid)
+    context = None
+
+    match cat:
+        case parque:
+            cat = "Parques"
+            propuesta = PpParque.objects.filter(fuuid__uuid=uuid).last()
+            context = {
+                "cat":cat,
+                "datos":{
+                    "nombre": gen_data.nombre_promovente,
+                    "telefono": gen_data.telefono,
+                    "direccion": gen_data.direccion_proyecto,
+                    "desc": gen_data.desc_p,
+                    "fecha": gen_data.fecha_pp,
+                    "notas": gen_data.notas_importantes,
+                },
+                "propuesta":{
+
+                }
+            }
+
+
+@login_required
 def document2(request):
     # SÍ login_required - empleados generan documentos de pago
     uuid = request.COOKIES.get('uuid')
@@ -760,6 +792,23 @@ def gen_folio(uid, puo):
     # ###
 
     return puo, folio
+
+def gen_pp_folio(uid):
+    """Folio para presupuesto participativo"""
+    pp_info = PpGeneral.objects.filter(fuuid=uid).last()
+    uid_str = str(uid.uuid)
+    folio = ''
+    if pp_info:
+        id_pp = pp_info.pk
+        print(pp_info)
+
+    fecha = date.today()
+    year_str = str(fecha.year)
+    year_slice = year_str[2:4]
+
+    folio = f'GOP-CPC-{id_pp:05d}-{uid_str[:4]}/{year_slice}'
+
+    return folio
 
 def cut_direction(dirreccion_completa):
     gmaps = googlemaps.Client(key=settings.GOOGLE_API_KEY)
@@ -955,10 +1004,29 @@ def user_errors(request, error):
         }
     })
 
+# Función auxiliar para PP
+def get_or_create_uuid(request):
+    """Obtiene o crea un UUID para las propuestas de PP"""
+    uuid_str = request.COOKIES.get('uuid') or request.session.get('pp_uuid')
+
+    if uuid_str:
+        try:
+            return Uuid.objects.get(uuid=uuid_str)
+        except Uuid.DoesNotExist:
+            pass
+
+    # Crear nuevo UUID
+    new_uuid = str(uuid.uuid4())
+    uuid_obj = Uuid.objects.create(uuid=new_uuid)
+    return uuid_obj
+
 # Presupuesto participativo
 
 
 def gen_render(request):
+    # Obtener o crear UUID para la propuesta
+    uuid_obj = get_or_create_uuid(request)
+
     if request.method == 'POST':
         categoria = request.POST.get('categoria')
         cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluvial']
@@ -966,10 +1034,16 @@ def gen_render(request):
             request.session['categoria'] = categoria
         else:
             messages.error(request, "El valor mandado no vale nada")
+
         form = GeneralRender(request.POST or None)
         if form.is_valid():
-            print("si chambea")
-            form.save()
+            # Vincular la instancia con el UUID
+            instance = form.save(commit=False)
+            instance.fuuid = uuid_obj
+            instance.save()
+
+            # Guardar UUID en sesión para continuidad
+            request.session['pp_uuid'] = str(uuid_obj.uuid)
 
             match categoria:
                 case 'parque':
@@ -980,81 +1054,169 @@ def gen_render(request):
                     return redirect('escuelas')
                 case 'infraestructura':
                     return redirect('infraestructura')
-                case 'pluviales':
+                case 'pluvial':
                     return redirect('pluviales')
-
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        print("no chambea")
         form = GeneralRender()
+
     return render(request, 'pp/datos_generales.html', {'form': form})
 
 
 def escuela_render(request):
-    if request.method == 'POST':
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
 
-        form = EscuelaRender(request.POST or None)
+    try:
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
+
+    if request.method == 'POST':
+        form = EscuelaRender(request.POST)
         if form.is_valid():
-            print("si chambea")
-            form.save()
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            messages.success(request, "Propuesta de escuela guardada exitosamente.")
+            return redirect('gen_render')  # O redirigir a donde corresponda
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        print("no chambea")
         form = EscuelaRender()
 
-    return render(request, 'pp/escuela.html', {'form': form})
+    return render(request, 'pp/escuela.html', {'form': form, 'pp_general': pp_general})
 
 
 def parque_render(request):
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
+
+    try:
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
+
     if request.method == 'POST':
-        form = ParqueRender(request.POST or None)
+        form = ParqueRender(request.POST)
         if form.is_valid():
-            print("si chambea")
-            form.save()
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            messages.success(request, "Propuesta de parque guardada exitosamente.")
+            return redirect('gen_render')  # O redirigir a donde corresponda
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        print("no chambea")
         form = ParqueRender()
-    return render(request, 'pp/parque.html', {'form': form})
+
+    return render(request, 'pp/parque.html', {'form': form, 'pp_general': pp_general})
 
 
 def cs_render(request):
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
+
+    try:
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
+
     if request.method == 'POST':
-        form = CsRender(request.POST or None)
+        form = CsRender(request.POST)
         if form.is_valid():
-            print("si chambea")
-            form.save()
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            messages.success(request, "Propuesta de centro/salón guardada exitosamente.")
+            return redirect('gen_render')  # O redirigir a donde corresponda
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        print("no chambea")
         form = CsRender()
 
-    return render(request, 'pp/centro_salon.html', {'form': form})
+    return render(request, 'pp/centro_salon.html', {'form': form, 'pp_general': pp_general})
 
 
 def infraestructura_render(request):
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
+
+    try:
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
+
     if request.method == 'POST':
-        form = InfraestructuraRender(request.POST or None)
+        form = InfraestructuraRender(request.POST)
         if form.is_valid():
-            print("si chambea")
-            form.save()
-            return redirect('')
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            messages.success(request, "Propuesta de infraestructura guardada exitosamente.")
+            return redirect('gen_render')  # O redirigir a donde corresponda
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        print("no chambea")
         form = InfraestructuraRender()
-    return render(request, 'pp/infraestructura.html', {'form': form})
+
+    return render(request, 'pp/infraestructura.html', {'form': form, 'pp_general': pp_general})
 
 
 def pluvial_render(request):
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
+
+    try:
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
+
     if request.method == 'POST':
-        form = PluvialRender(request.POST or None)
+        form = PluvialRender(request.POST)
         if form.is_valid():
-            print("si chambea")
-            form.save()
-            return redirect('')
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            messages.success(request, "Propuesta pluvial guardada exitosamente.")
+            return redirect('gen_render')  # O redirigir a donde corresponda
+        else:
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        print("no chambea")
         form = PluvialRender()
 
-    return render(request, 'pp/pluviales.html', {'form': form})
-
-
+    return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
 #API
 class FilesViewSet(viewsets.ModelViewSet):
     queryset = Files.objects.all()
