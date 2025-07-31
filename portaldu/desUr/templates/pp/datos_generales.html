@@ -13,9 +13,11 @@
 {% block body %}{% include 'nav.html' %}
 
 <main>
-    <form method="post" >
+    <form method="post" action="{% url 'general' %}">
         {% csrf_token %}
         <div class="container">
+            <input type="hidden" name="fuuid" value="{{ form.fuuid.value|default:'' }}">
+
             <h1>Datos generales</h1>
             <p>Por favor, completa los siguientes datos para participar en el presupuesto participativo.</p>
             <div class="row-md-6 form-group">

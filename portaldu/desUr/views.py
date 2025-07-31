@@ -16,7 +16,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para Q
-from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque
+from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
+    PpPluvial, PpFiles
 from portaldu.cmin.models import Users, LoginDate  # Usar modelos de cmin
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
@@ -186,8 +187,10 @@ def home(request):
                 print(new)
         if action == 'op':
             response = redirect('data')
-        else:
+        elif action == 'pp':
             response = redirect('general')
+        else:
+            reponse = redirect('home')
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
     return render(request, 'main.html')
@@ -625,12 +628,37 @@ def pp_document(request):
     cat = request.session.get('categoria', 'sin categoria')
     propuesta = None
     num_folio = gen_pp_folio(gen_data.fuuid)
-    context = None
+    context = {}
 
     match cat:
-        case parque:
+        case "parque":
             cat = "Parques"
-            propuesta = PpParque.objects.filter(fuuid__uuid=uuid).last()
+            propuesta = PpParque.objects.filter(fk_pp=gen_data).last()
+
+            propuesta_data = {}
+            if propuesta:
+                propuesta_data = {
+                    'cancha_futbol_rapido': propuesta.cancha_futbol_rapido,
+                    'cancha_futbol_soccer': propuesta.cancha_futbol_soccer,
+                    'cancha_futbol_7x7': propuesta.cancha_futbol_7x7,
+                    'cancha_beisbol': propuesta.cancha_beisbol,
+                    'cancha_softbol': propuesta.cancha_softbol,
+                    'cancha_usos_multiples': propuesta.cancha_usos_multiples,
+                    'cancha_otro': propuesta.cancha_otro,
+                    'alumbrado_rehabilitacion': propuesta.alumbrado_rehabilitacion,
+                    'alumbrado_nuevo': propuesta.alumbrado_nuevo,
+                    'juegos_dog_park': propuesta.juegos_dog_park,
+                    'juegos_infantiles': propuesta.juegos_infantiles,
+                    'juegos_ejercitadores': propuesta.juegos_ejercitadores,
+                    'juegos_otros': propuesta.juegos_otro,
+                    'techumbre_domo': propuesta.techumbre_domo,
+                    'techumbre_kiosko': propuesta.techumbre_kiosko,
+                    'equipamiento_botes': propuesta.equipamiento_botes,
+                    'equipamiento_bancas': propuesta.equipamiento_bancas,
+                    'equipamiento_andadores': propuesta.equipamiento_andadores,
+                    'equipamiento_rampas': propuesta.equipamiento_rampas,
+                }
+
             context = {
                 "cat":cat,
                 "datos":{
@@ -641,10 +669,168 @@ def pp_document(request):
                     "fecha": gen_data.fecha_pp,
                     "notas": gen_data.notas_importantes,
                 },
-                "propuesta":{
-
-                }
+                "propuesta": propuesta_data,
+                "notas": propuesta.notas_parque,
+                "folio": num_folio,
             }
+
+        case "escuela":
+            cat = "Escuelas"
+            propuesta = PpEscuela.objects.filter(fk_pp=gen_data).last()
+
+            propuesta_data = {}
+            if propuesta:
+                propuesta_data = {
+                    'rehabilitacion_baños': propuesta.rehabilitacion_baños,
+                    'rehabilitacion_salones': propuesta.rehabilitacion_salones,
+                    'rehabilitacion_electricidad': propuesta.rehabilitacion_electricidad,
+                    'rehabilitacion_gimnasio': propuesta.rehabilitacion_gimnasio,
+                    'rehabilitacion_otro': propuesta.rehabilitacion_otro,
+                    'construccion_domo': propuesta.construccion_domo,
+                    'construccion_aula': propuesta.construccion_aula,
+                    'cancha_futbol_rapido': propuesta.cancha_futbol_rapido,
+                    'cancha_usos_multiples': propuesta.cancha_usos_multiples,
+                    'cancha_futbol_7x7': propuesta.cancha_futbol_7x7,
+                }
+
+            context = {
+                "cat": cat,
+                "datos": {
+                    "nombre": gen_data.nombre_promovente,
+                    "telefono": gen_data.telefono,
+                    "direccion": gen_data.direccion_proyecto,
+                    "desc": gen_data.desc_p,
+                    "fecha": gen_data.fecha_pp,
+                    "notas": gen_data.notas_importantes,
+                },
+                "nom_escuela": propuesta.nom_escuela,
+                "propuesta": propuesta_data,
+                "notas": propuesta.notas_escuela,
+                "folio": num_folio
+            }
+
+        case "cs":
+            cat = "Centro comunitario / salón de usos múltiples"
+            propuesta = PpCS.objects.filter(fk_pp=gen_data).last()
+
+            propuesta_data = {}
+            if propuesta:
+                propuesta_data = {
+                    'rehabilitacion_baños': propuesta.rehabilitacion_baños,
+                    'rehabilitacion_salones': propuesta.rehabilitacion_salones,
+                    'rehabilitacion_electricidad': propuesta.rehabilitacion_electricidad,
+                    'rehabilitacion_gimnasio': propuesta.rehabilitacion_gimnasio,
+                    'contruccion_domo': propuesta.contruccion_domo,
+                    'construccion_salon': propuesta.construccion_salon,
+                    'construccion_otro': propuesta.construccion_otro,
+                }
+
+            context = {
+                "cat": cat,
+                "datos": {
+                    "nombre": gen_data.nombre_promovente,
+                    "telefono": gen_data.telefono,
+                    "direccion": gen_data.direccion_proyecto,
+                    "desc": gen_data.desc_p,
+                    "fecha": gen_data.fecha_pp,
+                    "notas": gen_data.notas_importantes,
+                },
+                "notas": propuesta.notas_propuesta,
+                "propuesta": propuesta_data,
+                "folio": num_folio
+            }
+        case "infraestructura":
+            cat = "Infraestructura"
+            propuesta = PpInfraestructura.objects.filter(fk_pp=gen_data).last()
+
+            propuesta_data = {}
+            if propuesta:
+                propuesta_data = {
+                    'infraestructura_barda': propuesta.infraestructura_barda,
+                    'infraestructura_baquetas': propuesta.infraestructura_baquetas,
+                    'infraestructura_muo': propuesta.infraestructura_muo,
+                    'infraestructura_camellon': propuesta.infraestructura_camellon,
+                    'infraestructura_crucero': propuesta.infraestructura_crucero,
+                    'infraestructura_ordenamiento': propuesta.infraestructura_ordenamiento,
+                    'infraestructura_er': propuesta.infraestructura_er,
+                    'infraestructura_mejora': propuesta.infraestructura_mejora,
+                    'infraestructura_peatonal': propuesta.infraestructura_peatonal,
+                    'infraestructura_bayoneta': propuesta.infraestructura_bayoneta,
+                    'infraestructura_topes': propuesta.infraestructura_topes,
+                    'infraestructura_puente': propuesta.infraestructura_puente,
+                    'pavimentacion_asfalto': propuesta.pavimentacion_asfalto,
+                    'paviemntacion_rehabilitacion': propuesta.paviemntacion_rehabilitacion,
+                    'señalamiento_pintura': propuesta.señalamiento_pintura,
+                    'señalamiento_señales': propuesta.señalamiento_señales,
+                }
+
+            context = {
+                "cat": cat,
+                "datos": {
+                    "nombre": gen_data.nombre_promovente,
+                    "telefono": gen_data.telefono,
+                    "direccion": gen_data.direccion_proyecto,
+                    "desc": gen_data.desc_p,
+                    "fecha": gen_data.fecha_pp,
+                    "notas": gen_data.notas_importantes,
+                },
+                "notas": propuesta.notas_propuesta,
+                "propuesta": propuesta_data,
+                "folio": num_folio
+            }
+
+        case "pluviales":
+            cat = "Soluciones pluviales"
+            propuesta = PpPluvial.objects.filter(fk_pp=gen_data).last()
+
+            propuesta_data = {}
+            if propuesta:
+                propuesta_data = {
+                    'pluvial_muro_contencion': propuesta.pluvial_muro_contencion,
+                    'pluvial_canaliazacion': propuesta.pluvial_canaliazacion,
+                    'pluvial_puente_peatonal': propuesta.pluvial_puente_peatonal,
+                    'pluvial_vado': propuesta.pluvial_vado,
+                    'pluvial_puente': propuesta.pluvial_puente,
+                    'pluvial_desalojo': propuesta.pluvial_desalojo,
+                    'pluvial_rejillas': propuesta.pluvial_rejillas,
+                    'pluvial_lavaderos': propuesta.pluvial_lavaderos,
+                    'pluvial_obra_hidraulica': propuesta.pluvial_obra_hidraulica,
+                    'pluvial_reposicion_piso': propuesta.pluvial_reposicion_piso,
+                    'pluvial_proteccion_inundaciones': propuesta.pluvial_proteccion_inundaciones,
+                }
+
+            context = {
+                "cat": cat,
+                "datos": {
+                    "nombre": gen_data.nombre_promovente,
+                    "telefono": gen_data.telefono,
+                    "direccion": gen_data.direccion_proyecto,
+                    "desc": gen_data.desc_p,
+                    "fecha": gen_data.fecha_pp,
+                    "notas": gen_data.notas_importantes,
+                },
+                "propuesta": propuesta_data,
+                "notas": propuesta.notas_propuesta,
+                "folio": num_folio
+            }
+
+    html = render_to_string("documet/pp_document.html", context)
+    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    final_pdf = pdf_out.write_pdf()
+    response = HttpResponse(final_pdf, content_type="application/pdf")
+    response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    return response
+
+    #html = render_to_string("documet/pp_document.html", context)
+    #buffer = BytesIO()
+    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
+    #pdf_file = ContentFile(buffer.getvalue())
+    #nomDoc = f'VS_{cat}_{gen_data.nombre_promovente}_Presupuesto_Participativo.pdf'
+    #doc = PpFiles(nomDoc=nomDoc, fuuid=uuid, fk_pp=gen_data)
+    #doc.finalDoc.save(nomDoc, pdf_file)
+
+    #return render(request, 'documet/pp_document.html', {"doc":doc})
+
 
 
 @login_required
@@ -793,10 +979,10 @@ def gen_folio(uid, puo):
 
     return puo, folio
 
-def gen_pp_folio(uid):
+def gen_pp_folio(fuuid):
     """Folio para presupuesto participativo"""
-    pp_info = PpGeneral.objects.filter(fuuid=uid).last()
-    uid_str = str(uid.uuid)
+    pp_info = PpGeneral.objects.filter(fuuid=fuuid).last()
+    uid_str = str(fuuid.uuid)
     folio = ''
     if pp_info:
         id_pp = pp_info.pk
@@ -806,7 +992,7 @@ def gen_pp_folio(uid):
     year_str = str(fecha.year)
     year_slice = year_str[2:4]
 
-    folio = f'GOP-CPC-{id_pp:05d}-{uid_str[:4]}/{year_slice}'
+    folio = f'GOP-CPP-{id_pp:05d}-{uid_str[:4]}/{year_slice}'
 
     return folio
 
@@ -1022,47 +1208,76 @@ def get_or_create_uuid(request):
 
 # Presupuesto participativo
 
-
+@login_required
 def gen_render(request):
-    # Obtener o crear UUID para la propuesta
-    uuid_obj = get_or_create_uuid(request)
+    # Obtener o crear UUID
+    uuid_str = request.COOKIES.get('uuid')
+    if not uuid_str:
+        uuid_str = str(uuid.uuid4())
+        uuid_obj = Uuid.objects.create(uuid=uuid_str)
+    else:
+        try:
+            uuid_obj = Uuid.objects.get(uuid=uuid_str)
+        except Uuid.DoesNotExist:
+            uuid_obj = Uuid.objects.create(uuid=uuid_str)
 
     if request.method == 'POST':
+        print("Entrando al POST de gen_render")
+        print(f"POST data: {request.POST}")
+
+        # Crear una copia mutable del POST data
+        post_data = request.POST.copy()
+        post_data['fuuid'] = uuid_obj.pk  # Agregar el fuuid al formulario
+
+        form = GeneralRender(post_data)  # Usar el POST data modificado
         categoria = request.POST.get('categoria')
         cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluvial']
+
         if categoria and categoria in cat_values:
             request.session['categoria'] = categoria
+            request.session['pp_uuid'] = uuid_str
+            print(f"Categoría guardada: {categoria}")
+            print(f"UUID guardado en sesión: {uuid_str}")
         else:
-            messages.error(request, "El valor mandado no vale nada")
+            messages.error(request, "Categoría inválida")
+            response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
+            response.set_cookie('uuid', uuid_str, max_age=3600)
+            return response
 
-        form = GeneralRender(request.POST or None)
         if form.is_valid():
-            # Vincular la instancia con el UUID
+            print("Formulario válido")
             instance = form.save(commit=False)
-            instance.fuuid = uuid_obj
+            instance.fuuid = uuid_obj  # Asegurar que el fuuid esté asignado
             instance.save()
+            print(f"Instancia guardada: {instance}")
 
-            # Guardar UUID en sesión para continuidad
-            request.session['pp_uuid'] = str(uuid_obj.uuid)
-
+            # Redireccionar según categoría
             match categoria:
                 case 'parque':
-                    return redirect('parques')
+                    response = redirect('parques')
                 case 'cs':
-                    return redirect('centros')
+                    response = redirect('centros')
                 case 'escuela':
-                    return redirect('escuelas')
+                    response = redirect('escuelas')
                 case 'infraestructura':
-                    return redirect('infraestructura')
+                    response = redirect('infraestructura')
                 case 'pluvial':
-                    return redirect('pluviales')
+                    response = redirect('pluviales')
+                case _:
+                    response = redirect('gen_render')
+
+            response.set_cookie('uuid', uuid_str, max_age=3600)
+            return response
         else:
+            print(f"Errores en formulario: {form.errors}")
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        form = GeneralRender()
+        print("Método GET - mostrando formulario")
+        form = GeneralRender(initial={'fuuid': uuid_obj.pk})  # Inicializar con fuuid
 
-    return render(request, 'pp/datos_generales.html', {'form': form})
-
+    response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
+    response.set_cookie('uuid', uuid_str, max_age=3600)
+    return response
 
 def escuela_render(request):
     # Obtener UUID de la propuesta general
@@ -1086,7 +1301,7 @@ def escuela_render(request):
             instance.fk_pp = pp_general
             instance.save()
             messages.success(request, "Propuesta de escuela guardada exitosamente.")
-            return redirect('gen_render')  # O redirigir a donde corresponda
+            return redirect('pp_document')  # O redirigir a donde corresponda
         else:
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
@@ -1117,7 +1332,7 @@ def parque_render(request):
             instance.fk_pp = pp_general
             instance.save()
             messages.success(request, "Propuesta de parque guardada exitosamente.")
-            return redirect('gen_render')  # O redirigir a donde corresponda
+            return redirect('pp_document')  # O redirigir a donde corresponda
         else:
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
@@ -1131,7 +1346,7 @@ def cs_render(request):
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+        return redirect('pp_document')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
@@ -1148,7 +1363,7 @@ def cs_render(request):
             instance.fk_pp = pp_general
             instance.save()
             messages.success(request, "Propuesta de centro/salón guardada exitosamente.")
-            return redirect('gen_render')  # O redirigir a donde corresponda
+            return redirect('pp_document')  # O redirigir a donde corresponda
         else:
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
@@ -1162,14 +1377,14 @@ def infraestructura_render(request):
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+        return redirect('clear')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
         pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
     except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
         messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
+        return redirect('clear')
 
     if request.method == 'POST':
         form = InfraestructuraRender(request.POST)
@@ -1179,7 +1394,7 @@ def infraestructura_render(request):
             instance.fk_pp = pp_general
             instance.save()
             messages.success(request, "Propuesta de infraestructura guardada exitosamente.")
-            return redirect('gen_render')  # O redirigir a donde corresponda
+            return redirect('pp_document')  # O redirigir a donde corresponda
         else:
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
@@ -1193,14 +1408,14 @@ def pluvial_render(request):
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+        return redirect('clear')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
         pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
     except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
         messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
+        return redirect('clear')
 
     if request.method == 'POST':
         form = PluvialRender(request.POST)
@@ -1210,13 +1425,15 @@ def pluvial_render(request):
             instance.fk_pp = pp_general
             instance.save()
             messages.success(request, "Propuesta pluvial guardada exitosamente.")
-            return redirect('gen_render')  # O redirigir a donde corresponda
+            return redirect('pp_document')  # O redirigir a donde corresponda
         else:
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = PluvialRender()
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
+
+
 #API
 class FilesViewSet(viewsets.ModelViewSet):
     queryset = Files.objects.all()

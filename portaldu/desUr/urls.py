@@ -26,6 +26,7 @@ urlpatterns = [
     path('pp/centros', views.cs_render, name='centros'),
     path('pp/infraestructura', views.infraestructura_render, name='infraestructura'),
     path('pp/pluviales', views.pluvial_render, name='pluviales'),
+    path('pp/document', views.pp_document, name='pp_document' ),
 
     # URLs existentes de desUr
     path('base/', views.base, name='base'),

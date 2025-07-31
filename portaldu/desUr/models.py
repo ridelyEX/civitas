@@ -303,6 +303,8 @@ class PpParque(models.Model):
     def __str__(self):
         return str(self.p_parque_ID) or None
 
+
+
 class PpEscuela(models.Model):
     # Campos para Rehabilitación
 
@@ -429,3 +431,18 @@ class PpPluvial(models.Model):
 
     def __str__(self):
         return str(self.pp_pluvial_ID) or None
+
+class PpFiles(models.Model):
+    fDoc_ID = models.AutoField(primary_key=True)
+    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
+    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Propuesta General", null=True, blank=True)
+    finalDoc = models.FileField(upload_to='pp_solicitudes/')
+    nomDoc = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        db_table = 'pp_solicitudes'
+        ordering = ['fDoc_ID']
+        verbose_name = "solicitudes presupuesto participativo"
+
+    def __str__(self):
+        return str(self.nomDoc)

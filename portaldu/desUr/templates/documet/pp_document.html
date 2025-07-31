@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+   <div class="propuesta-section">
+    <h3>Características de la Propuesta</h3>
+    {% for campo, valor in propuesta.items %}
+        <div class="campo-item">
+            <span class="checkbox">{% if valor %}☑{% else %}☐{% endif %}</span>
+            <span class="campo-nombre">{{ campo|title }}</span>
+        </div>
+    {% endfor %}
+</div>
+</body>
+</html>

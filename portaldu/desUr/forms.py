@@ -126,13 +126,41 @@ class GeneralRender(forms.ModelForm):
         label="alumbrado",
     )
 
+    # Campo personalizado para teléfono
+    telefono = forms.CharField(
+        max_length=10,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '6441234567',
+            'pattern': '[0-9]{10}',
+            'title': 'Ingresa 10 dígitos sin espacios'
+        }),
+        help_text="Formato: 10 dígitos sin espacios ni guiones"
+    )
+
+    def clean_telefono(self):
+        telefono = self.cleaned_data.get('telefono')
+        if telefono:
+            # Remover espacios, guiones y paréntesis
+            telefono_limpio = ''.join(filter(str.isdigit, telefono))
+
+            # Validar que tenga exactamente 10 dígitos
+            if len(telefono_limpio) != 10:
+                raise forms.ValidationError("El teléfono debe tener exactamente 10 dígitos")
+
+            # Validar que inicie con 6 (para Chihuahua) - opcional
+            if not telefono_limpio.startswith('6'):
+                raise forms.ValidationError("El teléfono debe iniciar con 6")
+
+            return telefono_limpio
+        return telefono
+
     class Meta:
         model = PpGeneral
-        exclude = ['pp_ID', 'fecha_pp', 'calle_p', 'colonia_p', 'cp_p']
+        exclude = ['pp_ID', 'fecha_pp', 'calle_p', 'colonia_p', 'cp_p', 'fuuid']
 
         widgets = {
             'nombre_promovente':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Nombre del promovente'}),
-            'telefono':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Número de teléfono'}),
             'categoria':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Categoría del proyecto'}),
             'direccion_proyecto':forms.TextInput(attrs={'class':'form-control', 'placeholder':'Dirección del proyecto'}),
             'desc_p':forms.Textarea(attrs={'class':'form-control', 'placeholder':'Descripción del proyecto'}),
@@ -141,11 +169,23 @@ class GeneralRender(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         if self.instance.pk and self.instance.instalation_choices:
             for instalacion, estado in self.instance.instalation_choices.items():
                 if instalacion in self.fields:
                     self.fields[instalacion].initial = estado
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instalation_choices = {}
+        instalaciones = ['cfe', 'agua', 'drenaje', 'impermeabilizacion', 'climas', 'alumbrado']
+        for instalacion in instalaciones:
+            estado = self.cleaned_data.get(instalacion)
+            if estado:
+                instalation_choices[instalacion] = estado
+        instance.instalation_choices = instalation_choices
+        if commit:
+            instance.save()
+        return instance
 
     def save(self, commit = True):
         instance = super().save(commit=False)
