@@ -629,6 +629,8 @@ def pp_document(request):
     propuesta = None
     num_folio = gen_pp_folio(gen_data.fuuid)
     context = {}
+    instalaciones_dict = dict(PpGeneral.INSTALATION_CHOICES)
+    estados_dict = dict(PpGeneral.CHOICES_STATE)
 
     match cat:
         case "parque":
@@ -668,10 +670,13 @@ def pp_document(request):
                     "desc": gen_data.desc_p,
                     "fecha": gen_data.fecha_pp,
                     "notas": gen_data.notas_importantes,
+                    "instalaciones": gen_data.instalation_choices
                 },
                 "propuesta": propuesta_data,
                 "notas": propuesta.notas_parque,
                 "folio": num_folio,
+                "instalaciones_dict": instalaciones_dict,
+                "estados_dict": estados_dict,
             }
 
         case "escuela":
@@ -706,7 +711,9 @@ def pp_document(request):
                 "nom_escuela": propuesta.nom_escuela,
                 "propuesta": propuesta_data,
                 "notas": propuesta.notas_escuela,
-                "folio": num_folio
+                "folio": num_folio,
+                "instalaciones_dict": instalaciones_dict,
+                "estados_dict": estados_dict,
             }
 
         case "cs":
@@ -737,7 +744,9 @@ def pp_document(request):
                 },
                 "notas": propuesta.notas_propuesta,
                 "propuesta": propuesta_data,
-                "folio": num_folio
+                "folio": num_folio,
+                "instalaciones_dict": instalaciones_dict,
+                "estados_dict": estados_dict,
             }
         case "infraestructura":
             cat = "Infraestructura"
@@ -776,7 +785,9 @@ def pp_document(request):
                 },
                 "notas": propuesta.notas_propuesta,
                 "propuesta": propuesta_data,
-                "folio": num_folio
+                "folio": num_folio,
+                "instalaciones_dict": instalaciones_dict,
+                "estados_dict": estados_dict,
             }
 
         case "pluviales":
@@ -811,8 +822,12 @@ def pp_document(request):
                 },
                 "propuesta": propuesta_data,
                 "notas": propuesta.notas_propuesta,
-                "folio": num_folio
+                "folio": num_folio,
+                "instalaciones_dict": instalaciones_dict,
+                "estados_dict": estados_dict,
             }
+
+    print(context)
 
     html = render_to_string("documet/pp_document.html", context)
     pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))

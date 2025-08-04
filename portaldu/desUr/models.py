@@ -5,6 +5,8 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission
 from django.conf import settings
 import uuid
 
+from rest_framework.exceptions import ValidationError
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -242,7 +244,7 @@ class PpGeneral(models.Model):
     #choices menu
 
     instalation_choices = models.JSONField(
-        verbose_name="isntalaciones",
+        verbose_name="instalaciones",
         default=dict,
         null=True,
         blank=True,
@@ -258,6 +260,22 @@ class PpGeneral(models.Model):
 
     def __str__(self):
         return self.nombre_promovente or "Propuesta sin nombre"
+
+    def clean(self):
+        super().clean()
+        valid_choices = [choice[0] for choice in self.INSTALATION_CHOICES]
+        valid_states = [choice[0] for choice in self.CHOICES_STATE]
+
+        if self.instalation_choices:
+            for instalacion, estado in self.instalation_choices.items():
+                if instalacion not in valid_choices:
+                    raise ValidationError({
+                        'instalation_choices': f"Instalación '{instalacion}' no es válida"
+                    })
+                if estado not in valid_states:
+                    raise ValidationError({
+                        'instalation_choices': f"Estado '{estado}' no es valido para '{instalacion}'"
+                    })
 
 class PpParque(models.Model):
     # Campos para Cancha
