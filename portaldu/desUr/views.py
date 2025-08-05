@@ -17,7 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para Q
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
-    PpPluvial, PpFiles
+    PpPluvial, PpFiles, DesUrLoginDate
 from portaldu.cmin.models import Users, LoginDate  # Usar modelos de cmin
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
@@ -27,6 +27,7 @@ from datetime import date, datetime
 from tkinter import *
 from rest_framework import viewsets
 from .serializers import FilesSerializer
+from .auth import DesUrAuthBackend, desur_login_required
 
 
 # Vistas de autenticación - PÚBLICAS (obviamente)
@@ -53,11 +54,15 @@ def desur_login_view(request):
     if request.method == 'POST' and form.is_valid():
         usuario = form.cleaned_data['usuario']
         contrasena = form.cleaned_data['contrasena']
-        user = authenticate(request, username=usuario, password=contrasena)
+
+        backend = DesUrAuthBackend()
+        user = backend.authenticate(request, username=usuario, password=contrasena)
+
         if user is not None:
             print(user)
-            login(request, user)
-            LoginDate.objects.create(user_FK=user)  # Usar LoginDate de cmin
+            request.session['desur_user_id'] = user.id
+            request.session['desur_user_username'] = user.username
+            DesUrLoginDate.create(user)
             return redirect('desur_menu')  # Ir al menú del empleado
         else:
             messages.error(request, "Usuario o contraseña incorrectos")
@@ -67,11 +72,12 @@ def desur_login_view(request):
 
 def desur_logout_view(request):
     # NO login_required - aunque podrías argumentar que sí
-    logout(request)
+    request.session.pop('desur_user_id', None)
+    request.session.pop('desur_user_username', None)
     return redirect('desur_login')
 
 
-@login_required
+@desur_login_required
 def desur_user_conf(request):
     # SÍ login_required - solo usuarios autenticados pueden configurar perfil
     usuario = request.user
@@ -86,13 +92,13 @@ def desur_user_conf(request):
     return render(request, 'auth/desur_user_conf.html', {'form': form})
 
 
-@login_required
+@desur_login_required
 def desur_menu(request):
     # SÍ login_required - menú personal
     return render(request, 'auth/desur_menu.html')
 
 
-@login_required
+@desur_login_required
 def desur_historial(request):
     """Vista para mostrar el historial de trámites procesados por el empleado actual"""
     # Obtener todos los trámites procesados por el usuario actual
@@ -127,7 +133,7 @@ def desur_historial(request):
     return render(request, 'auth/desur_historial.html', context)
 
 
-@login_required
+@desur_login_required
 def desur_buscar_tramite(request):
     """Vista para buscar trámites específicos"""
     tramites = None
@@ -160,7 +166,7 @@ def desur_buscar_tramite(request):
 # Vistas del sistema de trámites requieren autenticación
 # Solo empleados/funcionarios autorizados pueden operar el sistema
 
-@login_required
+@desur_login_required
 def base(request):
     # SÍ login_required - solo empleados pueden acceder al sistema
     uuid = request.COOKIES.get('uuid')
@@ -169,7 +175,7 @@ def base(request):
         return redirect('home')
     return render(request, 'documet/save.html',{'uuid':uuid})
 
-@login_required
+@desur_login_required
 def home(request):
     # SÍ login_required - punto de entrada solo para empleados autenticados
     if request.method == 'POST':
@@ -195,7 +201,7 @@ def home(request):
         return response
     return render(request, 'main.html')
 
-@login_required
+@desur_login_required
 def intData(request):
     # SÍ login_required - empleados capturan datos de ciudadanos
     direccion = request.GET.get('dir', '')
@@ -275,7 +281,7 @@ def intData(request):
     return render(request, 'di.html', context)
 
 
-@login_required
+@desur_login_required
 def soliData(request):
     # SÍ login_required - empleados procesan solicitudes de ciudadanos
         uuid = request.COOKIES.get('uuid')
@@ -325,7 +331,7 @@ def soliData(request):
 
             return user_errors(request, e)
 
-@login_required
+@desur_login_required
 def doc(request):
     # SÍ login_required - empleados gestionan documentación
     uuid = request.COOKIES.get('uuid')
@@ -362,7 +368,7 @@ def doc(request):
 
 
 
-@login_required
+@desur_login_required
 def docs(request):
     # SÍ login_required - empleados suben documentos del ciudadano
     uuid = request.COOKIES.get('uuid')
@@ -380,7 +386,7 @@ def docs(request):
         'count':count,
         'uuid':uuid,})
 
-@login_required
+@desur_login_required
 def dell(request, id):
     # SÍ login_required - empleados eliminan documentos
     uuid = request.COOKIES.get('uuid')
@@ -396,7 +402,7 @@ def dell(request, id):
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Método inválido'}, status=405)
 
-@login_required
+@desur_login_required
 def docs2(request):
     # SÍ login_required - empleados gestionan documentos
     uuid = request.COOKIES.get('uuid')
@@ -419,7 +425,7 @@ def docs2(request):
         return render(request, 'docs2.html')
 
 
-@login_required
+@desur_login_required
 def pago(request):
     # SÍ login_required - empleados procesan pagos
     uuid = request.COOKIES.get('uuid')
@@ -436,7 +442,7 @@ def pago(request):
 
     return render(request, 'pago.html')
 
-@login_required
+@desur_login_required
 def document(request):
     # SÍ login_required - empleados generan documentos oficiales
     uuid = request.COOKIES.get('uuid')
@@ -526,7 +532,7 @@ def document(request):
     #return render(request, "documet/document.html", context)
 
 
-@login_required
+@desur_login_required
 def save_document(request):
     # SÍ login_required - empleados guardan documentos oficiales
     uuid = request.COOKIES.get('uuid')
@@ -618,12 +624,13 @@ def save_document(request):
 
     return render(request, 'documet/save.html', {'doc':doc})
 
-@login_required
+@desur_login_required
 def pp_document(request):
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
 
+    uuid_object = get_object_or_404(Uuid, uuid=uuid)
     gen_data = get_object_or_404(PpGeneral, fuuid__uuid=uuid)
     cat = request.session.get('categoria', 'sin categoria')
     propuesta = None
@@ -673,7 +680,7 @@ def pp_document(request):
                     "instalaciones": gen_data.instalation_choices
                 },
                 "propuesta": propuesta_data,
-                "notas": propuesta.notas_parque,
+                "notas_parque": propuesta.notas_parque,
                 "folio": num_folio,
                 "instalaciones_dict": instalaciones_dict,
                 "estados_dict": estados_dict,
@@ -706,6 +713,7 @@ def pp_document(request):
                     "direccion": gen_data.direccion_proyecto,
                     "desc": gen_data.desc_p,
                     "fecha": gen_data.fecha_pp,
+                    "instalaciones": gen_data.instalation_choices,
                     "notas": gen_data.notas_importantes,
                 },
                 "nom_escuela": propuesta.nom_escuela,
@@ -717,7 +725,7 @@ def pp_document(request):
             }
 
         case "cs":
-            cat = "Centro comunitario / salón de usos múltiples"
+            cat = "Centro comunitario - Salón de usos múltiples"
             propuesta = PpCS.objects.filter(fk_pp=gen_data).last()
 
             propuesta_data = {}
@@ -727,7 +735,7 @@ def pp_document(request):
                     'rehabilitacion_salones': propuesta.rehabilitacion_salones,
                     'rehabilitacion_electricidad': propuesta.rehabilitacion_electricidad,
                     'rehabilitacion_gimnasio': propuesta.rehabilitacion_gimnasio,
-                    'contruccion_domo': propuesta.contruccion_domo,
+                    'construccion_domo': propuesta.construccion_domo,
                     'construccion_salon': propuesta.construccion_salon,
                     'construccion_otro': propuesta.construccion_otro,
                 }
@@ -740,6 +748,7 @@ def pp_document(request):
                     "direccion": gen_data.direccion_proyecto,
                     "desc": gen_data.desc_p,
                     "fecha": gen_data.fecha_pp,
+                    "instalaciones": gen_data.instalation_choices,
                     "notas": gen_data.notas_importantes,
                 },
                 "notas": propuesta.notas_propuesta,
@@ -781,6 +790,7 @@ def pp_document(request):
                     "direccion": gen_data.direccion_proyecto,
                     "desc": gen_data.desc_p,
                     "fecha": gen_data.fecha_pp,
+                    "instalaciones": gen_data.instalation_choices,
                     "notas": gen_data.notas_importantes,
                 },
                 "notas": propuesta.notas_propuesta,
@@ -818,6 +828,7 @@ def pp_document(request):
                     "direccion": gen_data.direccion_proyecto,
                     "desc": gen_data.desc_p,
                     "fecha": gen_data.fecha_pp,
+                    "instalaciones": gen_data.instalation_choices,
                     "notas": gen_data.notas_importantes,
                 },
                 "propuesta": propuesta_data,
@@ -827,28 +838,28 @@ def pp_document(request):
                 "estados_dict": estados_dict,
             }
 
-    print(context)
 
-    html = render_to_string("documet/pp_document.html", context)
-    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
-    final_pdf = pdf_out.write_pdf()
-    response = HttpResponse(final_pdf, content_type="application/pdf")
-    response["Content-Disposition"] = "inline; filename=información_general.pdf"
-    return response
 
     #html = render_to_string("documet/pp_document.html", context)
-    #buffer = BytesIO()
-    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
-    #pdf_file = ContentFile(buffer.getvalue())
-    #nomDoc = f'VS_{cat}_{gen_data.nombre_promovente}_Presupuesto_Participativo.pdf'
-    #doc = PpFiles(nomDoc=nomDoc, fuuid=uuid, fk_pp=gen_data)
-    #doc.finalDoc.save(nomDoc, pdf_file)
+    #pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+    #final_pdf = pdf_out.write_pdf()
+    #response = HttpResponse(final_pdf, content_type="application/pdf")
+    #response["Content-Disposition"] = "inline; filename=información_general.pdf"
+    #return response
 
-    #return render(request, 'documet/pp_document.html', {"doc":doc})
+    html = render_to_string("documet/pp_document.html", context)
+    buffer = BytesIO()
+    pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
+    pdf_file = ContentFile(buffer.getvalue())
+    nomDoc = f'VS_{cat}_{gen_data.nombre_promovente}_Presupuesto_Participativo.pdf'
+    doc = PpFiles(nomDoc=nomDoc, fuuid=uuid_object, fk_pp=gen_data)
+    doc.finalDoc.save(nomDoc, pdf_file)
+
+    return render(request, 'documet/save.html', {"doc":doc})
 
 
 
-@login_required
+@desur_login_required
 def document2(request):
     # SÍ login_required - empleados generan documentos de pago
     uuid = request.COOKIES.get('uuid')
@@ -886,7 +897,7 @@ def document2(request):
     return response
     #return render(request, "documet/document2.html")
 
-@login_required
+@desur_login_required
 def clear(request):
     # SÍ login_required - solo empleados limpian sesiones
     response = redirect('desur_menu')  # Cambiar redirect a login de empleados
@@ -1223,7 +1234,7 @@ def get_or_create_uuid(request):
 
 # Presupuesto participativo
 
-@login_required
+@desur_login_required
 def gen_render(request):
     # Obtener o crear UUID
     uuid_str = request.COOKIES.get('uuid')
@@ -1330,14 +1341,14 @@ def parque_render(request):
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+        return redirect('general')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
         pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
     except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
         messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
+        return redirect('general')
 
     if request.method == 'POST':
         form = ParqueRender(request.POST)

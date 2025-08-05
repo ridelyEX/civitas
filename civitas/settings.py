@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
-from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL
+from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -59,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'portaldu.desUr.auth.DesUrUserMiddleware',
 ]
 
 ROOT_URLCONF = 'civitas.urls'
@@ -138,6 +139,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'portaldu.desUr.auth.DesUrAuthBackend',
+]
 
 AUTH_USER_MODEL = 'cmin.users'
 

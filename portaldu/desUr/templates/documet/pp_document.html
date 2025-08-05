@@ -59,8 +59,9 @@
         border-bottom: 1px solid rgb(119, 201, 255);
        }
 
-       .thead{
-        background-color: rgba(187, 255, 241, 0.411);
+       .main table thead.thead{
+        border-bottom: 1px solid rgb(119, 201, 255);
+        background-color: rgba(187, 255, 241, 0.411) !important ;
        }
 
        .badge-bueno {
@@ -77,6 +78,8 @@
     background-color: #dc3545;
     color: white;
 }
+
+
 
     </style>
 </head>
@@ -138,32 +141,67 @@
                             <td>{{notas}}</td>
                         </tr>
                    </tbody>
+                    <thead class="thead" style="background-color: rgba(187, 225, 241, 0.411);">
+                        <tr>
+                            <th scope="col" colspan="2">Instalaciones</th>
+                        </tr>
+                        <tr>
+                            <th scope="col">Instalación</th>
+                            <th scope="col">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>CFE</td>
+                            <td>
+                                <span class="badge badge-{{datos.instalaciones.cfe}}">
+                                    {{ datos.instalaciones.cfe|default:"No especificado"  }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Agua</td>
+                            <td>
+                                <span class="badge badge-{{datos.instalaciones.agua}}">
+                                    {{ datos.instalaciones.agua|default:"No especificado"  }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Drenaje</td>
+                            <td>
+                                <span class="badge badge-{{datos.instalaciones.drenaje}}">
+                                    {{ datos.instalaciones.drenaje|default:"No especificado"  }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Impermeabilización</td>
+                            <td>
+                                <span class="badge badge-{{datos.instalaciones.impermeabilizacion}}">
+                                    {{ datos.instalaciones.impermeabilizacion|default:"No especificado"  }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Climas</td>
+                            <td>
+                                <span class="badge badge-{{datos.instalaciones.climas}}">
+                                    {{ datos.instalaciones.climas|default:"No especificado"  }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Alumbrado</td>
+                            <td>
+                                <span class="badge badge-{{datos.instalaciones.alumbrado}}">
+                                    {{ datos.instalaciones.alumbrado|default:"No especificado"  }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
                </table>
-               <h3>Instalaciones</h3>
-               {% if datos.instalaciones %}
-               <table class="table">
-                   <thead>
-                       <tr>
-                           <th>Instalación</th>
-                           <th>Estado</th>
-                       </tr>
-                   </thead>
-                   <tbody>
-                        {% for instalacion_key, estado_key in datos.instalaciones.items %}
-                       <tr>
-                           <td>{{ instalacion_key|default_if_none:instalacion_key }}</td>
-                           <td>
-                               <span class="badge badge-{{ estado_key }}">
-                                   {{ estado_key|default_if_none:estado_key }}
-                               </span>
-                           </td>
-                       </tr>
-                        {% endfor %}
-                   </tbody>
-                   {% else %}
-                   <p>No se seleccionó nada</p>
-               </table>
-               {% endif %}
+
            </div>
        </div>
 
@@ -176,6 +214,7 @@
                 </div>
             {% endfor %}
        </div>
+       
 </div>
 </body>
 </html>

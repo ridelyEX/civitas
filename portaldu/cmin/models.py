@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import AutoField
 from django.forms import FileField
 
-from portaldu.desUr.models import Files, soli
+from portaldu.desUr.models import Files
 
 
 class CustomUser(BaseUserManager):

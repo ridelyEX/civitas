@@ -46,7 +46,7 @@ def login_view(request):
             LoginDate.objects.create(user_FK=user)
             return redirect('menu')
         else:
-            return HttpResponse("no jalo, padre")
+            messages.error(request, "Usuario o contraseña incorrectos")
 
     return render(request, 'login.html', {'form':form})
 

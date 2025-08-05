@@ -1,7 +1,7 @@
 from django import forms
 
 from portaldu.cmin.models import Users  # Importar el modelo Users de cmin
-from .models import (PpCS, PpEscuela, PpGeneral, PpPluvial, PpParque, PpInfraestructura)
+from .models import (PpCS, PpEscuela, PpGeneral, PpPluvial, PpParque, PpInfraestructura, DesUrUsers)
 
 # Usar el modelo de usuario de cmin
 
@@ -16,7 +16,7 @@ class DesUrUsersRender(forms.ModelForm):
     confirmP = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}))
 
     class Meta:
-        model = Users  # Cambiar a usar el modelo Users de cmin
+        model = DesUrUsers  # Cambiar a usar el modelo Users de cmin
         fields = ['email', 'first_name', 'last_name','username', 'bday','password', 'foto']
         widgets = {
           'email': forms.EmailInput(attrs={'class':'formcontrol'}),
@@ -52,7 +52,7 @@ class DesUrUsersConfig(forms.ModelForm):
     confirmP = forms.CharField(widget=forms.PasswordInput(attrs={'class':'formcontrol'}), required=False)
 
     class Meta:
-        model = Users  # Cambiar a usar el modelo Users de cmin
+        model = DesUrUsers  # Cambiar a usar el modelo Users de cmin
         fields = ['username', 'foto']
         widgets = {
             'username': forms.TextInput(attrs={'class':'formcontrol'}),
@@ -185,25 +185,9 @@ class GeneralRender(forms.ModelForm):
         instance.instalation_choices = instalation_choices
         if commit:
             instance.save()
+        print(self.cleaned_data)
         return instance
 
-    def save(self, commit = True):
-        instance = super().save(commit=False)
-
-        instalation_choices = {}
-
-        instalaciones = ['cfe', 'agua', 'drenaje', 'impermeabilizacion', 'climas', 'alumbrado']
-
-        for instalacion in instalaciones:
-            estado = self.cleaned_data.get(instalacion)
-            if estado:
-                instalation_choices[instalacion] = estado
-
-        instance.instalation_choices = instalation_choices
-
-        if commit:
-            instance.save()
-        return instance
 
 class ParqueRender(forms.ModelForm):
 
