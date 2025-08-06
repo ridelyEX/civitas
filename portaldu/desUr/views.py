@@ -4,7 +4,7 @@ from io import BytesIO
 import re
 from tempfile import NamedTemporaryFile
 import googlemaps
-import pywhatkit
+#import pywhatkit
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -21,11 +21,11 @@ from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRende
 from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
 from datetime import date, datetime
-from tkinter import *
+#from tkinter import *
 from rest_framework import viewsets
 from .serializers import FilesSerializer
 from .auth import DesUrAuthBackend, desur_login_required
-
+from verify_email.email_handler import ActivationMailManager
 
 # Vistas de autenticación
 def desur_users_render(request):
@@ -34,8 +34,10 @@ def desur_users_render(request):
         print(request.POST)
         form = DesUrUsersRender(request.POST, request.FILES)
         if form.is_valid():
+            correo = request.POST.get('email')
             print("estamos dentro")
-            cleaned_data = form.cleaned_data
+            cleaned_data_obj = form.cleaned_data
+            #inactive_user = ActivationMailManager.send_verification_link(request, form)
             form.save()
             return redirect('desur_login')
     else:
@@ -357,7 +359,7 @@ def doc(request):
             elif action == 'descargar':
                 return redirect('document')
             elif action == 'wasap':
-                wasap_msg(uuid, datos.tel)
+            #wasap_msg(uuid, datos.tel)
     context = {'asunto': asunto,
                'datos':datos,
                'uuid':uuid}
@@ -903,7 +905,7 @@ def clear(request):
 
 
 # Functions.
-
+"""
 def wasap_msg(uid, num):
 
     import pyautogui
@@ -944,7 +946,7 @@ def wasap_msg(uid, num):
     else:
         print("Sin documentos")
         return redirect('doc')
-
+"""
 
 def gen_folio(uid, puo):
     print(puo)

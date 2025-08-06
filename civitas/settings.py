@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'portaldu.cmin.apps.CminConfig',
     'bootstrap5',
     'django_user_agents',
+    'verify_email'
 ]
 
 MIDDLEWARE = [
@@ -164,5 +165,16 @@ EMAIL_USE_SSL = True
 EMAIL_HOST_USER = os.getenv('email')
 EMAIL_HOST_PASSWORD = os.getenv('contra')
 DEFAULT_FROM_EMAIL = f"Test {os.getenv('email')}"
+
+VERIFY_EMAIL_URL = '/verify/'
+
+VERIFY_EMAIL = {
+    'ACTIVE_FIELD': 'is_active',
+    'HTML_MESSAGE_TEMPLATE': 'verify_email/email_verification.html',
+    'HTML_MESSAGE_SUBJECT': 'Verificación de cuenta - Civitas',
+    'DEFAULT_CONFIRMATION_TEMPLATE': 'verify_email/email_verification_successful.html',
+    'DEFAULT_CONFIRMATION_SUBJECT': 'Cuenta verificada exitosamente',
+    'GENERATE_LINK': True,
+}
 
 print({EMAIL_HOST_USER}, {EMAIL_HOST_PASSWORD})

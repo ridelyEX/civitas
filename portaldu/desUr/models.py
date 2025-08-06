@@ -38,6 +38,10 @@ class DesUrUsers(models.Model):
     def get_short_name(self):
         return self.first_name
 
+    def get_email_field_name(self):
+        """Retorna el nombre del campo de email"""
+        return 'email'
+
     @property
     def is_authenticated(self):
         return True

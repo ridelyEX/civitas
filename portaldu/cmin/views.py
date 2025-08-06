@@ -1,8 +1,6 @@
-from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
 from portaldu.desUr.models import Files, soli
@@ -11,8 +9,8 @@ from django.core.mail import EmailMessage
 import os
 from .forms import UsersRender, Login, UsersConfig
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close
-import pywhatkit
-from tkinter import *
+#import pywhatkit
+#from tkinter import *
 
 
 def master(request):

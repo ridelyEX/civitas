@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('desUr/', include('portaldu.desUr.urls')),
     path('cmin/', include('portaldu.cmin.urls')),
+    path('verification/', include('verify_email.urls')),
 ]
 
 handler404 = 'portaldu.cmin.views.custom_handler404'
