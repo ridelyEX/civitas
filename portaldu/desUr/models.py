@@ -444,3 +444,13 @@ class PpFiles(models.Model):
 
     def __str__(self):
         return str(self.nomDoc)
+
+
+# Excel
+
+class Book(models.Model):
+    titulo = models.CharField(max_length=255, verbose_name="Título del libro", null=True, blank=True)
+    fecha_actu = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de actualización", null=True, blank=True)
+
+    def __str__(self):
+        return self.titulo

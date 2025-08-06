@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+ Upload Excel File
+    {% if messages %}
+
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+
+    {% endif %}
+
+        {% csrf_token %}
+        {{ form.as_p }}
+        Upload
+
+{% endblock %}

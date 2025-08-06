@@ -17,7 +17,7 @@ from django.db import models  # Agregar esta importación para Q
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
     PpPluvial, PpFiles, DesUrLoginDate
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
-                    ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
+                    ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender, UploadExcel)
 from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
 from datetime import date, datetime
@@ -1455,6 +1455,31 @@ def pluvial_render(request):
         form = PluvialRender()
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
+
+#Excel
+
+def subir_excel(request):
+    import pandas as pd
+    from .models import Book
+
+    if request.method == 'POST':
+        form = UploadExcel(request.POST, request.FILES)
+        if form.is_valid():
+            ex = request.FILES['file']
+            read_ex = pd.read_excel(ex)
+            for _, row in read_ex.interrwos():
+                book, created = Book.objects.get_or_create(
+                    titulo=row['titulo'],
+                )
+                if created:
+                    messages.success(request, f'Se subió el libro: {book.titulo}')
+                else:
+                    messages.warning(request, f'El libro {book.titulo} ya existe.')
+            return HttpResponse('Se subió el excel papu')
+        else:
+            form = UploadExcel()
+        return render(request, 'excel/upload_excel.html', {'form': form})
+
 
 
 #API
