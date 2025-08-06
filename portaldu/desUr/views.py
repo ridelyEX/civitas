@@ -3,8 +3,8 @@ import uuid
 from io import BytesIO
 import re
 from tempfile import NamedTemporaryFile
-import pywhatkit
 import googlemaps
+import pywhatkit
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -12,13 +12,10 @@ from django.db import transaction
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para Q
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
     PpPluvial, PpFiles, DesUrLoginDate
-from portaldu.cmin.models import Users, LoginDate  # Usar modelos de cmin
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
 from django.template.loader import render_to_string, get_template
@@ -30,7 +27,7 @@ from .serializers import FilesSerializer
 from .auth import DesUrAuthBackend, desur_login_required
 
 
-# Vistas de autenticación - PÚBLICAS (obviamente)
+# Vistas de autenticación
 def desur_users_render(request):
     # NO login_required - necesario para que administradores creen cuentas de empleados
     if request.method == 'POST':

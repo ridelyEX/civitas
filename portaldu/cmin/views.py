@@ -167,7 +167,6 @@ def seguimiento(request):
     return render(request, 'send.html', context)
 
 
-
 @login_required
 def menu(request):
     return render(request, 'menu.html')
@@ -327,6 +326,9 @@ def seguimiento_docs(request, solicitud_id):
 def custom_handler404(request, exception=None):
     context = {}
     return render(request, 'error404.html', context, status=404)
+
+
+
 
 """
 def test_email(request):
