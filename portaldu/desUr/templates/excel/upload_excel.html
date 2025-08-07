@@ -1,18 +1,20 @@
 {% extends 'base.html' %}
 
 {% block body %}
-
- Upload Excel File
-    {% if messages %}
-
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
-
+<div class="container">
+    <h1>{{header}}</h1>
+    {% if form.errors %}
+    <p style="color: red;">
+        asi no es {{form.errors|pluralize}}
+        {{form.messages}}
+    </p>
     {% endif %}
-
+    <form action="{% url 'excel' %}" enctype="multipart/form-data" method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        Upload
-
+        <table>
+            {{form.as_p}}
+        </table>
+        <input type="submit" value="Submit">
+    </form>
+</div>
 {% endblock %}

@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
-from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS
+from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS, \
+    FILE_UPLOAD_HANDLERS
 from dotenv import load_dotenv
 load_dotenv()
 

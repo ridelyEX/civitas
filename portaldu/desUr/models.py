@@ -127,25 +127,6 @@ class SubirDocs(models.Model):
         return self.nomDoc or "Documento sin nombre"
 
 
-class Pagos(models.Model):
-    pago_ID = models.AutoField(primary_key=True)
-    data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
-                                verbose_name="datos")
-    fecha = models.DateTimeField(null = True, blank = True)
-    pfm = models.CharField(max_length=80, null = True, blank = True)
-
-    class Meta:
-        db_table = 'pagos'
-        ordering = ['pago_ID']
-
-    def __str__(self):
-        return self.pfm or ""
-
-    def save(self, *args, **kwargs):
-        if not self.data_ID_id and data.objects.exists():
-            self.data_ID_id = data.objects.latest('data_ID').data_ID
-        super().save(*args, **kwargs)
-
 class soli(models.Model):
     soli_ID = models.AutoField(primary_key=True)
     data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
@@ -448,9 +429,35 @@ class PpFiles(models.Model):
 
 # Excel
 
-class Book(models.Model):
-    titulo = models.CharField(max_length=255, verbose_name="Título del libro", null=True, blank=True)
-    fecha_actu = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de actualización", null=True, blank=True)
+class Pagos(models.Model):
+    pago_ID = models.AutoField(primary_key=True)
+    data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
+                                verbose_name="datos")
+    fecha = models.DateTimeField(null = True, blank = True)
+    pfm = models.CharField(max_length=80, null = True, blank = True)
+
+    class Meta:
+        db_table = 'pagos'
+        ordering = ['pago_ID']
 
     def __str__(self):
-        return self.titulo
+        return self.pfm or ""
+
+    def save(self, *args, **kwargs):
+        if not self.data_ID_id and data.objects.exists():
+            self.data_ID_id = data.objects.latest('data_ID').data_ID
+        super().save(*args, **kwargs)
+
+class Licitaciones(models.Model):
+    licitacion_ID = models.AutoField(primary_key=True)
+    fecha_limite = models.DateField(blank=True, null=True)
+    no_licitacion = models.CharField(max_length=15, blank=True, null=True)
+    desc_licitacion = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        db_table = 'licitaciones'
+        ordering = ['no_licitacion']
+        verbose_name = "Licitación"
+
+    def __str__(self):
+        return self.no_licitacion or "Licitación sin número"

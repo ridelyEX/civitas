@@ -10,12 +10,12 @@ from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para Q
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
-    PpPluvial, PpFiles, DesUrLoginDate
+    PpPluvial, PpFiles, DesUrLoginDate, Licitaciones
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender, UploadExcel)
 from django.template.loader import render_to_string, get_template
@@ -25,6 +25,7 @@ from tkinter import *
 from rest_framework import viewsets
 from .serializers import FilesSerializer
 from .auth import DesUrAuthBackend, desur_login_required
+import pandas as pd
 
 
 # Vistas de autenticación
@@ -1459,27 +1460,37 @@ def pluvial_render(request):
 #Excel
 
 def subir_excel(request):
-    import pandas as pd
-    from .models import Book
-
-    if request.method == 'POST':
+    if request.method == "POST":
         form = UploadExcel(request.POST, request.FILES)
         if form.is_valid():
-            ex = request.FILES['file']
-            read_ex = pd.read_excel(ex)
-            for _, row in read_ex.interrwos():
-                book, created = Book.objects.get_or_create(
-                    titulo=row['titulo'],
-                )
-                if created:
-                    messages.success(request, f'Se subió el libro: {book.titulo}')
-                else:
-                    messages.warning(request, f'El libro {book.titulo} ya existe.')
-            return HttpResponse('Se subió el excel papu')
-        else:
-            form = UploadExcel()
-        return render(request, 'excel/upload_excel.html', {'form': form})
+            try:
+                excel_file = request.FILES['file']
+                df = pd.read_excel(excel_file, header=0)
 
+                required_columns = ['Fecha límite', 'No. licitación', 'Descripción']
+                for col in required_columns:
+                    if col not in df.columns:
+                        messages.error(request, f"Columna '{col}' no se encuentra en las tabla")
+                        print("no jala")
+                        return render(request, 'excel/upload_excel.html', {"form":form,
+                                                                           "messages":messages})
+
+                for _, row in df.iterrows():
+                    Licitaciones.objects.create(
+                        fecha_limite=row['Fecha límite'],
+                        no_licitacion=row['No. licitación'],
+                        desc_licitacion=row['Descripción']
+                    )
+                messages.success(request, "Archivo de excel subido correctamente")
+                return HttpResponse("Datos en base de datos")
+
+            except Exception as e:
+                messages.error(request, f"Error al procesar el archivo: {str(e)}")
+                return render(request, 'excel/upload_excel.html', {"form":form})
+
+    else:
+        form = UploadExcel()
+    return render(request, 'excel/upload_excel.html', {"form":form})
 
 
 #API

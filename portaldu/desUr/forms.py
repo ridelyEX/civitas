@@ -364,14 +364,5 @@ class PluvialRender(forms.ModelForm):
 #Excel
 
 class UploadExcel(forms.Form):
-    file = forms.FileField(
-        label='Selecciona un archivo Excel',
-        help_text='El archivo debe ser en formato .xlsx',
-        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
-    )
+    file = forms.FileField()
 
-    def clean_file(self):
-        file = self.cleaned_data.get('file')
-        if file and not file.name.endswith('.xlsx') or not file.name.endswith('.xls') or not file.name.endswith('.xlsm') or not file.name.endswith('.xlsb'):
-            raise forms.ValidationError("El archivo debe ser en formato .xlsx, .xls, .xlsm o .xlsb")
-        return file
