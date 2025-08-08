@@ -5,23 +5,35 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.min.js" integrity="sha384-VQqxDN0EQCkWoxt/0vsQvZswzTHUVOImccYmSyhJTp7kGtPed0Qcx8rK9h9YEgx+" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-    <title>Desarrollo Urbano</title>
+    <title>Pago de licitaciones</title>
 {% endblock %}
 
 
 {% block body %}
-    <form method="post">
+ <form method="post">
         {% csrf_token %}
         <div class="container">
             <div class="head">
                 <div class="titulo">
                     <h1>Licitación Pública Nacional</h1><br>
                 </div>
-                <p> Elemento "DOPM-02-2025" (esto es un placeholder) </p><!-- Esto es un placeholder -->
+
+                <!-- Selector de licitación -->
+                <div class="selector">
+                    <label for="licitacion_select">Seleccionar licitación:</label>
+                    <select name="licitacion" id="licitacion_select" class="input">
+                        <option value="">Seleccione una licitación</option>
+                        {% for licitacion in licitaciones %}
+                            <option value="{{ licitacion.id }}">{{ licitacion.no_licitacion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <p id="elemento_codigo">Elemento "DOPM-02-2025" (esto es un placeholder)</p>
             </div>
             <div class="body">
                 <div class="fechaLimite">
-                    <text>Fecha límite para cubrir el costo de participación: (aquí va una fecha de BD)</text> <!-- Fecha generada en DB -->
+                    <text id="fecha_limite_text">Fecha límite para cubrir el costo de participación: (aquí va una fecha de BD)</text>
                 </div>
 
                 <div class="formulario">
@@ -37,7 +49,7 @@
                         >
                     </div>
                     <div class="descCont">
-                        <p>Aquí va una descripción sobre la licitación</p> <!-- La liceitación viene de la BD -->
+                        <p id="descripcion_licitacion">Aquí va una descripción sobre la licitación</p>
                     </div>
                     <div class="nom">
                         <label for="pfm" class="text">Persona física o moral</label>
@@ -63,6 +75,7 @@
         </div>
     </form>
 {% endblock %}
+
 {% block footer %}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
@@ -74,7 +87,43 @@
             altFormat: "F j, Y",
             enableTime: "true",
         });
+
+        // Actualización en tiempo real
+        document.getElementById('licitacion_select').addEventListener('change', function() {
+            const licitacionId = this.value;
+
+            if (!licitacionId) {
+                document.getElementById('elemento_codigo').textContent = 'Elemento "DOPM-02-2025" (esto es un placeholder)';
+                document.getElementById('fecha_limite_text').textContent = 'Fecha límite para cubrir el costo de participación: (aquí va una fecha de BD)';
+                document.getElementById('descripcion_licitacion').textContent = 'Aquí va una descripción sobre la licitación';
+                return;
+            }
+
+            fetch('{% url "get_licitacion" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify({ 'licitacion_id': licitacionId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Llenar los campos automáticamente
+                document.getElementById('elemento_codigo').textContent = `Elemento "${data.codigo}"`;
+                document.getElementById('fecha_limite_text').textContent = `Fecha límite para cubrir el costo de participación: ${data.fecha}`;
+                document.getElementById('descripcion_licitacion').textContent = data.descripcion;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al cargar los datos');
+            });
+        });
     </script>
     <script src="{% static 'sripts/btnScripts.js' %}"></script>
-
 {% endblock %}

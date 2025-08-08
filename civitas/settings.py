@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import locale
 
 from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS, \
     FILE_UPLOAD_HANDLERS
@@ -60,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'portaldu.desUr.auth.DesUrUserMiddleware',
 ]
 
@@ -120,13 +122,22 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-es'
 
-TIME_ZONE = 'Mexico/General'
+TIME_ZONE = 'America/Mexico_City'
 
 USE_I18N = True
 
-USE_TZ = False
+USE_L10N = True
+
+USE_TZ = True
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
+
+DATE_FORMAT = 'j \d\e F \d\e Y'
+
 
 GOOGLE_API_KEY = os.getenv("gmapk")
 
@@ -167,3 +178,13 @@ EMAIL_HOST_PASSWORD = os.getenv('contra')
 DEFAULT_FROM_EMAIL = f"Test {os.getenv('email')}"
 
 print({EMAIL_HOST_USER}, {EMAIL_HOST_PASSWORD})
+
+
+if os.name == 'nt':  # Windows
+    try:
+        locale.setlocale(locale.LC_ALL, 'Spanish_Spain.1252')
+    except locale.Error:
+        try:
+            locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
+        except locale.Error:
+            pass

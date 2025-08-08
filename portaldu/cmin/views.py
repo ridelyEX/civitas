@@ -1,3 +1,4 @@
+import pandas as pd
 from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -9,8 +10,8 @@ from portaldu.desUr.models import Files, soli
 from django.contrib import messages
 from django.core.mail import EmailMessage
 import os
-from .forms import UsersRender, Login, UsersConfig
-from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close
+from .forms import UsersRender, Login, UsersConfig, UploadExcel
+from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones
 import pywhatkit
 from tkinter import *
 
@@ -326,6 +327,52 @@ def seguimiento_docs(request, solicitud_id):
 def custom_handler404(request, exception=None):
     context = {}
     return render(request, 'error404.html', context, status=404)
+
+
+#Excel
+
+def subir_excel(request):
+    licitaciones = Licitaciones.objects.all()
+
+    licitaciones.filter(
+        fecha_limite__lt=timezone.now().date(),
+        activa=True
+    ).update(activa=False)
+
+    licitaciones_activas = licitaciones.filter(activa=True)
+
+    if request.method == "POST":
+        form = UploadExcel(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                excel_file = request.FILES['file']
+                df = pd.read_excel(excel_file, header=0)
+
+                required_columns = ['Fecha límite', 'No. licitación', 'Descripción']
+                for col in required_columns:
+                    if col not in df.columns:
+                        messages.error(request, f"Columna '{col}' no se encuentra en las tabla")
+                        print("no jala")
+                        return render(request, 'excel/upload_excel.html', {"form":form,
+                                                                                                    "licitaciones": licitaciones_activas})
+
+                for _, row in df.iterrows():
+                    Licitaciones.objects.create(
+                        fecha_limite=row['Fecha límite'],
+                        no_licitacion=row['No. licitación'],
+                        desc_licitacion=row['Descripción']
+                    )
+                messages.success(request, "Archivo de excel subido correctamente")
+                return redirect('excel')
+
+            except Exception as e:
+                messages.error(request, f"Error al procesar el archivo: {str(e)}")
+                return render(request, 'excel/upload_excel.html', {"form":form,
+                                                                                            "licitaciones": licitaciones_activas})
+    else:
+        form = UploadExcel()
+    return render(request, 'excel/upload_excel.html', {"form":form,
+                                                                                "licitaciones": licitaciones_activas})
 
 
 

@@ -118,4 +118,21 @@ class Close(models.Model):
     def __str__(self):
         return f"Cierre {self.close_ID} - {self.solicitud_FK.nomSolicitud}"
 
+
+#Excel
+class Licitaciones(models.Model):
+    licitacion_ID = models.AutoField(primary_key=True)
+    fecha_limite = models.DateField(blank=True, null=True)
+    no_licitacion = models.CharField(max_length=15, blank=True, null=True)
+    desc_licitacion = models.CharField(max_length=255, blank=True, null=True)
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'licitaciones'
+        ordering = ['no_licitacion']
+        verbose_name = "Licitación"
+
+    def __str__(self):
+        return self.no_licitacion or "Licitación sin número"
+
 # Create your models here.

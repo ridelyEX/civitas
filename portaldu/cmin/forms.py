@@ -77,3 +77,7 @@ class UsersConfig(forms.ModelForm):
         if commit:
             user.save()
         return user
+
+#Excel
+class UploadExcel(forms.Form):
+    file = forms.FileField()

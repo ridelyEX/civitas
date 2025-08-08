@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Uuid, data, SubirDocs, Pagos, soli, Files, Licitaciones
+from .models import Uuid, data, SubirDocs, Pagos, soli, Files
 from portaldu.cmin.models import Users, LoginDate
 
 # Los modelos de usuario ya están administrados por cmin
@@ -39,4 +39,4 @@ class FilesAdmin(admin.ModelAdmin):
     search_fields = ('nomDoc',)
 
 
-admin.site.register(Licitaciones)
+

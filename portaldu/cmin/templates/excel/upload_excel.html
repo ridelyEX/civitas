@@ -1,0 +1,70 @@
+{% extends 'master.html' %}{% load static %}{% load i18n %}
+
+{% block head %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+<style>
+    input[type="file"] {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block tittle %}Licitaciones{% endblock %}
+
+{% block content %}{% include 'navmin.html' %}
+<div class="container">
+    <h1>{{header}}</h1>
+    {% if form.errors %}
+    <p style="color: red;">
+        asi no es {{form.errors|pluralize}}
+    </p>
+    {% endif %}
+    <h1>Licitaciones disponibles</h1>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th scope="col">Número de licitación</th>
+            <th scope="col">Fecha límite</th>
+            <th scope="col">Descripción</th>
+        </tr>
+        </thead>
+        <tbody>
+    {% for licitacion in licitaciones %}
+        <tr>
+            <td>{{ licitacion.no_licitacion }}</td>
+            <td>{{ licitacion.fecha_limite|date:"j/m/Y" }}</td>
+            <td>{{ licitacion.desc_licitacion }}</td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td>No hay licitaciones disponibles</td>
+        </tr>
+    {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Subir nuevas licitaciones</h2>
+    <form action="{% url 'excel' %}" enctype="multipart/form-data" method="post">
+        {% csrf_token %}
+        <button type="button" class="up-excel btn btn-secondary" id="up-excel">Subir licitaciones</button>
+            {{form.file}}
+        <input type="submit" class="btn btn-primary" value="Subir">
+    </form>
+
+    <div class="acciones Ibottom">
+        <button type="button" class="back bbtn" id="bback" data-url="{% url 'menu' %}">Regresar</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script>
+document.getElementById("up-excel").addEventListener('click', function(){
+    console.log("click");
+        document.getElementById("id_file").click();
+    });
+</script>
+<script src="{% static 'cminScripts/cminBtns.js' %}"></script>
+{% endblock %}

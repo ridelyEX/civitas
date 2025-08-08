@@ -427,12 +427,11 @@ class PpFiles(models.Model):
         return str(self.nomDoc)
 
 
-# Excel
-
 class Pagos(models.Model):
     pago_ID = models.AutoField(primary_key=True)
     data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
                                 verbose_name="datos")
+
     fecha = models.DateTimeField(null = True, blank = True)
     pfm = models.CharField(max_length=80, null = True, blank = True)
 
@@ -448,16 +447,3 @@ class Pagos(models.Model):
             self.data_ID_id = data.objects.latest('data_ID').data_ID
         super().save(*args, **kwargs)
 
-class Licitaciones(models.Model):
-    licitacion_ID = models.AutoField(primary_key=True)
-    fecha_limite = models.DateField(blank=True, null=True)
-    no_licitacion = models.CharField(max_length=15, blank=True, null=True)
-    desc_licitacion = models.CharField(max_length=255, blank=True, null=True)
-
-    class Meta:
-        db_table = 'licitaciones'
-        ordering = ['no_licitacion']
-        verbose_name = "Licitación"
-
-    def __str__(self):
-        return self.no_licitacion or "Licitación sin número"

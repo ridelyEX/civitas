@@ -361,8 +361,4 @@ class PluvialRender(forms.ModelForm):
 
         }
 
-#Excel
-
-class UploadExcel(forms.Form):
-    file = forms.FileField()
 

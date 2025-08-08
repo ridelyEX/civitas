@@ -5,6 +5,7 @@ import re
 from tempfile import NamedTemporaryFile
 import googlemaps
 import pywhatkit
+import json
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
@@ -13,11 +14,12 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
-from django.db import models  # Agregar esta importación para Q
+from django.db import models  # Agregar esta importación para # Q
+from django.utils import timezone
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
-    PpPluvial, PpFiles, DesUrLoginDate, Licitaciones
+    PpPluvial, PpFiles, DesUrLoginDate
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
-                    ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender, UploadExcel)
+                    ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
 from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
 from datetime import date, datetime
@@ -25,6 +27,8 @@ from tkinter import *
 from rest_framework import viewsets
 from .serializers import FilesSerializer
 from .auth import DesUrAuthBackend, desur_login_required
+from portaldu.cmin.models import Licitaciones
+from django.views.decorators.http import require_http_methods
 import pandas as pd
 
 
@@ -423,13 +427,19 @@ def docs2(request):
         return render(request, 'docs2.html')
 
 
-@desur_login_required
+#@desur_login_required
 def pago(request):
-    # SÍ login_required - empleados procesan pagos
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
-    daatos = get_object_or_404(data, fuuid__uuid=uuid)
+    # SÍ, login_required - empleados procesan pagos
+   # uuid = request.COOKIES.get('uuid')
+   # if not uuid:
+   #    return redirect('home')
+    #datos = get_object_or_404(data, fuuid__uuid=uuid)
+    licitaciones = Licitaciones.objects.all()
+    licitaciones.filter(
+        fecha_limite__lt=timezone.now().date(),
+        activa=True
+    ).update(activa=False)
+    licitaciones_activas = licitaciones.filter(activa=True).order_by('fecha_limite')
 
     if request.method == 'POST':
         fecha = request.POST.get('fecha')
@@ -438,7 +448,28 @@ def pago(request):
         pago.save()
         return redirect('doc')
 
-    return render(request, 'pago.html')
+    context = {
+        "licitaciones": licitaciones_activas,
+        #"datos": datos,
+    }
+
+    return render(request, 'pago.html', context)
+
+@require_http_methods(["POST"])
+def get_licitaciones(request):
+    data = json.loads(request.body)
+    licitaciones_id = data.get('licitacion_id')
+
+    try:
+        licitacion = Licitaciones.objects.get(id=licitaciones_id)
+        return JsonResponse({
+            'codigo': licitacion.no_licitacion,
+            'descripcion': licitacion.desc_licitacion,
+            'fecha': licitacion.fecha_limite.strtime('%d de %B, %Y') if licitacion.fecha_limite else '',
+        })
+    except Licitaciones.DoesNotExist:
+        return JsonResponse({'error': 'Licitación no encontrada'}, status=400)
+
 
 @desur_login_required
 def document(request):
@@ -1456,42 +1487,6 @@ def pluvial_render(request):
         form = PluvialRender()
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
-
-#Excel
-
-def subir_excel(request):
-    if request.method == "POST":
-        form = UploadExcel(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                excel_file = request.FILES['file']
-                df = pd.read_excel(excel_file, header=0)
-
-                required_columns = ['Fecha límite', 'No. licitación', 'Descripción']
-                for col in required_columns:
-                    if col not in df.columns:
-                        messages.error(request, f"Columna '{col}' no se encuentra en las tabla")
-                        print("no jala")
-                        return render(request, 'excel/upload_excel.html', {"form":form,
-                                                                           "messages":messages})
-
-                for _, row in df.iterrows():
-                    Licitaciones.objects.create(
-                        fecha_limite=row['Fecha límite'],
-                        no_licitacion=row['No. licitación'],
-                        desc_licitacion=row['Descripción']
-                    )
-                messages.success(request, "Archivo de excel subido correctamente")
-                return HttpResponse("Datos en base de datos")
-
-            except Exception as e:
-                messages.error(request, f"Error al procesar el archivo: {str(e)}")
-                return render(request, 'excel/upload_excel.html', {"form":form})
-
-    else:
-        form = UploadExcel()
-    return render(request, 'excel/upload_excel.html', {"form":form})
-
 
 #API
 class FilesViewSet(viewsets.ModelViewSet):
