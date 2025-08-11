@@ -20,20 +20,24 @@
 
                 <!-- Selector de licitación -->
                 <div class="selector">
+                    <p>Total licitaciones: {{ licitaciones|length }}</p>
+                    {% for licitacion in licitaciones %}
+                        <p>{{ licitacion.licitacion_ID }} - {{ licitacion.no_licitacion }}</p>
+                    {% endfor %}
                     <label for="licitacion_select">Seleccionar licitación:</label>
                     <select name="licitacion" id="licitacion_select" class="input">
                         <option value="">Seleccione una licitación</option>
                         {% for licitacion in licitaciones %}
-                            <option value="{{ licitacion.id }}">{{ licitacion.no_licitacion }}</option>
+                            <option value="{{ licitacion.licitacion_ID }}">{{ licitacion.no_licitacion }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                <p id="elemento_codigo">Elemento "DOPM-02-2025" (esto es un placeholder)</p>
+                <input type="text" class="txt" id="elemento_codigo" readonly placeholder="Número de licitación">
             </div>
             <div class="body">
                 <div class="fechaLimite">
-                    <text id="fecha_limite_text">Fecha límite para cubrir el costo de participación: (aquí va una fecha de BD)</text>
+                    <input  type="text" class="txt" id="fecha_limite_text" readonly placeholder="Fecha límite para cubrir el coto de participación">
                 </div>
 
                 <div class="formulario">
@@ -49,7 +53,7 @@
                         >
                     </div>
                     <div class="descCont">
-                        <p id="descripcion_licitacion">Aquí va una descripción sobre la licitación</p>
+                        <input type="text" class="txt" id="descripcion_licitacion" readonly placeholder="Licitación">
                     </div>
                     <div class="nom">
                         <label for="pfm" class="text">Persona física o moral</label>
@@ -91,15 +95,17 @@
         // Actualización en tiempo real
         document.getElementById('licitacion_select').addEventListener('change', function() {
             const licitacionId = this.value;
+            console.log('Licitación seleccionada:', licitacionId); // Para verificar que se detecta el cambio
+
 
             if (!licitacionId) {
-                document.getElementById('elemento_codigo').textContent = 'Elemento "DOPM-02-2025" (esto es un placeholder)';
-                document.getElementById('fecha_limite_text').textContent = 'Fecha límite para cubrir el costo de participación: (aquí va una fecha de BD)';
-                document.getElementById('descripcion_licitacion').textContent = 'Aquí va una descripción sobre la licitación';
+                document.getElementById('elemento_codigo').value = '';
+                document.getElementById('fecha_limite_text').value = '';
+                document.getElementById('descripcion_licitacion').value = '';
                 return;
             }
 
-            fetch('{% url "get_licitacion" %}', {
+            fetch('{% url "get_licitaciones" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -115,9 +121,9 @@
                 }
 
                 // Llenar los campos automáticamente
-                document.getElementById('elemento_codigo').textContent = `Elemento "${data.codigo}"`;
-                document.getElementById('fecha_limite_text').textContent = `Fecha límite para cubrir el costo de participación: ${data.fecha}`;
-                document.getElementById('descripcion_licitacion').textContent = data.descripcion;
+                document.getElementById('elemento_codigo').value = data.codigo;
+                document.getElementById('fecha_limite_text').value = data.fecha;
+                document.getElementById('descripcion_licitacion').value = data.descripcion;
             })
             .catch(error => {
                 console.error('Error:', error);

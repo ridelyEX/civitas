@@ -458,10 +458,10 @@ def pago(request):
 @require_http_methods(["POST"])
 def get_licitaciones(request):
     data = json.loads(request.body)
-    licitaciones_id = data.get('licitacion_id')
+    licitaciones_id = data.get('licitacion_ID')
 
     try:
-        licitacion = Licitaciones.objects.get(id=licitaciones_id)
+        licitacion = Licitaciones.objects.get(licitacion_ID=licitaciones_id)
         return JsonResponse({
             'codigo': licitacion.no_licitacion,
             'descripcion': licitacion.desc_licitacion,
