@@ -12,8 +12,7 @@ from django.core.mail import EmailMessage
 import os
 from .forms import UsersRender, Login, UsersConfig, UploadExcel
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones
-import pywhatkit
-from tkinter import *
+
 
 
 def master(request):

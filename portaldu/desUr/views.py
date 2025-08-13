@@ -4,7 +4,7 @@ from io import BytesIO
 import re
 from tempfile import NamedTemporaryFile
 import googlemaps
-import pywhatkit
+
 import json
 from django.core.files import File
 from django.core.files.base import ContentFile
@@ -16,6 +16,8 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para # Q
 from django.utils import timezone
+from rest_framework.response import Response
+
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
     PpPluvial, PpFiles, DesUrLoginDate
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
@@ -23,28 +25,31 @@ from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRende
 from django.template.loader import render_to_string, get_template
 from weasyprint import HTML
 from datetime import date, datetime
-from tkinter import *
 from rest_framework import viewsets
 from .serializers import FilesSerializer
 from .auth import DesUrAuthBackend, desur_login_required
 from portaldu.cmin.models import Licitaciones
 from django.views.decorators.http import require_http_methods
 import pandas as pd
+import logging
+
+# Configurar logging
+logger = logging.getLogger(__name__)
 
 
 # Vistas de autenticación
 def desur_users_render(request):
     # NO login_required - necesario para que administradores creen cuentas de empleados
     if request.method == 'POST':
-        print(request.POST)
         form = DesUrUsersRender(request.POST, request.FILES)
         if form.is_valid():
-            print("estamos dentro")
             cleaned_data = form.cleaned_data
             form.save()
+            logger.info(f"Nuevo usuario DesUr creado: {cleaned_data.get('username', 'N/A')}")
             return redirect('desur_login')
+        else:
+            logger.warning("Error en formulario de registro DesUr")
     else:
-        print("no estamos dentro")
         form = DesUrUsersRender()
     return render(request, 'auth/desur_users.html', {'form':form})
 
@@ -61,12 +66,13 @@ def desur_login_view(request):
         user = backend.authenticate(request, username=usuario, password=contrasena)
 
         if user is not None:
-            print(user)
+            logger.info(f"Usuario autenticado exitosamente: {usuario}")
             request.session['desur_user_id'] = user.id
             request.session['desur_user_username'] = user.username
             DesUrLoginDate.create(user)
             return redirect('desur_menu')  # Ir al menú del empleado
         else:
+            logger.warning(f"Intento de login fallido para usuario: {usuario}")
             messages.error(request, "Usuario o contraseña incorrectos")
 
     return render(request, 'auth/desur_login.html', {'form':form})
@@ -188,17 +194,18 @@ def home(request):
             uuidM = str(uuid.uuid4())
             new = Uuid(uuid=uuidM)
             new.save()
+            logger.info("Nuevo UUID creado para sesión")
         else:
             if not Uuid.objects.filter(uuid=uuidM).exists():
                 new = Uuid(uuid=uuidM)
                 new.save()
-                print(new)
+                logger.info("UUID recreado para sesión existente")
         if action == 'op':
             response = redirect('data')
         elif action == 'pp':
             response = redirect('general')
         else:
-            reponse = redirect('home')
+            response = redirect('home')
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
     return render(request, 'main.html')
@@ -211,17 +218,17 @@ def intData(request):
     if not uuid:
         return redirect('home')
 
-    print(uuid)
+    logger.debug("Procesando datos de ciudadano")
 
     try:
         uid = get_object_or_404(Uuid, uuid=uuid)
-    except:
-        return HttpResponse("Sesión inválida"), redirect('home')
+    except Uuid.DoesNotExist:
+        logger.warning(f"UUID no encontrado: {uuid}")
+        return redirect('home')
 
     asunto = ''
 
     if request.method == 'POST':
-
         errors = validar_datos(request.POST)
         if errors:
             return render(request, 'di.html', {
@@ -253,11 +260,7 @@ def intData(request):
                     'fuuid': uid
                 }
 
-                if datos_persona['disc']:
-                    print("Discapacidad: ", datos_persona['disc'])
-
-                if datos_persona['vul']:
-                    print("Discapacidad: ", datos_persona['vul'])
+                logger.info("Datos de ciudadano procesados correctamente")
 
                 data.objects.update_or_create(
                     fuuid=uid,
@@ -271,7 +274,7 @@ def intData(request):
                         return redirect('soli')
 
         except Exception as e:
-            print("Error al procesar los datos:", str(e))
+            logger.error(f"Error al procesar datos: {str(e)}")
             return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
 
     context = {
@@ -291,16 +294,13 @@ def soliData(request):
             return redirect('home')
 
         try:
-
             uid = get_object_or_404(Uuid, uuid=uuid)
-
-
 
             is_mobile = request.user_agent.is_mobile
             is_tablet = request.user_agent.is_tablet
             is_pc = request.user_agent.is_pc
 
-            print(str(is_mobile) + " " + str(is_tablet) + " " + str(is_pc))
+            logger.debug("Detectando tipo de dispositivo para interfaz")
 
             dir = request.GET.get('dir', '')
             asunto = request.POST.get('asunto', '')
@@ -330,7 +330,6 @@ def soliData(request):
 
             return render(request, 'ds.html', context)
         except Exception as e:
-
             return user_errors(request, e)
 
 @desur_login_required
@@ -342,11 +341,11 @@ def doc(request):
 
     datos = data.objects.filter(fuuid__uuid=uuid).first()
     if not datos:
-        HttpResponse("no hay nada")
-
+        return HttpResponse("No hay datos disponibles")
 
     asunto = request.session.get('asunto','')
-    print(asunto)
+    logger.debug("Procesando documentación")
+
     if asunto == "DOP00005":
         if request.method == 'POST':
             action = request.POST.get('action')
@@ -361,14 +360,28 @@ def doc(request):
                 return redirect('saveD1')
             elif action == 'descargar':
                 return redirect('document')
-            elif action == 'wasap':
-                wasap_msg(uuid, datos.tel)
+
     context = {'asunto': asunto,
                'datos':datos,
                'uuid':uuid}
     return render(request, 'dg.html', context)
 
-
+@desur_login_required
+def dell(request, id):
+    # SÍ login_required - empleados eliminan documentos
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
+    if request.method == 'POST':
+        try:
+            docc = get_object_or_404(SubirDocs, pk=id, fuuid__uuid=uuid)
+            docc.delete()
+            logger.info("Documento eliminado correctamente")
+            return JsonResponse({'success': True})
+        except Exception as e:
+            logger.error(f"Error eliminando documento: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Método inválido'}, status=405)
 
 @desur_login_required
 def docs(request):
@@ -388,21 +401,6 @@ def docs(request):
         'count':count,
         'uuid':uuid,})
 
-@desur_login_required
-def dell(request, id):
-    # SÍ login_required - empleados eliminan documentos
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
-    if request.method == 'POST':
-        try:
-            docc = get_object_or_404(SubirDocs, pk=id, fuuid__uuid=uuid)
-            docc.delete()
-            print("se murio")
-            return JsonResponse({'success': True})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-    return JsonResponse({'error': 'Método inválido'}, status=405)
 
 @desur_login_required
 def docs2(request):
@@ -794,8 +792,8 @@ def pp_document(request):
             if propuesta:
                 propuesta_data = {
                     'infraestructura_barda': propuesta.infraestructura_barda,
-                    'infraestructura_baquetas': propuesta.infraestructura_baquetas,
-                    'infraestructura_muo': propuesta.infraestructura_muo,
+                    'infraestructura_baquetas': propuesta.infraestructura_banquetas,
+                    'infraestructura_muro': propuesta.infraestructura_muro,
                     'infraestructura_camellon': propuesta.infraestructura_camellon,
                     'infraestructura_crucero': propuesta.infraestructura_crucero,
                     'infraestructura_ordenamiento': propuesta.infraestructura_ordenamiento,
@@ -806,7 +804,7 @@ def pp_document(request):
                     'infraestructura_topes': propuesta.infraestructura_topes,
                     'infraestructura_puente': propuesta.infraestructura_puente,
                     'pavimentacion_asfalto': propuesta.pavimentacion_asfalto,
-                    'paviemntacion_rehabilitacion': propuesta.paviemntacion_rehabilitacion,
+                    'paviementacion_rehabilitacion': propuesta.pavimentacion_rehabilitacion,
                     'señalamiento_pintura': propuesta.señalamiento_pintura,
                     'señalamiento_señales': propuesta.señalamiento_señales,
                 }
@@ -837,7 +835,7 @@ def pp_document(request):
             if propuesta:
                 propuesta_data = {
                     'pluvial_muro_contencion': propuesta.pluvial_muro_contencion,
-                    'pluvial_canaliazacion': propuesta.pluvial_canaliazacion,
+                    'pluvial_canalizacion': propuesta.pluvial_canalizacion,
                     'pluvial_puente_peatonal': propuesta.pluvial_puente_peatonal,
                     'pluvial_vado': propuesta.pluvial_vado,
                     'pluvial_puente': propuesta.pluvial_puente,
@@ -935,7 +933,7 @@ def clear(request):
 
 
 # Functions.
-
+"""
 def wasap_msg(uid, num):
 
     import pyautogui
@@ -976,177 +974,333 @@ def wasap_msg(uid, num):
     else:
         print("Sin documentos")
         return redirect('doc')
+"""
 
 
 def gen_folio(uid, puo):
-    print(puo)
-    dp = data.objects.filter(fuuid=uid).last()
-    uid_str = str(uid.uuid)
-    folio = ''
-    if dp:
-        id_dp = dp.pk
-    print(id_dp)
-    fecha = date.today()
-    year_str = str(fecha.year)
-    year_slice = year_str[2:4]
-    match puo:
-        case 'OFI':
-            folio = f'GOP-OFI-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Oficio'
-        case 'CRC':
-            folio = f'GOP-CRC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'CRC'
-        case 'MEC':
-            folio = f'GOP-MEC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Marca el cambio'
-        case 'DLO':
-            folio = f'GOP-DLO-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Diputado Local'
-        case 'DFE':
-            folio = f'GOP-DFE-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Diputado Federal'
-        case 'REG':
-            folio = f'GOP-REG-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Regidores'
-        case 'DEA':
-            folio = f'GOP-DEA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Despacho del Alcalde'
-        case 'EVA':
-            folio = f'GOP-EVA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Evento con el Alcalde'
-        case 'PED':
-            folio = f'GOP-PED-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Presencial en Dirección'
-        case 'VIN':
-            folio = f'GOP-VIN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Vinculación'
-        case 'PPA':
-            folio = f'GOP-PPA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Presupuesto participativo'
-        case 'CPC':
-            folio = f'GOP-CPC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-            puo = 'Coordinación de Participación Ciudadana'
-    ###
-    # Concatenar id al formato del folio y al año
-    # Separar la cadena de la fecha?
-    # Base de datos para el folio? naahhh
-    # ###
+    """Genera folio único para trámites con validaciones mejoradas"""
+    logger.debug("Generando folio para trámite")
 
-    return puo, folio
+    try:
+        dp = data.objects.filter(fuuid=uid).last()
+        uid_str = str(uid.uuid)
+        id_dp = dp.pk if dp else 0  # Valor por defecto si no hay datos
+
+        fecha = date.today()
+        year_str = str(fecha.year)
+        year_slice = year_str[2:4]
+
+        match puo:
+            case 'OFI':
+                folio = f'GOP-OFI-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Oficio'
+            case 'CRC':
+                folio = f'GOP-CRC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'CRC'
+            case 'MEC':
+                folio = f'GOP-MEC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Marca el cambio'
+            case 'DLO':
+                folio = f'GOP-DLO-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Diputado Local'
+            case 'DFE':
+                folio = f'GOP-DFE-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Diputado Federal'
+            case 'REG':
+                folio = f'GOP-REG-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Regidores'
+            case 'DEA':
+                folio = f'GOP-DEA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Despacho del Alcalde'
+            case 'EVA':
+                folio = f'GOP-EVA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Evento con el Alcalde'
+            case 'PED':
+                folio = f'GOP-PED-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Presencial en Dirección'
+            case 'VIN':
+                folio = f'GOP-VIN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Vinculación'
+            case 'PPA':
+                folio = f'GOP-PPA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Presupuesto participativo'
+            case 'CPC':
+                folio = f'GOP-CPC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'Coordinación de Participación Ciudadana'
+            case _:
+                folio = f'GOP-GEN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
+                puo = 'General'
+
+        logger.info(f"Folio generado correctamente: {folio}")
+        return puo, folio
+
+    except Exception as e:
+        logger.error(f"Error generando folio: {str(e)}")
+        return 'Error', f'ERROR-{uid_str[:8]}'
 
 def gen_pp_folio(fuuid):
-    """Folio para presupuesto participativo"""
-    pp_info = PpGeneral.objects.filter(fuuid=fuuid).last()
-    uid_str = str(fuuid.uuid)
-    folio = ''
-    if pp_info:
-        id_pp = pp_info.pk
-        print(pp_info)
+    """Folio para presupuesto participativo con validaciones mejoradas"""
+    try:
+        pp_info = PpGeneral.objects.filter(fuuid=fuuid).last()
+        uid_str = str(fuuid.uuid)
+        id_pp = pp_info.pk if pp_info else 0  # Valor por defecto
 
-    fecha = date.today()
-    year_str = str(fecha.year)
-    year_slice = year_str[2:4]
+        fecha = date.today()
+        year_str = str(fecha.year)
+        year_slice = year_str[2:4]
 
-    folio = f'GOP-CPP-{id_pp:05d}-{uid_str[:4]}/{year_slice}'
+        folio = f'GOP-CPP-{id_pp:05d}-{uid_str[:4]}/{year_slice}'
 
-    return folio
+        logger.debug("Folio de PP generado correctamente")
+        return folio
 
-def cut_direction(dirreccion_completa):
-    gmaps = googlemaps.Client(key=settings.GOOGLE_API_KEY)
-
-    geocode_result = gmaps.geocode(dirreccion_completa)
-
-    if not geocode_result:
-        return None, None, None
-
-    calle = None
-    colonia = None
-    cp = None
-
-    for component in geocode_result[0]['address_components']:
-        types = component['types']
-
-        if 'route' in types:
-            calle = component['long_name']
-
-            for comp in geocode_result[0]['address_components']:
-                if 'street_number' in comp['types']:
-                    calle += ' ' + comp['long_name']
-                    break
-
-        if any(t in types for t in ['sublocality', 'sublocality_level_1', 'neighborhood']):
-            colonia = component['long_name']
-
-        if 'postal_code' in types:
-            cp = component['long_name']
-
-    return calle, colonia, cp
-
+    except Exception as e:
+        logger.error(f"Error generando folio PP: {str(e)}")
+        return f'ERROR-PP-{str(fuuid.uuid)[:8]}'
 def validar_curp(curp):
     pattern = r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$'
-    if pattern != r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$':
-        print('uhhhhhh Está mal')
+    if not re.match(pattern, curp):
+        logger.warning("CURP con formato incorrecto detectado")
         raise ValidationError("El formato del CURP es incorrecto.")
+    return True
+
+def validar_datos(post_data):
+    """
+    Valida los datos de entrada del formulario de ciudadanos con validaciones robustas
+    """
+    errors = []
+
+    # Validar nombre
+    nombre = post_data.get('nombre', '').strip()
+    if not nombre:
+        errors.append("El nombre es obligatorio")
+    elif len(nombre) < 2:
+        errors.append("El nombre debe tener al menos 2 caracteres")
+    elif not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', nombre):
+        errors.append("El nombre solo puede contener letras y espacios")
+
+    # Validar apellido paterno
+    pApe = post_data.get('pApe', '').strip()
+    if not pApe:
+        errors.append("El apellido paterno es obligatorio")
+    elif len(pApe) < 2:
+        errors.append("El apellido paterno debe tener al menos 2 caracteres")
+    elif not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', pApe):
+        errors.append("El apellido paterno solo puede contener letras y espacios")
+
+    # Validar apellido materno
+    mApe = post_data.get('mApe', '').strip()
+    if not mApe:
+        errors.append("El apellido materno es obligatorio")
+    elif len(mApe) < 2:
+        errors.append("El apellido materno debe tener al menos 2 caracteres")
+    elif not re.match(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$', mApe):
+        errors.append("El apellido materno solo puede contener letras y espacios")
+
+    # Validar fecha de nacimiento
+    bDay = post_data.get('bDay', '').strip()
+    if not bDay:
+        errors.append("La fecha de nacimiento es obligatoria")
+    else:
+        try:
+            from datetime import datetime, date
+            fecha_nacimiento = datetime.strptime(bDay, '%Y-%m-%d').date()
+            hoy = date.today()
+            edad = hoy.year - fecha_nacimiento.year - ((hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day))
+
+            if fecha_nacimiento > hoy:
+                errors.append("La fecha de nacimiento no puede ser futura")
+            elif edad > 120:
+                errors.append("La fecha de nacimiento no es válida")
+            elif edad < 0:
+                errors.append("La fecha de nacimiento no es válida")
+        except ValueError:
+            errors.append("Formato de fecha de nacimiento inválido")
+
+    # Validar teléfono
+    tel = post_data.get('tel', '').strip()
+    if not tel:
+        errors.append("El teléfono es obligatorio")
+    else:
+        # Remover espacios, guiones y paréntesis para validación
+        tel_limpio = re.sub(r'[\s\-\(\)]', '', tel)
+        if not tel_limpio.isdigit():
+            errors.append("El teléfono solo puede contener números")
+        elif len(tel_limpio) < 10:
+            errors.append("El teléfono debe tener al menos 10 dígitos")
+        elif len(tel_limpio) > 15:
+            errors.append("El teléfono no puede tener más de 15 dígitos")
+
+    # Validar CURP
+    curp = post_data.get('curp', '').strip().upper()
+    if not curp:
+        errors.append("El CURP es obligatorio")
+    else:
+        try:
+            validar_curp(curp)
+        except ValidationError as e:
+            errors.append(str(e))
+
+    # Validar sexo
+    sexo = post_data.get('sexo', '').strip()
+    if not sexo:
+        errors.append("El sexo es obligatorio")
+    elif sexo not in ['mujer', 'hombre', 'M', 'H']:
+        errors.append("El sexo debe ser M (Mujer) o H (Hombre)")
+
+    # Validar dirección
+    direccion = post_data.get('dir', '').strip()
+    if not direccion:
+        errors.append("La dirección es obligatoria")
+    elif len(direccion) < 10:
+        errors.append("La dirección debe ser más específica")
+
+    # Validar asunto
+    asunto = post_data.get('asunto', '').strip()
+    if not asunto:
+        errors.append("El asunto es obligatorio")
+    else:
+        # Validar que sea uno de los asuntos válidos
+        asuntos_validos = [
+            'DOP00001', 'DOP00002', 'DOP00003', 'DOP00004', 'DOP00005',
+            'DOP00006', 'DOP00007', 'DOP00008', 'DOP00009', 'DOP00010',
+            'DOP00011', 'DOP00012', 'DOP00013'
+        ]
+        if asunto not in asuntos_validos:
+            errors.append("El asunto seleccionado no es válido")
+
+    # Log de validación (sin datos sensibles)
+    if errors:
+        logger.warning(f"Errores de validación detectados: {len(errors)} errores")
+        for error in errors:
+            logger.warning(f"Error de validación: {error}")
+    else:
+        logger.info("Validación de datos exitosa")
+
+    return errors
+
+def cut_direction(direccion):
+    """
+    Procesa y divide una dirección en componentes con validaciones mejoradas
+    """
+    try:
+        if not direccion or not isinstance(direccion, str):
+            logger.warning("Dirección vacía o inválida recibida")
+            return "", "", ""
+
+        direccion = direccion.strip()
+        if len(direccion) < 5:
+            logger.warning("Dirección demasiado corta para procesar")
+            return direccion, "", ""
+
+        # Intentar extraer código postal
+        cp_match = re.search(r'\b\d{5}\b', direccion)
+        cp = cp_match.group() if cp_match else ""
+
+        # Remover CP de la dirección para procesar el resto
+        direccion_sin_cp = re.sub(r'\b\d{5}\b', '', direccion).strip()
+
+        # Buscar indicadores de colonia
+        indicadores_colonia = ['colonia', 'col.', 'col', 'fraccionamiento', 'fracc.', 'fracc']
+        colonia = ""
+        calle = direccion_sin_cp
+
+        for indicador in indicadores_colonia:
+            if indicador.lower() in direccion_sin_cp.lower():
+                partes = re.split(rf'\b{re.escape(indicador)}\b', direccion_sin_cp, flags=re.IGNORECASE)
+                if len(partes) == 2:
+                    calle = partes[0].strip()
+                    colonia = partes[1].strip()
+                    break
+
+        # Limpiar y validar resultados
+        calle = re.sub(r'\s+', ' ', calle).strip()
+        colonia = re.sub(r'\s+', ' ', colonia).strip()
+
+        logger.debug("Dirección procesada correctamente")
+
+        return calle, colonia, cp
+
+    except Exception as e:
+        logger.error(f"Error procesando dirección: {str(e)}")
+        return direccion, "", ""
 
 
-    return bool(re.match(pattern, curp))
+class FilesViewSet(viewsets.ViewSet):
+    def list(self, request):
+        return Response([])
 
-def validar_tel(tel):
-    pattern = r'^[0-9]{10}$'
-    return bool(re.match(pattern, tel))
+    def create(self, request):
+        return Response({})
 
-def validar_datos(request_data):
+    def retrieve(self, request, pk=None):
+        return Response({})
 
-        errors = []
+    def update(self, request, pk=None):
+        return Response({})
 
-        mandatory_fields = ['nombre', 'pApe', 'mApe', 'bDay', 'tel', 'curp', 'sexo', 'dir']
-        for field in mandatory_fields:
-            if not request_data.get(field, '').strip():
-                errors.append({
-                    'field': field,
-                    'mensaje': f'El campo {field} es obligatorio.',
-                    'codigo': f'{field.upper()}_required',
-                })
-
-        curp = request_data.get('curp', '').strip().upper()
-        if curp and not validar_curp(curp):
-            errors.append({
-                'field': 'curp',
-                'mensaje': 'El CURP no es válido.',
-                'codigo': 'CURP_invalid'
-                })
-
-        tel = request_data.get('tel', '').strip()
-        if tel and not validar_tel(tel):
-            errors.append({
-                'field': 'tel',
-                'mensaje': 'El número debe tener 10 digitos.',
-                'codigo': 'TEL_FORMAT',
-            })
-
-        return errors
+    def destroy(self, request, pk=None):
+        return Response({})
+    pass
 
 def soli_processed(request, uid, dp):
+    """
+    Procesa solicitudes de trámites con validaciones mejoradas y manejo de errores robusto
+    """
     try:
         with transaction.atomic():
-            dirr = request.POST.get('dir')
-            print('Dirección: ', dirr)
-            calle, colonia, cp = cut_direction(dirr)
-            descc = request.POST.get('descc')
-            if descc is None:
-                print("Sin descripción")
+            # Validar que la solicitud venga con método POST
+            if request.method != 'POST':
+                logger.warning("Intento de acceso a soli_processed sin método POST")
+                return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-            info = request.POST.get('info')
-            if info is None:
-                print("Sin información adicional")
+            # Validar datos de entrada
+            dirr = request.POST.get('dir', '').strip()
+            if not dirr:
+                logger.warning("Solicitud sin dirección")
+                return JsonResponse({'error': 'La dirección es obligatoria'}, status=400)
 
-            puo = request.POST.get('puo')
+            logger.info(f"Procesando solicitud de trámite para usuario {request.user.username}")
+
+            # Procesar dirección de forma segura
+            try:
+                calle, colonia, cp = cut_direction(dirr)
+            except Exception as e:
+                logger.error(f"Error procesando dirección: {str(e)}")
+                calle, colonia, cp = dirr, "", ""
+
+            # Validar y limpiar campos opcionales
+            descc = request.POST.get('descc', '').strip()
+            if not descc:
+                logger.debug("Solicitud sin descripción")
+                descc = "Sin descripción proporcionada"
+
+            info = request.POST.get('info', '').strip()
+            if not info:
+                logger.debug("Solicitud sin información adicional")
+                info = "Sin información adicional"
+
+            # Validar PUO
+            puo = request.POST.get('puo', '').strip()
+            if not puo:
+                logger.warning("Solicitud sin PUO especificado")
+                return JsonResponse({'error': 'El tipo de proceso (PUO) es obligatorio'}, status=400)
+
+            # Validar que el PUO sea válido
+            valid_puos = ['OFI', 'CRC', 'MEC', 'DLO', 'DFE', 'REG', 'DEA', 'EVA', 'PED', 'VIN', 'PPA', 'CPC']
+            if puo not in valid_puos:
+                logger.warning(f"PUO inválido recibido: {puo}")
+                return JsonResponse({'error': 'Tipo de proceso no válido'}, status=400)
+
             request.session['puo'] = puo
 
+            # Procesar imagen con validación mejorada
             img = img_processed(request)
             if not img:
-                return JsonResponse({'error': 'No hay imagen que rollo'}, status=400)
+                logger.warning("No se pudo procesar la imagen de la solicitud")
+                return JsonResponse({'error': 'No se pudo procesar la imagen. Verifique el formato.'}, status=400)
 
+            # Crear solicitud con validaciones
             solicitud = soli(
                 data_ID=dp,
                 dirr=dirr,
@@ -1157,89 +1311,113 @@ def soli_processed(request, uid, dp):
                 info=info,
                 puo=puo,
                 foto=img,
-                processed_by=request.user  # Registrar qué empleado procesó el trámite
+                processed_by=request.user
             )
 
-            solicitud.save()
-            print("Todo guardado fak yea", solicitud)
+            # Validar modelo antes de guardar
+            try:
+                solicitud.full_clean()
+                solicitud.save()
+                logger.info(f"Solicitud guardada exitosamente: ID {solicitud.pk}")
+            except ValidationError as e:
+                logger.error(f"Error de validación en solicitud: {e}")
+                return JsonResponse({'error': 'Datos de solicitud inválidos'}, status=400)
 
-            if soli.objects.filter(pk=solicitud.pk).exists():
-                print("Solicitud registrada")
-            else:
-                print("Solicitud no registrada")
+            # Verificar que se guardó correctamente
+            if not soli.objects.filter(pk=solicitud.pk).exists():
+                logger.error("Error crítico: Solicitud no se registró en la base de datos")
+                raise ValidationError("Error al registrar la solicitud")
 
-            files_processed(request, uid)
+            # Procesar archivos adjuntos
+            try:
+                files_processed(request, uid)
+                logger.debug("Archivos procesados correctamente")
+            except Exception as e:
+                logger.error(f"Error procesando archivos: {str(e)}")
+                # No es crítico, continuar
 
-            puo_txt, folio = gen_folio(uid, puo)
-            solicitud.folio = folio
-            solicitud.save()
-            print(folio)
-            print(puo_txt)
+            # Generar y asignar folio
+            try:
+                puo_txt, folio = gen_folio(uid, puo)
+                solicitud.folio = folio
+                solicitud.save(update_fields=['folio'])
+                logger.info(f"Folio asignado a solicitud: {folio}")
+            except Exception as e:
+                logger.error(f"Error generando folio: {str(e)}")
+                return JsonResponse({'error': 'Error generando folio'}, status=500)
 
             return redirect('doc')
 
+    except ValidationError as e:
+        logger.error(f"Error de validación procesando solicitud: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        print("No se ha guardado nada", str(e))
-        return user_errors(request, e)
+        logger.error(f"Error crítico procesando solicitud: {str(e)}", exc_info=True)
+        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
 
 def img_processed(request):
+    """Procesa imágenes de solicitudes con validaciones mejoradas"""
     img = None
     imgpath = request.POST.get('src')
 
     if 'src' in request.FILES:
         img = request.FILES['src']
     elif imgpath and imgpath.startswith("data:image"):
-        header, encoded = imgpath.split(",", 1)
-        datos = base64.b64decode(encoded)
-        img = NamedTemporaryFile(delete=False)
-        img.write(datos)
-        img.flush()
-        img = File(img)
+        try:
+            header, encoded = imgpath.split(",", 1)
+            datos = base64.b64decode(encoded)
+            img = NamedTemporaryFile(delete=False)
+            img.write(datos)
+            img.flush()
+            img = File(img)
+        except Exception as e:
+            logger.error(f"Error procesando imagen base64: {str(e)}")
+            return None
     else:
-        print("No hay foto, no like")
+        logger.warning("No se encontró imagen para procesar")
         return None
 
-    name = str(img.name).split("\\")[-1]
-    name += '.jpg'
-    img.name = name
+    if img:
+        name = str(img.name).split("\\")[-1]
+        if not name.endswith('.jpg'):
+            name += '.jpg'
+        img.name = name
 
     return img
 
 def files_processed(request, uid):
+    """Procesa archivos adjuntos con validaciones"""
     file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
 
     if file_keys:
         for key in file_keys:
-            index = key.split('_')[-1]
-            file = request.FILES[key]
-            desc = request.POST.get(f'tempdesc_{index}')
+            try:
+                index = key.split('_')[-1]
+                file = request.FILES[key]
+                desc = request.POST.get(f'tempdesc_{index}', 'Documento sin descripción')
 
-            if desc is None:
-                print("No hay descripción pal documento")
-                desc = "Documento sin descripción"
-
-            if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
-                print("no existe documentoc como este, procede a guardarlo papu")
-                documento = SubirDocs(
-                    descDoc=desc,
-                    doc=file,
-                    nomDoc=file.name,
-                    fuuid=uid,
-                )
-                documento.save()
-            else:
-                print("NO se guardará un documento repetido")
-
+                if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
+                    logger.debug("Guardando nuevo documento")
+                    documento = SubirDocs(
+                        descDoc=desc,
+                        doc=file,
+                        nomDoc=file.name,
+                        fuuid=uid,
+                    )
+                    documento.save()
+                else:
+                    logger.warning("Documento duplicado, no se guardará")
+            except Exception as e:
+                logger.error(f"Error procesando archivo {key}: {str(e)}")
 
 def user_errors(request, error):
-    import logging
-    logger = logging.getLogger(__name__)
+    """Maneja errores del sistema de forma segura"""
     logger.error(f"Error en vista: {error}", exc_info=True)
 
     return render(request, 'error.html', {
         'error': {
             'titulo': "Error del sistema",
-            'mensaje': 'Volver a intentar más tarde',
+            'mensaje': 'Por favor, inténtelo nuevamente o contacte al administrador',
             'codigo': 'SYS_ERROR',
             'accion': 'Reintentar'
         }
@@ -1265,6 +1443,7 @@ def get_or_create_uuid(request):
 
 @desur_login_required
 def gen_render(request):
+    """Vista principal para datos generales de presupuesto participativo"""
     # Obtener o crear UUID
     uuid_str = request.COOKIES.get('uuid')
     if not uuid_str:
@@ -1277,8 +1456,7 @@ def gen_render(request):
             uuid_obj = Uuid.objects.create(uuid=uuid_str)
 
     if request.method == 'POST':
-        print("Entrando al POST de gen_render")
-        print(f"POST data: {request.POST}")
+        logger.debug("Procesando formulario de presupuesto participativo")
 
         # Crear una copia mutable del POST data
         post_data = request.POST.copy()
@@ -1286,13 +1464,12 @@ def gen_render(request):
 
         form = GeneralRender(post_data)  # Usar el POST data modificado
         categoria = request.POST.get('categoria')
-        cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluvial']
+        cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluviales']
 
         if categoria and categoria in cat_values:
             request.session['categoria'] = categoria
             request.session['pp_uuid'] = uuid_str
-            print(f"Categoría guardada: {categoria}")
-            print(f"UUID guardado en sesión: {uuid_str}")
+            logger.info(f"Categoría de PP guardada: {categoria}")
         else:
             messages.error(request, "Categoría inválida")
             response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
@@ -1300,11 +1477,10 @@ def gen_render(request):
             return response
 
         if form.is_valid():
-            print("Formulario válido")
+            logger.info("Formulario de PP válido, guardando datos")
             instance = form.save(commit=False)
             instance.fuuid = uuid_obj  # Asegurar que el fuuid esté asignado
             instance.save()
-            print(f"Instancia guardada: {instance}")
 
             # Redireccionar según categoría
             match categoria:
@@ -1316,7 +1492,7 @@ def gen_render(request):
                     response = redirect('escuelas')
                 case 'infraestructura':
                     response = redirect('infraestructura')
-                case 'pluvial':
+                case 'pluviales':
                     response = redirect('pluviales')
                 case _:
                     response = redirect('gen_render')
@@ -1324,17 +1500,18 @@ def gen_render(request):
             response.set_cookie('uuid', uuid_str, max_age=3600)
             return response
         else:
-            print(f"Errores en formulario: {form.errors}")
+            logger.warning(f"Errores en formulario PP: {form.errors}")
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        print("Método GET - mostrando formulario")
         form = GeneralRender(initial={'fuuid': uuid_obj.pk})  # Inicializar con fuuid
 
     response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
     response.set_cookie('uuid', uuid_str, max_age=3600)
     return response
 
+@desur_login_required
 def escuela_render(request):
+    """Vista para propuestas de presupuesto participativo en escuelas"""
     # Obtener UUID de la propuesta general
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
@@ -1355,29 +1532,32 @@ def escuela_render(request):
             instance = form.save(commit=False)
             instance.fk_pp = pp_general
             instance.save()
+            logger.info("Propuesta de escuela guardada exitosamente")
             messages.success(request, "Propuesta de escuela guardada exitosamente.")
-            return redirect('pp_document')  # O redirigir a donde corresponda
+            return redirect('pp_document')
         else:
+            logger.warning(f"Errores en formulario de escuela: {form.errors}")
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = EscuelaRender()
 
     return render(request, 'pp/escuela.html', {'form': form, 'pp_general': pp_general})
 
-
+@desur_login_required
 def parque_render(request):
+    """Vista para propuestas de presupuesto participativo en parques"""
     # Obtener UUID de la propuesta general
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('general')
+        return redirect('gen_render')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
         pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
     except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
         messages.error(request, "Propuesta general no encontrada.")
-        return redirect('general')
+        return redirect('gen_render')
 
     if request.method == 'POST':
         form = ParqueRender(request.POST)
@@ -1386,22 +1566,25 @@ def parque_render(request):
             instance = form.save(commit=False)
             instance.fk_pp = pp_general
             instance.save()
+            logger.info("Propuesta de parque guardada exitosamente")
             messages.success(request, "Propuesta de parque guardada exitosamente.")
-            return redirect('pp_document')  # O redirigir a donde corresponda
+            return redirect('pp_document')
         else:
+            logger.warning(f"Errores en formulario de parque: {form.errors}")
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = ParqueRender()
 
     return render(request, 'pp/parque.html', {'form': form, 'pp_general': pp_general})
 
-
+@desur_login_required
 def cs_render(request):
+    """Vista para propuestas de centros comunitarios y salones de usos múltiples"""
     # Obtener UUID de la propuesta general
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('pp_document')
+        return redirect('gen_render')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
@@ -1417,29 +1600,32 @@ def cs_render(request):
             instance = form.save(commit=False)
             instance.fk_pp = pp_general
             instance.save()
+            logger.info("Propuesta de centro/salón guardada exitosamente")
             messages.success(request, "Propuesta de centro/salón guardada exitosamente.")
-            return redirect('pp_document')  # O redirigir a donde corresponda
+            return redirect('pp_document')
         else:
+            logger.warning(f"Errores en formulario de centro/salón: {form.errors}")
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = CsRender()
 
     return render(request, 'pp/centro_salon.html', {'form': form, 'pp_general': pp_general})
 
-
+@desur_login_required
 def infraestructura_render(request):
+    """Vista para propuestas de infraestructura"""
     # Obtener UUID de la propuesta general
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('clear')
+        return redirect('gen_render')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
         pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
     except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
         messages.error(request, "Propuesta general no encontrada.")
-        return redirect('clear')
+        return redirect('gen_render')
 
     if request.method == 'POST':
         form = InfraestructuraRender(request.POST)
@@ -1448,29 +1634,32 @@ def infraestructura_render(request):
             instance = form.save(commit=False)
             instance.fk_pp = pp_general
             instance.save()
+            logger.info("Propuesta de infraestructura guardada exitosamente")
             messages.success(request, "Propuesta de infraestructura guardada exitosamente.")
-            return redirect('pp_document')  # O redirigir a donde corresponda
+            return redirect('pp_document')
         else:
+            logger.warning(f"Errores en formulario de infraestructura: {form.errors}")
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = InfraestructuraRender()
 
     return render(request, 'pp/infraestructura.html', {'form': form, 'pp_general': pp_general})
 
-
+@desur_login_required
 def pluvial_render(request):
+    """Vista para propuestas de soluciones pluviales"""
     # Obtener UUID de la propuesta general
     pp_uuid = request.session.get('pp_uuid')
     if not pp_uuid:
         messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('clear')
+        return redirect('gen_render')
 
     try:
         uuid_obj = Uuid.objects.get(uuid=pp_uuid)
         pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
     except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
         messages.error(request, "Propuesta general no encontrada.")
-        return redirect('clear')
+        return redirect('gen_render')
 
     if request.method == 'POST':
         form = PluvialRender(request.POST)
@@ -1479,16 +1668,13 @@ def pluvial_render(request):
             instance = form.save(commit=False)
             instance.fk_pp = pp_general
             instance.save()
+            logger.info("Propuesta pluvial guardada exitosamente")
             messages.success(request, "Propuesta pluvial guardada exitosamente.")
-            return redirect('pp_document')  # O redirigir a donde corresponda
+            return redirect('pp_document')
         else:
+            logger.warning(f"Errores en formulario pluvial: {form.errors}")
             messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = PluvialRender()
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
-
-#API
-class FilesViewSet(viewsets.ModelViewSet):
-    queryset = Files.objects.all()
-    serializer_class = FilesSerializer

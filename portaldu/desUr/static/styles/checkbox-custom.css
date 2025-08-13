@@ -5,6 +5,7 @@
     display: flex;
     align-content: center;
     flex-direction: row;
+ 
     width: fit-content;
 }
 
@@ -107,6 +108,7 @@
     position: absolute;
     z-index: 1;
     font-size: 0.90rem;
+    
 }
 
 .checkbox-wrapper-46:hover span.p2 {

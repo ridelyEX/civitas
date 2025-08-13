@@ -137,8 +137,8 @@ class soli(models.Model):
     processed_by = models.ForeignKey(DesUrUsers, on_delete=models.CASCADE,
                                    verbose_name="Procesado por", null=True, blank=True)
     dirr   = models.TextField()
-    calle = models.CharField(max_length=50, null=True, blank=True)
-    colonia = models.CharField(max_length=50, null=True, blank=True)
+    calle = models.CharField(max_length=100, null=True, blank=True)
+    colonia = models.CharField(max_length=100, null=True, blank=True)
     cp = models.CharField(max_length=5, null=True, blank=True)
     descc   = models.TextField(blank=True, null=True)
     fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)

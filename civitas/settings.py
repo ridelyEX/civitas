@@ -29,12 +29,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+1cgdo&)u_qlg()^r5ukuyo7s*w%v=#(dxbuck2jq6uwfqejuu'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-+1cgdo&)u_qlg()^r5ukuyo7s*w%v=#(dxbuck2jq6uwfqejuu')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['*']
+# Configuración segura de hosts permitidos
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if not DEBUG else ['*']
 
 
 # Application definition
@@ -90,12 +91,15 @@ WSGI_APPLICATION = 'civitas.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'civitas',
-        'USER': 'root',
-        'PASSWORD': 'admin',  #en la chamba es admim, en la laptop es H0L4 y en la compu es root
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.getenv('DB_NAME', 'civitas'),
+        'USER': os.getenv('DB_USER', 'root'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'admin'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        } if os.getenv('DB_ENGINE', '').endswith('mysql') else {},
     }
 }
 
@@ -177,7 +181,73 @@ EMAIL_HOST_USER = os.getenv('email')
 EMAIL_HOST_PASSWORD = os.getenv('contra')
 DEFAULT_FROM_EMAIL = f"Test {os.getenv('email')}"
 
-print({EMAIL_HOST_USER}, {EMAIL_HOST_PASSWORD})
+# Configuración de logging seguro
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'civitas.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG' if DEBUG else 'WARNING',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'portaldu': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+
+# Configuración de seguridad adicional
+if not DEBUG:
+    # Headers de seguridad para producción
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Solo activar en HTTPS
+    if os.getenv('USE_HTTPS', 'false').lower() == 'true':
+        SECURE_SSL_REDIRECT = True
+        SESSION_COOKIE_SECURE = True
+        CSRF_COOKIE_SECURE = True
+
+# Configuración de sesiones seguras
+SESSION_COOKIE_AGE = 3600  # 1 hora
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Configuración de cookies CSRF
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 
 if os.name == 'nt':  # Windows

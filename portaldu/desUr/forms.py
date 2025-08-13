@@ -196,43 +196,43 @@ class ParqueRender(forms.ModelForm):
         exclude = ['p_parque_ID', 'fk_pp']
 
         widgets = {
-            'cancha_futbol_rapido':forms.CheckboxInput(attrs={'class':'check-form-control'}),
+            'cancha_futbol_rapido':forms.CheckboxInput(attrs={'class':'check-form-control','required':'true'}),
             'cancha_futbol_soccer': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'cancha_futbol_7x7': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'cancha_beisbol': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'cancha_softbol': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'cancha_usos_multiples': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'cancha_otro': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'alumbrado_rehabilitacion': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'alumbrado_nuevo': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control','required':'true'}),
             'juegos_dog_park': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control','required':'true'}),
             'juegos_infantiles': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'juegos_ejercitadores': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control','required':'true'}),
             'juegos_otros': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control','required':'true'}),
             'techumbre_domo': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control','required':'true'}),
             'techumbre_kiosko': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'equipamiento_botes': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control','required':'true'}),
             'equipamiento_bancas': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'equipamiento_andadores': forms.CheckboxInput(
-              attrs={'class': 'check-form-control'}),
+              attrs={'class': 'check-form-control','required':'true'}),
             'equipamiento_rampas': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control','required':'true'}),
             'notas_parque':forms.Textarea(attrs={'class':'text-form-control'}),
         }
 
@@ -242,26 +242,26 @@ class EscuelaRender(forms.ModelForm):
         exclude = ['p_escuela_ID', 'fk_pp']
 
         widgets = {
-            'nom_escuela':forms.TextInput(attrs={'class':'form-control'}),
-            'rehabilitacion_baños':forms.CheckboxInput(attrs={'class':'check-form-control'}),
+            'nom_escuela':forms.TextInput(attrs={'class':'form-control', 'required':'true'}),
+            'rehabilitacion_baños':forms.CheckboxInput(attrs={'class':'check-form-control', 'required':'true'}),
             'rehabilitacion_salones': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control', 'required':'true'}),
             'rehabilitacion_electricidad': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control', 'required':'true'}),
             'rehabilitacion_gimnasio': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control', 'required':'true'}),
             'rehabilitacion_otro': forms.CheckboxInput(
-               attrs={'class': 'check-form-control'}),
+               attrs={'class': 'check-form-control', 'required':'true'}),
             'contruccion_domo': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control', 'required':'true'}),
             'construccion_aula': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control', 'required':'true'}),
             'cancha_futbol_rapido': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control', 'required':'true'}),
             'cancha_futbol_soccer': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control', 'required':'true'}),
             'cancha_futbol_7x7': forms.CheckboxInput(
-                attrs={'class': 'check-form-control'}),
+                attrs={'class': 'check-form-control', 'required':'true'}),
             'notas_escuela': forms.Textarea(attrs={'class': 'text-form-control'}),
         }
 

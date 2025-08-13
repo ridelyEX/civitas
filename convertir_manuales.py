@@ -324,8 +324,7 @@ class ManualConverter:
     def convert_all_manuals(self):
         """Convierte todos los manuales encontrados"""
         manual_files = [
-            'Manual_Usuario_DesUr.md',
-            'Manual_Usuario_CMIN.md'
+            'REQUERIMIENTOS_SISTEMA.md'
         ]
 
         results = {
