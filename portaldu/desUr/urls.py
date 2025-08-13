@@ -43,5 +43,11 @@ urlpatterns = [
     path('document2/', views.document2, name="document2"),
     path('save/', views.save_document, name="saveD1"),
     path('', include(router.urls)),
-    path('get_licitaciones/', views.get_licitaciones, name="get_licitaciones")
+
+    #Rutas móviles
+    path('sw.js', views.service_worker, name='service_worker'),
+    path('offline/', views.offline_page, name='offline_page'),
+    path('manifest.json', views.manifest, name='manifest'),
+
+    path('get_licitaciones/', views.get_licitaciones, name="get_licitaciones"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

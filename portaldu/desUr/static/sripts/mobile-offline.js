@@ -1,0 +1,1 @@
+// Clase para funciones offline en dispositivos móviles

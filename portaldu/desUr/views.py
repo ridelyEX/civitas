@@ -1678,3 +1678,25 @@ def pluvial_render(request):
         form = PluvialRender()
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
+
+#mobile offline views
+
+def service_worker(request):
+    """Servir el service worker"""
+    return render(request, 'pwa/sw.js', content_type='application/javascript')
+
+def manifest(request):
+    """Servir el manifest"""
+    return render(request, 'pwa/manifest.json', content_type='application/json')
+
+def offline_page(request):
+    """Página que se muestra cuando no hay conexión"""
+    return render(request, 'pwa/offline.html')
+
+def is_mobile(request):
+    """Detectar si el usuario está en un dispositivo móvil"""
+    mobile_regex = re.compile(r'Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini')
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    return mobile_regex.search(user_agent) is not None
+
+
