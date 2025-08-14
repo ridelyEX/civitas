@@ -1,0 +1,457 @@
+<!-- templates/mobile/soliData.html -->
+{% extends 'mobile/base.html' %}
+
+{% block title %}Nueva Solicitud - Civitas Mobile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Información del usuario -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">👤 {{ usuario.nombre }} {{ usuario.pApe }} {{ usuario.mApe }}</h6>
+            </div>
+            <div class="card-body py-2">
+                <small class="text-muted">
+                    📱 {{ usuario.tel }} | 📄 {{ usuario.curp }}
+                </small>
+            </div>
+        </div>
+
+        <!-- Formulario de solicitud -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📝 Nueva Solicitud</h5>
+            </div>
+            <div class="card-body">
+                <form id="mobile-soli-form" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Dirección del problema -->
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label">📍 Dirección del Problema *</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="direccion" name="direccion"
+                                   placeholder="Calle, colonia, código postal..." required>
+                            <button type="button" class="btn btn-outline-primary" id="get-current-location">
+                                📍 Aquí
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Descripción del problema -->
+                    <div class="mb-3">
+                        <label for="solicitud" class="form-label">📋 Descripción del Problema *</label>
+                        <textarea class="form-control" id="solicitud" name="solicitud" rows="4"
+                                  placeholder="Describe detalladamente el problema o solicitud..."
+                                  required></textarea>
+                        <div class="form-text">
+                            <span id="char-count">0</span>/500 caracteres
+                        </div>
+                    </div>
+
+                    <!-- Captura de fotos optimizada para móvil -->
+                    <div class="mb-3">
+                        <label class="form-label">📷 Fotos del Problema</label>
+
+                        <!-- Botones de captura -->
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="button" class="btn btn-outline-primary" id="take-photo-btn">
+                                📷 Tomar Foto
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="select-photos-btn">
+                                🖼️ Seleccionar de Galería
+                            </button>
+                        </div>
+
+                        <!-- Input oculto para fotos -->
+                        <input type="file" id="photo-input" name="fotos" multiple accept="image/*"
+                               capture="environment" style="display: none;">
+                        <input type="file" id="gallery-input" name="fotos" multiple accept="image/*"
+                               style="display: none;">
+
+                        <!-- Preview de fotos -->
+                        <div id="photo-preview" class="row g-2"></div>
+
+                        <small class="form-text text-muted">
+                            Máximo 5 fotos, 10MB cada una. Las fotos ayudan a procesar tu solicitud más rápido.
+                        </small>
+                    </div>
+
+                    <!-- Información adicional -->
+                    <div class="accordion mb-3" id="additional-info">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#collapse-info">
+                                    ℹ️ Información Adicional
+                                </button>
+                            </h2>
+                            <div id="collapse-info" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="mb-3">
+                                        <label for="prioridad" class="form-label">Prioridad</label>
+                                        <select class="form-select" id="prioridad" name="prioridad">
+                                            <option value="normal">Normal</option>
+                                            <option value="urgente">Urgente</option>
+                                            <option value="critica">Crítica</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="categoria" class="form-label">Categoría</label>
+                                        <select class="form-select" id="categoria" name="categoria">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="alumbrado">Alumbrado Público</option>
+                                            <option value="baches">Baches y Pavimento</option>
+                                            <option value="limpieza">Limpieza Pública</option>
+                                            <option value="agua">Problemas de Agua</option>
+                                            <option value="seguridad">Seguridad</option>
+                                            <option value="otros">Otros</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg" id="submit-soli-btn">
+                            <span id="submit-soli-text">✅ Enviar Solicitud</span>
+                            <span id="submit-soli-spinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                        </button>
+
+                        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                            ← Regresar a Datos
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Errores -->
+                {% if errors %}
+                <div class="alert alert-danger mt-3">
+                    <strong>⚠️ Errores encontrados:</strong>
+                    <ul class="mb-0 mt-2">
+                        {% for error in errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de cámara (para dispositivos que lo soporten) -->
+<div class="modal fade" id="camera-modal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📷 Capturar Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <canvas id="photo-canvas" style="display: none;"></canvas>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="capture-photo-btn">
+                    📷 Capturar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación offline -->
+<div class="modal fade" id="offline-soli-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📱 Solicitud Guardada</h5>
+            </div>
+            <div class="modal-body">
+                <p>Tu solicitud se ha guardado localmente y se enviará automáticamente cuando recuperes la conexión a internet.</p>
+                <p><strong>¿Deseas crear otra solicitud?</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/ageo/'">
+                    Ir al Inicio
+                </button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="location.reload()">
+                    Nueva Solicitud
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('mobile-soli-form');
+    const submitBtn = document.getElementById('submit-soli-btn');
+    const submitText = document.getElementById('submit-soli-text');
+    const submitSpinner = document.getElementById('submit-soli-spinner');
+
+    let capturedPhotos = [];
+    let stream = null;
+
+    // Contador de caracteres
+    const solicitudTextarea = document.getElementById('solicitud');
+    const charCount = document.getElementById('char-count');
+
+    solicitudTextarea.addEventListener('input', function() {
+        const count = this.value.length;
+        charCount.textContent = count;
+        charCount.className = count > 500 ? 'text-danger' : 'text-muted';
+    });
+
+    // Geolocalización para dirección actual
+    document.getElementById('get-current-location').addEventListener('click', async function() {
+        const btn = this;
+        btn.innerHTML = '⏳ Ubicando...';
+        btn.disabled = true;
+
+        try {
+            const position = await getCurrentPosition();
+            const address = await getAddressFromCoords(position.coords.latitude, position.coords.longitude);
+            document.getElementById('direccion').value = address;
+        } catch (error) {
+            console.error('Error obteniendo ubicación:', error);
+            alert('No se pudo obtener la ubicación actual');
+        } finally {
+            btn.innerHTML = '📍 Aquí';
+            btn.disabled = false;
+        }
+    });
+
+    // Manejo de fotos
+    document.getElementById('take-photo-btn').addEventListener('click', function() {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            openCamera();
+        } else {
+            // Fallback a input file con capture
+            document.getElementById('photo-input').click();
+        }
+    });
+
+    document.getElementById('select-photos-btn').addEventListener('click', function() {
+        document.getElementById('gallery-input').click();
+    });
+
+    document.getElementById('photo-input').addEventListener('change', handleFileSelect);
+    document.getElementById('gallery-input').addEventListener('change', handleFileSelect);
+
+    async function openCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            });
+
+            const video = document.getElementById('camera-preview');
+            video.srcObject = stream;
+
+            const modal = new bootstrap.Modal(document.getElementById('camera-modal'));
+            modal.show();
+
+            modal._element.addEventListener('hidden.bs.modal', function() {
+                stopCamera();
+            });
+
+        } catch (error) {
+            console.error('Error accediendo a la cámara:', error);
+            alert('No se pudo acceder a la cámara. Usa "Seleccionar de Galería" en su lugar.');
+        }
+    }
+
+    document.getElementById('capture-photo-btn').addEventListener('click', function() {
+        const video = document.getElementById('camera-preview');
+        const canvas = document.getElementById('photo-canvas');
+        const context = canvas.getContext('2d');
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+
+        canvas.toBlob(function(blob) {
+            const file = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            capturedPhotos.push(file);
+            updatePhotoPreview();
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('camera-modal'));
+            modal.hide();
+        }, 'image/jpeg', 0.8);
+    });
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+    }
+
+    function handleFileSelect(event) {
+        const files = Array.from(event.target.files);
+
+        // Validar cantidad total
+        if (capturedPhotos.length + files.length > 5) {
+            alert('Máximo 5 fotos permitidas');
+            return;
+        }
+
+        // Validar cada archivo
+        for (const file of files) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`La foto ${file.name} es demasiado grande (máximo 10MB)`);
+                continue;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert(`${file.name} no es una imagen válida`);
+                continue;
+            }
+
+            capturedPhotos.push(file);
+        }
+
+        updatePhotoPreview();
+        event.target.value = ''; // Limpiar input
+    }
+
+    function updatePhotoPreview() {
+        const preview = document.getElementById('photo-preview');
+        preview.innerHTML = '';
+
+        capturedPhotos.forEach((file, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-4';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                col.innerHTML = `
+                    <div class="position-relative">
+                        <img src="${e.target.result}" class="img-fluid rounded" style="height: 100px; object-fit: cover; width: 100%;">
+                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1"
+                                onclick="removePhoto(${index})" style="padding: 2px 6px; font-size: 12px;">
+                            ✕
+                        </button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+
+            preview.appendChild(col);
+        });
+    }
+
+    window.removePhoto = function(index) {
+        capturedPhotos.splice(index, 1);
+        updatePhotoPreview();
+    };
+
+    // Envío del formulario
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Validaciones
+        if (!document.getElementById('direccion').value.trim()) {
+            alert('Por favor ingresa la dirección del problema');
+            return;
+        }
+
+        if (!document.getElementById('solicitud').value.trim()) {
+            alert('Por favor describe el problema');
+            return;
+        }
+
+        // Mostrar estado de carga
+        submitBtn.disabled = true;
+        submitText.textContent = 'Enviando...';
+        submitSpinner.style.display = 'inline-block';
+
+        const formData = new FormData(form);
+
+        // Agregar fotos capturadas
+        capturedPhotos.forEach((file, index) => {
+            formData.append('fotos', file);
+        });
+
+        try {
+            if (navigator.onLine) {
+                // Envío normal
+                const response = await fetch('/ageo/soliData/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Éxito
+                    alert('✅ Solicitud enviada exitosamente');
+                    window.location.href = result.redirect_url || '/ageo/';
+                } else {
+                    throw new Error(result.error || 'Error del servidor');
+                }
+            } else {
+                // Guardar offline
+                await window.offlineManager.saveSoliOffline(formData, capturedPhotos);
+
+                // Mostrar modal de confirmación
+                const modal = new bootstrap.Modal(document.getElementById('offline-soli-modal'));
+                modal.show();
+            }
+        } catch (error) {
+            console.error('Error enviando solicitud:', error);
+
+            if (!navigator.onLine) {
+                // Guardar offline como fallback
+                await window.offlineManager.saveSoliOffline(formData, capturedPhotos);
+                const modal = new bootstrap.Modal(document.getElementById('offline-soli-modal'));
+                modal.show();
+            } else {
+                alert('Error: ' + error.message);
+            }
+        } finally {
+            // Restaurar estado del botón
+            submitBtn.disabled = false;
+            submitText.textContent = '✅ Enviar Solicitud';
+            submitSpinner.style.display = 'none';
+        }
+    });
+
+    // Funciones auxiliares
+    function getCurrentPosition() {
+        return new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000
+            });
+        });
+    }
+
+    async function getAddressFromCoords(lat, lng) {
+        try {
+            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key={{ google_key }}`);
+            const data = await response.json();
+
+            if (data.results && data.results[0]) {
+                return data.results[0].formatted_address;
+            } else {
+                return `Lat: ${lat}, Lng: ${lng}`;
+            }
+        } catch (error) {
+            console.error('Error obteniendo dirección:', error);
+            return `Lat: ${lat}, Lng: ${lng}`;
+        }
+    }
+});
+</script>
+{% endblock %}

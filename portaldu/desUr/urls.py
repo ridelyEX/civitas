@@ -44,10 +44,13 @@ urlpatterns = [
     path('save/', views.save_document, name="saveD1"),
     path('', include(router.urls)),
 
-    #Rutas móviles
+    # PWA URLs
     path('sw.js', views.service_worker, name='service_worker'),
     path('offline/', views.offline_page, name='offline_page'),
     path('manifest.json', views.manifest, name='manifest'),
+
+    # Páginas de confirmación móvil
+    path('confirmacion/', views.confirmacion_mobile, name='confirmacion'),
 
     path('get_licitaciones/', views.get_licitaciones, name="get_licitaciones"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

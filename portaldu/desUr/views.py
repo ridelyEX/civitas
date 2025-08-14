@@ -218,6 +218,8 @@ def intData(request):
     if not uuid:
         return redirect('home')
 
+    mobile_device = is_mobile(request)
+
     logger.debug("Procesando datos de ciudadano")
 
     try:
@@ -267,6 +269,15 @@ def intData(request):
                     defaults=datos_persona
                 )
 
+                "lógica disposisitivos móviles"
+                if mobile_devive or is_offline_sync:
+                    return JsonResponse({
+                        'succes': True,
+                        'message': 'Datos guardados',
+                        'redirect_url': '/ageo/soliData/',
+                        'is_offline_sync': is_offline_sync
+                    })
+
                 match asunto:
                     case "DOP00005":
                         return redirect('pago')
@@ -277,13 +288,15 @@ def intData(request):
             logger.error(f"Error al procesar datos: {str(e)}")
             return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
 
+    template = 'mobile/intData.html' if mobile_device else 'di.html'
+
     context = {
         'dir': direccion,
         'asunto': asunto,
         'uuid':uuid,
         'google_key': settings.GOOGLE_API_KEY,
     }
-    return render(request, 'di.html', context)
+    return render(request, template, context)
 
 
 @desur_login_required
@@ -293,10 +306,12 @@ def soliData(request):
         if not uuid:
             return redirect('home')
 
+        mobile_device = is_mobile(request)
+        logger.info(f"Procesando solicitud del usuario: {request.user.username}")
+
         try:
             uid = get_object_or_404(Uuid, uuid=uuid)
-
-            is_mobile = request.user_agent.is_mobile
+            usuario_data = get_object_o_404(data, fuuid=uid)
             is_tablet = request.user_agent.is_tablet
             is_pc = request.user_agent.is_pc
 
@@ -1699,4 +1714,13 @@ def is_mobile(request):
     user_agent = request.META.get('HTTP_USER_AGENT', '')
     return mobile_regex.search(user_agent) is not None
 
+def confirmacion_mobile(request):
+    """Página de confirmación optimizada para móvil"""
+    mobile_device = is_mobile(request)
+
+    template = 'mobile/confirmacion.html' if mobile_device else 'confirmacion.html'
+
+    return render(request, template, {
+        'is_mobile': mobile_device,
+    })
 
