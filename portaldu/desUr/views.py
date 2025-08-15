@@ -219,6 +219,7 @@ def intData(request):
         return redirect('home')
 
     mobile_device = is_mobile(request)
+    is_offline_sync = request.POST.get('offline_sync', False)
 
     logger.debug("Procesando datos de ciudadano")
 
@@ -270,9 +271,9 @@ def intData(request):
                 )
 
                 "lógica disposisitivos móviles"
-                if mobile_devive or is_offline_sync:
+                if mobile_device or is_offline_sync:
                     return JsonResponse({
-                        'succes': True,
+                        'success': True,
                         'message': 'Datos guardados',
                         'redirect_url': '/ageo/soliData/',
                         'is_offline_sync': is_offline_sync
@@ -302,50 +303,72 @@ def intData(request):
 @desur_login_required
 def soliData(request):
     # SÍ login_required - empleados procesan solicitudes de ciudadanos
-        uuid = request.COOKIES.get('uuid')
-        if not uuid:
-            return redirect('home')
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
 
-        mobile_device = is_mobile(request)
-        logger.info(f"Procesando solicitud del usuario: {request.user.username}")
+    mobile_device = is_mobile(request)
+    logger.info(f"Procesando solicitud del usuario: {request.user.username}")
 
-        try:
-            uid = get_object_or_404(Uuid, uuid=uuid)
-            usuario_data = get_object_o_404(data, fuuid=uid)
-            is_tablet = request.user_agent.is_tablet
-            is_pc = request.user_agent.is_pc
+    try:
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        usuario_data = get_object_or_404(data, fuuid=uid)
+    except (Uuid.DoesNotExist, data.DoesNotExist):
+        logger.warning(f"Datos no encontrados: {uuid}")
+        return redirect('intData')
 
-            logger.debug("Detectando tipo de dispositivo para interfaz")
+    logger.debug("Detectando tipo de dispositivo para interfaz")
 
-            dir = request.GET.get('dir', '')
-            asunto = request.POST.get('asunto', '')
-            puo = request.POST.get('puo', '')
+    dir = request.GET.get('dir', '')
+    asunto = request.POST.get('asunto', '')
+    puo = request.POST.get('puo', '')
 
-            dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
-            if not dp:
-                return redirect('home')
+    dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
+    if not dp:
+        return redirect('home')
 
-            if request.method == 'POST':
-                return soli_processed(request, uid, dp)
+    if request.method == 'POST':
+        is_offline_sync = request.POST.get('offline_sync', False)
 
-            solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
+        if mobile_device or is_offline_sync:
+            try:
+                response = soli_processed(request, uid, dp)
 
-            context = {
-                'dir': dir,
-                'asunto': asunto,
-                'puo': puo,
-                'datos': dp,
-                'uuid': uuid,
-                'is_mobile': is_mobile,
-                'is_tablet': is_tablet,
-                'is_pc': is_pc,
-                'soli': solicitud,
-                'google_key': settings.GOOGLE_API_KEY,
-            }
+                if isinstance(response, JsonResponse):
+                    return response
 
-            return render(request, 'ds.html', context)
-        except Exception as e:
-            return user_errors(request, e)
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Solicitud procesada',
+                    'redirect_url': '/ageo/doc/',
+                    'is_offline_sync': is_offline_sync,
+                })
+            except Exception as e:
+                logger.error(f"Error al procesar solicitud: {str(e)}")
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e),
+                }, status=500)
+
+        return soli_processed(request, uid, dp)
+
+    solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
+
+    context = {
+        'dir': dir,
+        'asunto': asunto,
+        'puo': puo,
+        'datos': dp,
+        'uuid': uuid,
+        'is_mobile': mobile_device,
+        'is_tablet': False,
+        'is_pc': not mobile_device,
+        'soli': solicitud,
+        'google_key': settings.GOOGLE_API_KEY,
+    }
+
+    template = 'mobile/soliData.html' if mobile_device else 'ds.html'
+    return render(request, template, context)
 
 @desur_login_required
 def doc(request):
