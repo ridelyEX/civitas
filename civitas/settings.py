@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 import locale
 
+
 from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS, \
     FILE_UPLOAD_HANDLERS
 from dotenv import load_dotenv
@@ -24,6 +25,8 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -94,7 +97,7 @@ DATABASES = {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
         'NAME': os.getenv('DB_NAME', 'civitas'),
         'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'admin'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'H0L4'), #admin H0L4 root
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '3306'),
         'OPTIONS': {

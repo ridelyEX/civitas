@@ -7,18 +7,30 @@ html, body{
 
 .cont{
     display: flex;
-    height: 100%;
+    height: fit-content;
     width: 100%;
+    height:100%;
     justify-content: center;
     align-content: center;
+}
+
+.encabezado h1{
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 2.543m;
+    color: #1a237e;
+    text-align: center;
+    margin-bottom: 2rem;
+    letter-spacing: 1px;
+    font-weight: bold;
 }
 
 
 .boton{
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: center;
     align-items: center;
+    padding-bottom: 10rem;
     height: 100%;
     width: 100%;
 }
@@ -33,6 +45,13 @@ html, body{
     padding: 23px 20px;
     border-radius: 8px;
     cursor: pointer;
+    width: 30rem;
+    margin-bottom: 1.5rem;
+
+}
+
+.boton .btn:last-child{
+    margin-bottom: 0;
 }
 
 .boton .btn:hover{
@@ -51,4 +70,19 @@ html, body{
     height: 100vh;
     object-fit: cover;
     opacity: 0.90;
+}
+
+.aviso{
+    position: fixed;
+    background-color: rgba(255, 255, 255, 0.8);
+    width: 100%;
+    height: fit-content;
+    text-align: center;
+    border-color: black;
+    border-style: solid;
+    border-width: 1px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: 15px;
+    padding: 10px 0px;
+    bottom: 0;
 }
