@@ -1,0 +1,593 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DesUr">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="DesUr">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{% url 'manifest' %}">
+
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192x192.png' %}">
+    <link rel="shortcut icon" href="{% static 'images/icon-192x192.png' %}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/icon-192x192.png' %}">
+
+    <title>Instalar DesUr - Aplicación PWA</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .install-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .install-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .install-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .install-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+
+        .install-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .feature-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .device-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        @media (max-width: 768px) {
+            .install-container {
+                padding: 10px;
+            }
+
+            .install-card {
+                padding: 20px;
+                border-radius: 15px;
+            }
+
+            .app-icon {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="install-container">
+        <div class="install-card">
+            <img src="{% static 'images/icon-192x192.png' %}" alt="DesUr Icon" class="app-icon">
+
+            <h1 class="h3 mb-3">DesUr - Desarrollo Urbano</h1>
+            <p class="text-muted mb-4">Instala la aplicación para acceso rápido y funcionalidad offline</p>
+
+            <!-- Estado del Service Worker -->
+            <div id="swStatus" class="status-indicator status-warning">
+                🔄 Verificando Service Worker...
+            </div>
+
+            <!-- Estado de la PWA -->
+            <div id="pwaStatus" class="status-indicator status-warning">
+                🔄 Verificando compatibilidad PWA...
+            </div>
+
+            <!-- Estado del dispositivo -->
+            <div id="deviceStatus" class="status-indicator status-warning">
+                🔄 Detectando dispositivo...
+            </div>
+
+            <!-- Botón de instalación -->
+            <button id="installBtn" class="install-btn" disabled>
+                📱 Instalando...
+            </button>
+
+            <!-- Características de la app -->
+            <div class="feature-list">
+                <div class="feature-item">
+                    <span class="feature-icon">🌐</span>
+                    <span>Funciona sin conexión WiFi</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📱</span>
+                    <span>Interfaz optimizada para móviles</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔄</span>
+                    <span>Sincronización automática</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔐</span>
+                    <span>Datos seguros y encriptados</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">⚡</span>
+                    <span>Carga ultrarrápida</span>
+                </div>
+            </div>
+
+            <!-- Información del dispositivo (solo en debug) -->
+            <div id="deviceInfo" class="device-info" style="display: none;">
+                <strong>Información del dispositivo:</strong><br>
+                <div id="deviceDetails"></div>
+            </div>
+
+            <!-- Botones alternativos -->
+            <div id="alternativeOptions" style="display: none;">
+                <button id="addToHomeBtn" class="btn btn-outline-primary w-100 mb-2">
+                    🏠 Agregar a pantalla de inicio
+                </button>
+                <button id="bookmarkBtn" class="btn btn-outline-secondary w-100">
+                    ⭐ Agregar a marcadores
+                </button>
+            </div>
+
+            <!-- Instrucciones manuales -->
+            <div id="manualInstructions" style="display: none;" class="mt-3">
+                <div class="alert alert-info">
+                    <strong>Instalación manual:</strong>
+                    <ol class="mb-0 mt-2 text-start">
+                        <li id="manualStep1"></li>
+                        <li id="manualStep2"></li>
+                        <li id="manualStep3"></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Variables globales
+        let deferredPrompt;
+        let deviceInfo = {};
+        let swRegistration = null;
+        let pwaSupported = false;
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePWAInstaller();
+        });
+
+        async function initializePWAInstaller() {
+            console.log('🚀 Iniciando instalador PWA...');
+
+            // Detectar dispositivo
+            detectDevice();
+
+            // Verificar Service Worker
+            await checkServiceWorker();
+
+            // Verificar soporte PWA
+            checkPWASupport();
+
+            // Configurar event listeners
+            setupEventListeners();
+
+            // Mostrar información de debug si es necesario
+            showDebugInfo();
+        }
+
+        function detectDevice() {
+            console.log('📱 Detectando dispositivo...');
+
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+            deviceInfo = {
+                isMobile: /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent),
+                isIOS: /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream,
+                isAndroid: /android/i.test(userAgent),
+                isChrome: /chrome/i.test(userAgent),
+                isFirefox: /firefox/i.test(userAgent),
+                isSafari: /safari/i.test(userAgent) && !/chrome/i.test(userAgent),
+                isEdge: /edge/i.test(userAgent),
+                isStandalone: window.matchMedia('(display-mode: standalone)').matches,
+                platform: navigator.platform,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                userAgent: userAgent
+            };
+
+            console.log('📱 Dispositivo detectado:', deviceInfo);
+            updateDeviceStatus();
+        }
+
+        function updateDeviceStatus() {
+            const statusElement = document.getElementById('deviceStatus');
+            const deviceDetails = document.getElementById('deviceDetails');
+
+            let statusClass = 'status-success';
+            let statusText = '';
+            let statusIcon = '';
+
+            if (deviceInfo.isStandalone) {
+                statusIcon = '✅';
+                statusText = 'Aplicación ya instalada';
+                statusClass = 'status-success';
+                document.getElementById('installBtn').style.display = 'none';
+                showAlreadyInstalledMessage();
+            } else if (deviceInfo.isMobile) {
+                statusIcon = '📱';
+                statusText = `Dispositivo móvil detectado (${deviceInfo.isIOS ? 'iOS' : deviceInfo.isAndroid ? 'Android' : 'Mobile'})`;
+                statusClass = 'status-success';
+            } else {
+                statusIcon = '💻';
+                statusText = 'Dispositivo de escritorio detectado';
+                statusClass = 'status-warning';
+            }
+
+            statusElement.className = `status-indicator ${statusClass}`;
+            statusElement.innerHTML = `${statusIcon} ${statusText}`;
+
+            // Actualizar detalles del dispositivo
+            if (deviceDetails) {
+                deviceDetails.innerHTML = `
+                    <strong>Plataforma:</strong> ${deviceInfo.platform}<br>
+                    <strong>Navegador:</strong> ${getBrowserName()}<br>
+                    <strong>Pantalla:</strong> ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}<br>
+                    <strong>Móvil:</strong> ${deviceInfo.isMobile ? 'Sí' : 'No'}<br>
+                    <strong>PWA instalada:</strong> ${deviceInfo.isStandalone ? 'Sí' : 'No'}
+                `;
+            }
+        }
+
+        function getBrowserName() {
+            if (deviceInfo.isChrome) return 'Chrome';
+            if (deviceInfo.isFirefox) return 'Firefox';
+            if (deviceInfo.isSafari) return 'Safari';
+            if (deviceInfo.isEdge) return 'Edge';
+            return 'Desconocido';
+        }
+
+        async function checkServiceWorker() {
+            console.log('🔧 Verificando Service Worker...');
+
+            const statusElement = document.getElementById('swStatus');
+
+            if (!('serviceWorker' in navigator)) {
+                statusElement.className = 'status-indicator status-error';
+                statusElement.innerHTML = '❌ Service Worker no soportado';
+                return false;
+            }
+
+            try {
+                // Intentar registrar el Service Worker
+                swRegistration = await navigator.serviceWorker.register("{% url 'service_worker_root' %}", {
+                    scope: '/ageo/'
+                });
+
+                console.log('✅ Service Worker registrado:', swRegistration);
+
+                // Verificar si está activo
+                if (swRegistration.active) {
+                    statusElement.className = 'status-indicator status-success';
+                    statusElement.innerHTML = '✅ Service Worker activo y funcionando';
+                    return true;
+                } else if (swRegistration.installing) {
+                    statusElement.className = 'status-indicator status-warning';
+                    statusElement.innerHTML = '🔄 Service Worker instalándose...';
+
+                    // Esperar a que se instale
+                    swRegistration.installing.addEventListener('statechange', function() {
+                        if (this.state === 'activated') {
+                            statusElement.className = 'status-indicator status-success';
+                            statusElement.innerHTML = '✅ Service Worker instalado correctamente';
+                        }
+                    });
+                    return true;
+                } else {
+                    statusElement.className = 'status-indicator status-warning';
+                    statusElement.innerHTML = '⚠️ Service Worker registrado pero no activo';
+                    return true;
+                }
+
+            } catch (error) {
+                console.error('❌ Error registrando Service Worker:', error);
+                statusElement.className = 'status-indicator status-error';
+                statusElement.innerHTML = '❌ Error en Service Worker: ' + error.message;
+                return false;
+            }
+        }
+
+        function checkPWASupport() {
+            console.log('🔍 Verificando soporte PWA...');
+
+            const statusElement = document.getElementById('pwaStatus');
+
+            // Verificar soporte básico PWA
+            const hasManifest = document.querySelector('link[rel="manifest"]') !== null;
+            const hasServiceWorker = 'serviceWorker' in navigator;
+            const hasAddToHomeScreen = 'BeforeInstallPromptEvent' in window;
+
+            pwaSupported = hasManifest && hasServiceWorker;
+
+            if (pwaSupported) {
+                statusElement.className = 'status-indicator status-success';
+                statusElement.innerHTML = '✅ PWA totalmente soportada';
+
+                if (hasAddToHomeScreen) {
+                    statusElement.innerHTML += ' (instalación automática disponible)';
+                }
+            } else {
+                statusElement.className = 'status-indicator status-warning';
+                statusElement.innerHTML = '⚠️ Soporte PWA limitado';
+
+                if (!hasManifest) {
+                    statusElement.innerHTML += ' (sin manifest)';
+                }
+                if (!hasServiceWorker) {
+                    statusElement.innerHTML += ' (sin Service Worker)';
+                }
+            }
+
+            // Actualizar botón de instalación
+            updateInstallButton();
+        }
+
+        function setupEventListeners() {
+            console.log('🎯 Configurando event listeners...');
+
+            // Event listener para el prompt de instalación
+            window.addEventListener('beforeinstallprompt', (e) => {
+                console.log('📥 beforeinstallprompt event recibido');
+                e.preventDefault();
+                deferredPrompt = e;
+                updateInstallButton();
+            });
+
+            // Event listener para después de la instalación
+            window.addEventListener('appinstalled', (e) => {
+                console.log('🎉 PWA instalada exitosamente');
+                showSuccessMessage();
+            });
+
+            // Botón de instalación principal
+            document.getElementById('installBtn').addEventListener('click', async () => {
+                await installPWA();
+            });
+
+            // Botones alternativos
+            document.getElementById('addToHomeBtn').addEventListener('click', () => {
+                showManualInstructions();
+            });
+
+            document.getElementById('bookmarkBtn').addEventListener('click', () => {
+                addToBookmarks();
+            });
+        }
+
+        function updateInstallButton() {
+            const installBtn = document.getElementById('installBtn');
+            const alternativeOptions = document.getElementById('alternativeOptions');
+
+            if (deviceInfo.isStandalone) {
+                installBtn.style.display = 'none';
+                return;
+            }
+
+            if (deferredPrompt) {
+                installBtn.disabled = false;
+                installBtn.innerHTML = '📱 Instalar aplicación';
+                installBtn.style.display = 'block';
+                alternativeOptions.style.display = 'none';
+            } else if (pwaSupported) {
+                installBtn.disabled = false;
+                installBtn.innerHTML = '🔗 Abrir aplicación';
+                installBtn.onclick = () => window.location.href = '/ageo/auth/menu/';
+                alternativeOptions.style.display = 'block';
+            } else {
+                installBtn.disabled = true;
+                installBtn.innerHTML = '❌ Instalación no disponible';
+                alternativeOptions.style.display = 'block';
+            }
+        }
+
+        async function installPWA() {
+            if (!deferredPrompt) {
+                if (pwaSupported) {
+                    window.location.href = '/ageo/auth/menu/';
+                } else {
+                    showManualInstructions();
+                }
+                return;
+            }
+
+            try {
+                console.log('🚀 Iniciando instalación PWA...');
+
+                const result = await deferredPrompt.prompt();
+                console.log('👤 Respuesta del usuario:', result);
+
+                if (result.outcome === 'accepted') {
+                    console.log('✅ Usuario aceptó la instalación');
+                    showSuccessMessage();
+                } else {
+                    console.log('❌ Usuario rechazó la instalación');
+                    showManualInstructions();
+                }
+
+                deferredPrompt = null;
+
+            } catch (error) {
+                console.error('❌ Error durante la instalación:', error);
+                showManualInstructions();
+            }
+        }
+
+        function showManualInstructions() {
+            const instructionsElement = document.getElementById('manualInstructions');
+            const step1 = document.getElementById('manualStep1');
+            const step2 = document.getElementById('manualStep2');
+            const step3 = document.getElementById('manualStep3');
+
+            if (deviceInfo.isIOS && deviceInfo.isSafari) {
+                step1.textContent = 'Toca el botón "Compartir" en la parte inferior';
+                step2.textContent = 'Selecciona "Agregar a pantalla de inicio"';
+                step3.textContent = 'Toca "Agregar" para confirmar';
+            } else if (deviceInfo.isAndroid && deviceInfo.isChrome) {
+                step1.textContent = 'Toca el menú (⋮) en la esquina superior';
+                step2.textContent = 'Selecciona "Agregar a pantalla de inicio"';
+                step3.textContent = 'Toca "Agregar" para confirmar';
+            } else {
+                step1.textContent = 'Busca la opción "Instalar aplicación" en el menú del navegador';
+                step2.textContent = 'O agrega esta página a tus marcadores';
+                step3.textContent = 'También puedes crear un acceso directo en tu escritorio';
+            }
+
+            instructionsElement.style.display = 'block';
+        }
+
+        function showSuccessMessage() {
+            const installBtn = document.getElementById('installBtn');
+            installBtn.className = 'install-btn';
+            installBtn.innerHTML = '🎉 ¡Instalación exitosa!';
+            installBtn.disabled = true;
+
+            setTimeout(() => {
+                window.location.href = '/ageo/auth/menu/';
+            }, 2000);
+        }
+
+        function showAlreadyInstalledMessage() {
+            const installBtn = document.getElementById('installBtn');
+            installBtn.innerHTML = '✅ Aplicación ya instalada';
+            installBtn.onclick = () => window.location.href = '/ageo/auth/menu/';
+            installBtn.disabled = false;
+        }
+
+        function addToBookmarks() {
+            if (window.sidebar && window.sidebar.addPanel) {
+                // Firefox
+                window.sidebar.addPanel('DesUr - Desarrollo Urbano', window.location.href, '');
+            } else if (window.external && window.external.AddFavorite) {
+                // Internet Explorer
+                window.external.AddFavorite(window.location.href, 'DesUr - Desarrollo Urbano');
+            } else {
+                // Otros navegadores
+                alert('Para agregar a marcadores:\n- Chrome/Firefox: Ctrl+D\n- Safari: Cmd+D\n- Edge: Ctrl+D');
+            }
+        }
+
+        function showDebugInfo() {
+            // Mostrar información de debug solo si está en modo debug
+            const urlParams = new URLSearchParams(window.location.search);
+            const isDebug = urlParams.get('debug') === 'true' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+            if (isDebug) {
+                document.getElementById('deviceInfo').style.display = 'block';
+            }
+        }
+
+        // Event listener para cambios de conexión
+        window.addEventListener('online', () => {
+            console.log('🌐 Conexión restaurada');
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('📶 Sin conexión - modo offline');
+        });
+    </script>
+</body>
+</html>

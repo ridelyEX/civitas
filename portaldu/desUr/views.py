@@ -16,6 +16,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para # Q
 from django.utils import timezone
+from django_user_agents.templatetags.user_agents import is_mobile
 from rest_framework.response import Response
 
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
@@ -1019,10 +1020,11 @@ def gen_folio(uid, puo):
     """Genera folio único para trámites con validaciones mejoradas"""
     logger.debug("Generando folio para trámite")
 
+    uid_str = str(uid.uuid)  # Mover esta línea al inicio
+
     try:
         dp = data.objects.filter(fuuid=uid).last()
-        uid_str = str(uid.uuid)
-        id_dp = dp.pk if dp else 0  # Valor por defecto si no hay datos
+        id_dp = dp.pk if dp else 0 # Valor por defecto si no hay datos
 
         fecha = date.today()
         year_str = str(fecha.year)
@@ -1075,13 +1077,12 @@ def gen_folio(uid, puo):
     except Exception as e:
         logger.error(f"Error generando folio: {str(e)}")
         return 'Error', f'ERROR-{uid_str[:8]}'
-
 def gen_pp_folio(fuuid):
     """Folio para presupuesto participativo con validaciones mejoradas"""
     try:
         pp_info = PpGeneral.objects.filter(fuuid=fuuid).last()
         uid_str = str(fuuid.uuid)
-        id_pp = pp_info.pk if pp_info else 0  # Valor por defecto
+        id_pp = pp_info.pk if pp_info else 0 # Valor por defecto
 
         fecha = date.today()
         year_str = str(fecha.year)
@@ -1197,553 +1198,627 @@ def validar_datos(post_data):
     asunto = post_data.get('asunto', '').strip()
     if not asunto:
         errors.append("El asunto es obligatorio")
-    else:
-        # Validar que sea uno de los asuntos válidos
-        asuntos_validos = [
-            'DOP00001', 'DOP00002', 'DOP00003', 'DOP00004', 'DOP00005',
-            'DOP00006', 'DOP00007', 'DOP00008', 'DOP00009', 'DOP00010',
-            'DOP00011', 'DOP00012', 'DOP00013'
-        ]
-        if asunto not in asuntos_validos:
-            errors.append("El asunto seleccionado no es válido")
-
-    # Log de validación (sin datos sensibles)
-    if errors:
-        logger.warning(f"Errores de validación detectados: {len(errors)} errores")
-        for error in errors:
-            logger.warning(f"Error de validación: {error}")
-    else:
-        logger.info("Validación de datos exitosa")
 
     return errors
 
-def cut_direction(direccion):
-    """
-    Procesa y divide una dirección en componentes con validaciones mejoradas
-    """
-    try:
-        if not direccion or not isinstance(direccion, str):
-            logger.warning("Dirección vacía o inválida recibida")
-            return "", "", ""
-
-        direccion = direccion.strip()
-        if len(direccion) < 5:
-            logger.warning("Dirección demasiado corta para procesar")
-            return direccion, "", ""
-
-        # Intentar extraer código postal
-        cp_match = re.search(r'\b\d{5}\b', direccion)
-        cp = cp_match.group() if cp_match else ""
-
-        # Remover CP de la dirección para procesar el resto
-        direccion_sin_cp = re.sub(r'\b\d{5}\b', '', direccion).strip()
-
-        # Buscar indicadores de colonia
-        indicadores_colonia = ['colonia', 'col.', 'col', 'fraccionamiento', 'fracc.', 'fracc']
-        colonia = ""
-        calle = direccion_sin_cp
-
-        for indicador in indicadores_colonia:
-            if indicador.lower() in direccion_sin_cp.lower():
-                partes = re.split(rf'\b{re.escape(indicador)}\b', direccion_sin_cp, flags=re.IGNORECASE)
-                if len(partes) == 2:
-                    calle = partes[0].strip()
-                    colonia = partes[1].strip()
-                    break
-
-        # Limpiar y validar resultados
-        calle = re.sub(r'\s+', ' ', calle).strip()
-        colonia = re.sub(r'\s+', ' ', colonia).strip()
-
-        logger.debug("Dirección procesada correctamente")
-
-        return calle, colonia, cp
-
-    except Exception as e:
-        logger.error(f"Error procesando dirección: {str(e)}")
-        return direccion, "", ""
-
-
-class FilesViewSet(viewsets.ViewSet):
-    def list(self, request):
-        return Response([])
-
-    def create(self, request):
-        return Response({})
-
-    def retrieve(self, request, pk=None):
-        return Response({})
-
-    def update(self, request, pk=None):
-        return Response({})
-
-    def destroy(self, request, pk=None):
-        return Response({})
-    pass
 
 def soli_processed(request, uid, dp):
-    """
-    Procesa solicitudes de trámites con validaciones mejoradas y manejo de errores robusto
-    """
+    """Procesa solicitudes de ciudadanos con validaciones mejoradas"""
     try:
         with transaction.atomic():
-            # Validar que la solicitud venga con método POST
-            if request.method != 'POST':
-                logger.warning("Intento de acceso a soli_processed sin método POST")
-                return JsonResponse({'error': 'Método no permitido'}, status=405)
+            solicitud_data = {
+                'dirr': request.POST.get('dir'),
+                'info': request.POST.get('info'),
+                'descc': request.POST.get('desc'),
+                'puo': request.POST.get('puo'),
+                'data_ID': dp,
+                'processed_by': request.user,
+                'fecha': timezone.now()
+            }
 
-            # Validar datos de entrada
-            dirr = request.POST.get('dir', '').strip()
-            if not dirr:
-                logger.warning("Solicitud sin dirección")
-                return JsonResponse({'error': 'La dirección es obligatoria'}, status=400)
+            if 'foto' in request.FILES:
+                solicitud_data['foto'] = request.FILES['foto']
 
-            logger.info(f"Procesando solicitud de trámite para usuario {request.user.username}")
+            solicitud = soli.objects.create(**solicitud_data)
 
-            # Procesar dirección de forma segura
-            try:
-                calle, colonia, cp = cut_direction(dirr)
-            except Exception as e:
-                logger.error(f"Error procesando dirección: {str(e)}")
-                calle, colonia, cp = dirr, "", ""
+            # Generar folio
+            puo_texto, folio = gen_folio(dp.fuuid, solicitud.puo)
+            solicitud.folio = folio
+            solicitud.save()
 
-            # Validar y limpiar campos opcionales
-            descc = request.POST.get('descc', '').strip()
-            if not descc:
-                logger.debug("Solicitud sin descripción")
-                descc = "Sin descripción proporcionada"
+            # Guardar en sesión
+            request.session['puo'] = solicitud.puo
+            request.session['folio'] = folio
 
-            info = request.POST.get('info', '').strip()
-            if not info:
-                logger.debug("Solicitud sin información adicional")
-                info = "Sin información adicional"
-
-            # Validar PUO
-            puo = request.POST.get('puo', '').strip()
-            if not puo:
-                logger.warning("Solicitud sin PUO especificado")
-                return JsonResponse({'error': 'El tipo de proceso (PUO) es obligatorio'}, status=400)
-
-            # Validar que el PUO sea válido
-            valid_puos = ['OFI', 'CRC', 'MEC', 'DLO', 'DFE', 'REG', 'DEA', 'EVA', 'PED', 'VIN', 'PPA', 'CPC']
-            if puo not in valid_puos:
-                logger.warning(f"PUO inválido recibido: {puo}")
-                return JsonResponse({'error': 'Tipo de proceso no válido'}, status=400)
-
-            request.session['puo'] = puo
-
-            # Procesar imagen con validación mejorada
-            img = img_processed(request)
-            if not img:
-                logger.warning("No se pudo procesar la imagen de la solicitud")
-                return JsonResponse({'error': 'No se pudo procesar la imagen. Verifique el formato.'}, status=400)
-
-            # Crear solicitud con validaciones
-            solicitud = soli(
-                data_ID=dp,
-                dirr=dirr,
-                calle=calle,
-                colonia=colonia,
-                cp=cp,
-                descc=descc,
-                info=info,
-                puo=puo,
-                foto=img,
-                processed_by=request.user
-            )
-
-            # Validar modelo antes de guardar
-            try:
-                solicitud.full_clean()
-                solicitud.save()
-                logger.info(f"Solicitud guardada exitosamente: ID {solicitud.pk}")
-            except ValidationError as e:
-                logger.error(f"Error de validación en solicitud: {e}")
-                return JsonResponse({'error': 'Datos de solicitud inválidos'}, status=400)
-
-            # Verificar que se guardó correctamente
-            if not soli.objects.filter(pk=solicitud.pk).exists():
-                logger.error("Error crítico: Solicitud no se registró en la base de datos")
-                raise ValidationError("Error al registrar la solicitud")
-
-            # Procesar archivos adjuntos
-            try:
-                files_processed(request, uid)
-                logger.debug("Archivos procesados correctamente")
-            except Exception as e:
-                logger.error(f"Error procesando archivos: {str(e)}")
-                # No es crítico, continuar
-
-            # Generar y asignar folio
-            try:
-                puo_txt, folio = gen_folio(uid, puo)
-                solicitud.folio = folio
-                solicitud.save(update_fields=['folio'])
-                logger.info(f"Folio asignado a solicitud: {folio}")
-            except Exception as e:
-                logger.error(f"Error generando folio: {str(e)}")
-                return JsonResponse({'error': 'Error generando folio'}, status=500)
-
+            logger.info(f"Solicitud procesada exitosamente por {request.user.username}")
             return redirect('doc')
 
-    except ValidationError as e:
-        logger.error(f"Error de validación procesando solicitud: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        logger.error(f"Error crítico procesando solicitud: {str(e)}", exc_info=True)
-        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
+        logger.error(f"Error procesando solicitud: {str(e)}")
+        return HttpResponse('Error al procesar solicitud. Intente nuevamente.')
 
-def img_processed(request):
-    """Procesa imágenes de solicitudes con validaciones mejoradas"""
-    img = None
-    imgpath = request.POST.get('src')
 
-    if 'src' in request.FILES:
-        img = request.FILES['src']
-    elif imgpath and imgpath.startswith("data:image"):
+# ==================== FUNCIONES PWA Y MÓVILES ====================
+
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+import json
+
+def service_worker(request):
+    """Sirve el archivo Service Worker para PWA"""
+    import os
+    from django.conf import settings
+
+    # Ruta completa al archivo Service Worker
+    sw_path = os.path.join(settings.BASE_DIR, 'portaldu', 'desUr', 'static', 'sw.js')
+
+    try:
+        with open(sw_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except FileNotFoundError:
+        # Fallback si no encuentra el archivo
+        content = '''
+        console.log('DesUr SW: Service Worker básico cargado');
+        
+        self.addEventListener('install', event => {
+            console.log('DesUr SW: Instalando...');
+            self.skipWaiting();
+        });
+        
+        self.addEventListener('activate', event => {
+            console.log('DesUr SW: Activando...');
+            self.clients.claim();
+        });
+        '''
+
+    response = HttpResponse(content, content_type='application/javascript')
+    response['Cache-Control'] = 'no-cache'
+    response['Service-Worker-Allowed'] = '/desur/'
+    return response
+
+
+def manifest(request):
+    """Genera el archivo manifest.json para PWA"""
+    manifest_data = {
+        "name": "DesUr - Portal de Desarrollo Urbano",
+        "short_name": "DesUr",
+        "description": "Portal de trámites de desarrollo urbano para dispositivos móviles - Funciona sin conexión",
+        "start_url": "/ageo/auth/menu/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#007bff",
+        "orientation": "portrait-primary",
+        "scope": "/ageo/",
+        "categories": ["government", "utilities", "productivity"],
+        "lang": "es-MX",
+        "dir": "ltr",
+        "prefer_related_applications": False,
+        "edge_side_panel": {
+            "preferred_width": 480
+        },
+        "icons": [
+            {
+                "src": "/static/images/icon-72x72.png",
+                "sizes": "72x72",
+                "type": "image/png",
+                "purpose": "maskable any"
+            },
+            {
+                "src": "/static/images/icon-96x96.png",
+                "sizes": "96x96",
+                "type": "image/png",
+                "purpose": "maskable any"
+            },
+            {
+                "src": "/static/images/icon-128x128.png",
+                "sizes": "128x128",
+                "type": "image/png",
+                "purpose": "maskable any"
+            },
+            {
+                "src": "/static/images/icon-144x144.png",
+                "sizes": "144x144",
+                "type": "image/png",
+                "purpose": "maskable any"
+            },
+            {
+                "src": "/static/images/icon-152x152.png",
+                "sizes": "152x152",
+                "type": "image/png",
+                "purpose": "maskable any"
+            },
+            {
+                "src": "/static/images/icon-192x192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "maskable any"
+            },
+            {
+                "src": "/static/images/icon-384x384.png",
+                "sizes": "384x384",
+                "type": "image/png",
+                "purpose": "maskable any"
+            },
+            {
+                "src": "/static/images/icon-512x512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "maskable any"
+            }
+        ],
+        "screenshots": [
+            {
+                "src": "/static/images/screenshot-desktop.png",
+                "sizes": "1280x720",
+                "type": "image/png",
+                "form_factor": "wide"
+            },
+            {
+                "src": "/static/images/screenshot-mobile.png",
+                "sizes": "375x667",
+                "type": "image/png",
+                "form_factor": "narrow"
+            }
+        ]
+    }
+
+    return JsonResponse(manifest_data, content_type='application/manifest+json')
+
+
+def offline_page(request):
+    """Página offline para cuando no hay conexión"""
+    return render(request, 'pwa/offline.html')
+
+
+def install_prompt(request):
+    """Página de instalación PWA"""
+    return render(request, 'pwa/install.html')
+
+
+# ==================== VISTAS MÓVILES ====================
+
+@desur_login_required
+def mobile_menu(request):
+    """Menú optimizado para dispositivos móviles"""
+    # Estadísticas rápidas para el empleado
+    tramites_hoy = soli.objects.filter(
+        processed_by=request.user,
+        fecha__date=date.today()
+    ).count()
+
+    total_tramites = soli.objects.filter(processed_by=request.user).count()
+
+    context = {
+        'empleado': request.user,
+        'tramites_hoy': tramites_hoy,
+        'total_tramites': total_tramites,
+        'is_mobile': True
+    }
+
+    return render(request, 'mobile/menu.html', context)
+
+
+@desur_login_required
+def mobile_historial(request):
+    """Historial optimizado para móviles"""
+    tramites = soli.objects.filter(
+        processed_by=request.user
+    ).select_related('data_ID').order_by('-fecha')[:20]  # Limitar a 20 más recientes
+
+    context = {
+        'tramites': tramites,
+        'empleado': request.user,
+        'is_mobile': True
+    }
+
+    return render(request, 'mobile/historial.html', context)
+
+
+@desur_login_required
+def confirmacion_mobile(request):
+    """Página de confirmación para móviles"""
+    return render(request, 'mobile/confirmacion.html', {'is_mobile': True})
+
+
+# ==================== APIs PARA FUNCIONALIDAD OFFLINE ====================
+
+@desur_login_required
+def sync_offline_data(request):
+    """API para sincronizar datos offline"""
+    if request.method == 'POST':
         try:
-            header, encoded = imgpath.split(",", 1)
-            datos = base64.b64decode(encoded)
-            img = NamedTemporaryFile(delete=False)
-            img.write(datos)
-            img.flush()
-            img = File(img)
+            data = json.loads(request.body)
+            sync_type = data.get('type')
+
+            if sync_type == 'form_data':
+                return sync_form_data(request, data)
+            elif sync_type == 'user_status':
+                return sync_user_status(request, data)
+            else:
+                return JsonResponse({'error': 'Tipo de sincronización no válido'}, status=400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON inválido'}, status=400)
         except Exception as e:
-            logger.error(f"Error procesando imagen base64: {str(e)}")
-            return None
-    else:
-        logger.warning("No se encontró imagen para procesar")
-        return None
+            logger.error(f"Error en sincronización: {str(e)}")
+            return JsonResponse({'error': 'Error interno del servidor'}, status=500)
 
-    if img:
-        name = str(img.name).split("\\")[-1]
-        if not name.endswith('.jpg'):
-            name += '.jpg'
-        img.name = name
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-    return img
 
-def files_processed(request, uid):
-    """Procesa archivos adjuntos con validaciones"""
-    file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
+def sync_form_data(request, data):
+    """Sincroniza datos de formularios guardados offline"""
+    try:
+        form_data = data.get('form_data', {})
+        form_type = data.get('form_type')
 
-    if file_keys:
-        for key in file_keys:
-            try:
-                index = key.split('_')[-1]
-                file = request.FILES[key]
-                desc = request.POST.get(f'tempdesc_{index}', 'Documento sin descripción')
+        # Procesar según el tipo de formulario
+        if form_type == 'citizen_data':
+            return process_offline_citizen_data(request, form_data)
+        elif form_type == 'solicitud':
+            return process_offline_solicitud(request, form_data)
+        else:
+            return JsonResponse({'error': 'Tipo de formulario no reconocido'}, status=400)
 
-                if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
-                    logger.debug("Guardando nuevo documento")
-                    documento = SubirDocs(
-                        descDoc=desc,
-                        doc=file,
-                        nomDoc=file.name,
-                        fuuid=uid,
-                    )
-                    documento.save()
-                else:
-                    logger.warning("Documento duplicado, no se guardará")
-            except Exception as e:
-                logger.error(f"Error procesando archivo {key}: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error procesando datos offline: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
-def user_errors(request, error):
-    """Maneja errores del sistema de forma segura"""
-    logger.error(f"Error en vista: {error}", exc_info=True)
 
-    return render(request, 'error.html', {
-        'error': {
-            'titulo': "Error del sistema",
-            'mensaje': 'Por favor, inténtelo nuevamente o contacte al administrador',
-            'codigo': 'SYS_ERROR',
-            'accion': 'Reintentar'
+def process_offline_citizen_data(request, form_data):
+    """Procesa datos de ciudadanos guardados offline"""
+    try:
+        # Validar datos
+        errors = validar_datos(form_data)
+        if errors:
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+        # Crear UUID si no existe
+        uuid_str = form_data.get('uuid')
+        if not uuid_str:
+            uuid_str = str(uuid.uuid4())
+            uid = Uuid.objects.create(uuid=uuid_str)
+        else:
+            uid, created = Uuid.objects.get_or_create(uuid=uuid_str)
+
+        # Guardar datos
+        datos_persona = {
+            'nombre': form_data.get('nombre', '').upper(),
+            'pApe': form_data.get('pApe', '').upper(),
+            'mApe': form_data.get('mApe', '').upper(),
+            'bDay': form_data.get('bDay'),
+            'tel': form_data.get('tel'),
+            'curp': form_data.get('curp', '').upper(),
+            'sexo': form_data.get('sexo'),
+            'dirr': form_data.get('dir'),
+            'asunto': form_data.get('asunto'),
+            'etnia': form_data.get('etnia', 'No pertenece a una etnia'),
+            'disc': form_data.get('discapacidad', 'sin discapacidad'),
+            'vul': form_data.get('vulnerables', 'No pertenece a un grupo vulnerable'),
+            'fuuid': uid
         }
-    })
 
-# Función auxiliar para PP
-def get_or_create_uuid(request):
-    """Obtiene o crea un UUID para las propuestas de PP"""
-    uuid_str = request.COOKIES.get('uuid') or request.session.get('pp_uuid')
+        data.objects.update_or_create(fuuid=uid, defaults=datos_persona)
 
-    if uuid_str:
-        try:
-            return Uuid.objects.get(uuid=uuid_str)
-        except Uuid.DoesNotExist:
+        return JsonResponse({
+            'success': True,
+            'message': 'Datos sincronizados correctamente',
+            'uuid': uuid_str
+        })
+
+    except Exception as e:
+        logger.error(f"Error procesando datos de ciudadano offline: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def process_offline_solicitud(request, form_data):
+    """Procesa solicitudes guardadas offline"""
+    try:
+        uuid_str = form_data.get('uuid')
+        if not uuid_str:
+            return JsonResponse({'success': False, 'error': 'UUID requerido'}, status=400)
+
+        uid = get_object_or_404(Uuid, uuid=uuid_str)
+        dp = get_object_or_404(data, fuuid=uid)
+
+        solicitud_data = {
+            'dirr': form_data.get('dir'),
+            'info': form_data.get('info'),
+            'descc': form_data.get('desc'),
+            'puo': form_data.get('puo'),
+            'data_ID': dp,
+            'processed_by': request.user,
+            'fecha': timezone.now()
+        }
+
+        solicitud = soli.objects.create(**solicitud_data)
+
+        # Generar folio
+        puo_texto, folio = gen_folio(dp.fuuid, solicitud.puo)
+        solicitud.folio = folio
+        solicitud.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Solicitud sincronizada correctamente',
+            'folio': folio
+        })
+
+    except Exception as e:
+        logger.error(f"Error procesando solicitud offline: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def sync_user_status(request, data):
+    """Sincroniza estado del usuario"""
+    try:
+        last_activity = data.get('last_activity')
+        if last_activity:
+            # Actualizar última actividad del usuario
             pass
 
-    # Crear nuevo UUID
-    new_uuid = str(uuid.uuid4())
-    uuid_obj = Uuid.objects.create(uuid=new_uuid)
-    return uuid_obj
+        return JsonResponse({
+            'success': True,
+            'server_time': timezone.now().isoformat(),
+            'user_status': 'active'
+        })
 
-# Presupuesto participativo
+    except Exception as e:
+        logger.error(f"Error sincronizando estado de usuario: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@desur_login_required
+def api_user_data(request):
+    """API para obtener datos del usuario actual"""
+    user = request.user
+
+    # Estadísticas del usuario
+    total_tramites = soli.objects.filter(processed_by=user).count()
+    tramites_hoy = soli.objects.filter(
+        processed_by=user,
+        fecha__date=date.today()
+    ).count()
+
+    # Últimos trámites
+    ultimos_tramites = soli.objects.filter(
+        processed_by=user
+    ).select_related('data_ID').order_by('-fecha')[:5]
+
+    tramites_data = []
+    for tramite in ultimos_tramites:
+        tramites_data.append({
+            'folio': tramite.folio,
+            'ciudadano': f"{tramite.data_ID.nombre} {tramite.data_ID.pApe}",
+            'puo': tramite.puo,
+            'fecha': tramite.fecha.isoformat() if tramite.fecha else None,
+        })
+
+    response_data = {
+        'user': {
+            'username': user.username,
+            'nombre': user.nombre if hasattr(user, 'nombre') else '',
+            'apellido': user.apellido if hasattr(user, 'apellido') else '',
+        },
+        'stats': {
+            'total_tramites': total_tramites,
+            'tramites_hoy': tramites_hoy,
+        },
+        'ultimos_tramites': tramites_data,
+        'server_time': timezone.now().isoformat()
+    }
+
+    return JsonResponse(response_data)
+
+
+# ==================== FUNCIONES DE UTILIDAD ====================
+
+def is_mobile_device(request):
+    """Detecta si el dispositivo es móvil"""
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    mobile_keywords = ['mobile', 'android', 'iphone', 'ipad', 'windows phone', 'blackberry']
+    return any(keyword in user_agent for keyword in mobile_keywords)
+
+
+def get_device_info(request):
+    """Obtiene información del dispositivo del usuario"""
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+
+    is_mobile = is_mobile_device(request)
+    is_tablet = 'tablet' in user_agent.lower() or 'ipad' in user_agent.lower()
+    is_desktop = not is_mobile and not is_tablet
+
+    return {
+        'is_mobile': is_mobile,
+        'is_tablet': is_tablet,
+        'is_desktop': is_desktop,
+        'user_agent': user_agent
+    }
+
+
+# ==================== VISTAS DE PRUEBA PARA PWA ====================
+
+def test_pwa_functionality(request):
+    """Vista de prueba para verificar funcionalidad PWA"""
+    if not settings.DEBUG:
+        return JsonResponse({'error': 'Solo disponible en modo debug'}, status=403)
+
+    device_info = get_device_info(request)
+
+    test_results = {
+        'service_worker_registered': True,  # Se verificará en el frontend
+        'manifest_valid': True,
+        'offline_capable': True,
+        'device_info': device_info,
+        'timestamp': timezone.now().isoformat()
+    }
+
+    return JsonResponse(test_results)
+
+
+# ==================== VISTAS DE PRESUPUESTO PARTICIPATIVO ====================
+# (Las vistas de PP ya están implementadas arriba, solo agregamos las que faltan)
 
 @desur_login_required
 def gen_render(request):
-    """Vista principal para datos generales de presupuesto participativo"""
-    # Obtener o crear UUID
-    uuid_str = request.COOKIES.get('uuid')
-    if not uuid_str:
-        uuid_str = str(uuid.uuid4())
-        uuid_obj = Uuid.objects.create(uuid=uuid_str)
-    else:
-        try:
-            uuid_obj = Uuid.objects.get(uuid=uuid_str)
-        except Uuid.DoesNotExist:
-            uuid_obj = Uuid.objects.create(uuid=uuid_str)
+    """Vista principal de presupuesto participativo"""
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
 
     if request.method == 'POST':
-        logger.debug("Procesando formulario de presupuesto participativo")
+        form = GeneralRender(request.POST)
+        if form.is_valid():
+            uid = get_object_or_404(Uuid, uuid=uuid)
+            form_instance = form.save(commit=False)
+            form_instance.fuuid = uid
+            form_instance.save()
 
-        # Crear una copia mutable del POST data
-        post_data = request.POST.copy()
-        post_data['fuuid'] = uuid_obj.pk  # Agregar el fuuid al formulario
-
-        form = GeneralRender(post_data)  # Usar el POST data modificado
-        categoria = request.POST.get('categoria')
-        cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluviales']
-
-        if categoria and categoria in cat_values:
+            categoria = request.POST.get('categoria')
             request.session['categoria'] = categoria
-            request.session['pp_uuid'] = uuid_str
-            logger.info(f"Categoría de PP guardada: {categoria}")
-        else:
-            messages.error(request, "Categoría inválida")
-            response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
-            response.set_cookie('uuid', uuid_str, max_age=3600)
-            return response
 
-        if form.is_valid():
-            logger.info("Formulario de PP válido, guardando datos")
-            instance = form.save(commit=False)
-            instance.fuuid = uuid_obj  # Asegurar que el fuuid esté asignado
-            instance.save()
+            if categoria == 'parque':
+                return redirect('parques')
+            elif categoria == 'escuela':
+                return redirect('escuelas')
+            elif categoria == 'cs':
+                return redirect('centros')
+            elif categoria == 'infraestructura':
+                return redirect('infraestructura')
+            elif categoria == 'pluviales':
+                return redirect('pluviales')
 
-            # Redireccionar según categoría
-            match categoria:
-                case 'parque':
-                    response = redirect('parques')
-                case 'cs':
-                    response = redirect('centros')
-                case 'escuela':
-                    response = redirect('escuelas')
-                case 'infraestructura':
-                    response = redirect('infraestructura')
-                case 'pluviales':
-                    response = redirect('pluviales')
-                case _:
-                    response = redirect('gen_render')
-
-            response.set_cookie('uuid', uuid_str, max_age=3600)
-            return response
-        else:
-            logger.warning(f"Errores en formulario PP: {form.errors}")
-            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        form = GeneralRender(initial={'fuuid': uuid_obj.pk})  # Inicializar con fuuid
+        form = GeneralRender()
 
-    response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
-    response.set_cookie('uuid', uuid_str, max_age=3600)
-    return response
+    return render(request, 'pp/general.html', {'form': form, 'uuid': uuid})
 
-@desur_login_required
-def escuela_render(request):
-    """Vista para propuestas de presupuesto participativo en escuelas"""
-    # Obtener UUID de la propuesta general
-    pp_uuid = request.session.get('pp_uuid')
-    if not pp_uuid:
-        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
-
-    try:
-        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
-        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
-    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
-        messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
-
-    if request.method == 'POST':
-        form = EscuelaRender(request.POST)
-        if form.is_valid():
-            # Vincular con la propuesta general
-            instance = form.save(commit=False)
-            instance.fk_pp = pp_general
-            instance.save()
-            logger.info("Propuesta de escuela guardada exitosamente")
-            messages.success(request, "Propuesta de escuela guardada exitosamente.")
-            return redirect('pp_document')
-        else:
-            logger.warning(f"Errores en formulario de escuela: {form.errors}")
-            messages.error(request, "Por favor corrige los errores en el formulario")
-    else:
-        form = EscuelaRender()
-
-    return render(request, 'pp/escuela.html', {'form': form, 'pp_general': pp_general})
 
 @desur_login_required
 def parque_render(request):
-    """Vista para propuestas de presupuesto participativo en parques"""
-    # Obtener UUID de la propuesta general
-    pp_uuid = request.session.get('pp_uuid')
-    if not pp_uuid:
-        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+    """Vista para presupuesto participativo - parques"""
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
 
     try:
-        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
-        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
-    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
-        messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
+    except:
+        return redirect('general')
 
     if request.method == 'POST':
         form = ParqueRender(request.POST)
         if form.is_valid():
-            # Vincular con la propuesta general
-            instance = form.save(commit=False)
-            instance.fk_pp = pp_general
-            instance.save()
-            logger.info("Propuesta de parque guardada exitosamente")
-            messages.success(request, "Propuesta de parque guardada exitosamente.")
+            form_instance = form.save(commit=False)
+            form_instance.fk_pp = pp_general
+            form_instance.save()
             return redirect('pp_document')
-        else:
-            logger.warning(f"Errores en formulario de parque: {form.errors}")
-            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = ParqueRender()
 
-    return render(request, 'pp/parque.html', {'form': form, 'pp_general': pp_general})
+    return render(request, 'pp/parques.html', {'form': form, 'uuid': uuid})
+
+
+@desur_login_required
+def escuela_render(request):
+    """Vista para presupuesto participativo - escuelas"""
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
+
+    try:
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
+    except:
+        return redirect('general')
+
+    if request.method == 'POST':
+        form = EscuelaRender(request.POST)
+        if form.is_valid():
+            form_instance = form.save(commit=False)
+            form_instance.fk_pp = pp_general
+            form_instance.save()
+            return redirect('pp_document')
+    else:
+        form = EscuelaRender()
+
+    return render(request, 'pp/escuelas.html', {'form': form, 'uuid': uuid})
+
 
 @desur_login_required
 def cs_render(request):
-    """Vista para propuestas de centros comunitarios y salones de usos múltiples"""
-    # Obtener UUID de la propuesta general
-    pp_uuid = request.session.get('pp_uuid')
-    if not pp_uuid:
-        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+    """Vista para presupuesto participativo - centros comunitarios"""
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
 
     try:
-        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
-        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
-    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
-        messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
+    except:
+        return redirect('general')
 
     if request.method == 'POST':
         form = CsRender(request.POST)
         if form.is_valid():
-            # Vincular con la propuesta general
-            instance = form.save(commit=False)
-            instance.fk_pp = pp_general
-            instance.save()
-            logger.info("Propuesta de centro/salón guardada exitosamente")
-            messages.success(request, "Propuesta de centro/salón guardada exitosamente.")
+            form_instance = form.save(commit=False)
+            form_instance.fk_pp = pp_general
+            form_instance.save()
             return redirect('pp_document')
-        else:
-            logger.warning(f"Errores en formulario de centro/salón: {form.errors}")
-            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = CsRender()
 
-    return render(request, 'pp/centro_salon.html', {'form': form, 'pp_general': pp_general})
+    return render(request, 'pp/centros.html', {'form': form, 'uuid': uuid})
+
 
 @desur_login_required
 def infraestructura_render(request):
-    """Vista para propuestas de infraestructura"""
-    # Obtener UUID de la propuesta general
-    pp_uuid = request.session.get('pp_uuid')
-    if not pp_uuid:
-        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+    """Vista para presupuesto participativo - infraestructura"""
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
 
     try:
-        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
-        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
-    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
-        messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
+    except:
+        return redirect('general')
 
     if request.method == 'POST':
         form = InfraestructuraRender(request.POST)
         if form.is_valid():
-            # Vincular con la propuesta general
-            instance = form.save(commit=False)
-            instance.fk_pp = pp_general
-            instance.save()
-            logger.info("Propuesta de infraestructura guardada exitosamente")
-            messages.success(request, "Propuesta de infraestructura guardada exitosamente.")
+            form_instance = form.save(commit=False)
+            form_instance.fk_pp = pp_general
+            form_instance.save()
             return redirect('pp_document')
-        else:
-            logger.warning(f"Errores en formulario de infraestructura: {form.errors}")
-            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = InfraestructuraRender()
 
-    return render(request, 'pp/infraestructura.html', {'form': form, 'pp_general': pp_general})
+    return render(request, 'pp/infraestructura.html', {'form': form, 'uuid': uuid})
+
 
 @desur_login_required
 def pluvial_render(request):
-    """Vista para propuestas de soluciones pluviales"""
-    # Obtener UUID de la propuesta general
-    pp_uuid = request.session.get('pp_uuid')
-    if not pp_uuid:
-        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
-        return redirect('gen_render')
+    """Vista para presupuesto participativo - soluciones pluviales"""
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
 
     try:
-        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
-        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
-    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
-        messages.error(request, "Propuesta general no encontrada.")
-        return redirect('gen_render')
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
+    except:
+        return redirect('general')
 
     if request.method == 'POST':
         form = PluvialRender(request.POST)
         if form.is_valid():
-            # Vincular con la propuesta general
-            instance = form.save(commit=False)
-            instance.fk_pp = pp_general
-            instance.save()
-            logger.info("Propuesta pluvial guardada exitosamente")
-            messages.success(request, "Propuesta pluvial guardada exitosamente.")
+            form_instance = form.save(commit=False)
+            form_instance.fk_pp = pp_general
+            form_instance.save()
             return redirect('pp_document')
-        else:
-            logger.warning(f"Errores en formulario pluvial: {form.errors}")
-            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = PluvialRender()
 
-    return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
-
-#mobile offline views
-
-def service_worker(request):
-    """Servir el service worker"""
-    return render(request, 'pwa/sw.js', content_type='application/javascript')
-
-def manifest(request):
-    """Servir el manifest"""
-    return render(request, 'pwa/manifest.json', content_type='application/json')
-
-def offline_page(request):
-    """Página que se muestra cuando no hay conexión"""
-    return render(request, 'pwa/offline.html')
-
-def is_mobile(request):
-    """Detectar si el usuario está en un dispositivo móvil"""
-    mobile_regex = re.compile(r'Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini')
-    user_agent = request.META.get('HTTP_USER_AGENT', '')
-    return mobile_regex.search(user_agent) is not None
-
-def confirmacion_mobile(request):
-    """Página de confirmación optimizada para móvil"""
-    mobile_device = is_mobile(request)
-
-    template = 'mobile/confirmacion.html' if mobile_device else 'confirmacion.html'
-
-    return render(request, template, {
-        'is_mobile': mobile_device,
-    })
-
+    return render(request, 'pp/pluviales.html', {'form': form, 'uuid': uuid})

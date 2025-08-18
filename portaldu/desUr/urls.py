@@ -4,8 +4,9 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
-router = DefaultRouter()
-router.register(r'files', views.FilesViewSet, basename='files')
+# Comentar el router hasta que se implemente FilesViewSet
+# router = DefaultRouter()
+# router.register(r'files', views.FilesViewSet, basename='files')
 
 urlpatterns = [
     # URLs de autenticación
@@ -42,15 +43,22 @@ urlpatterns = [
     path('pago/', views.pago, name="pago"),
     path('document2/', views.document2, name="document2"),
     path('save/', views.save_document, name="saveD1"),
-    path('', include(router.urls)),
+    # path('', include(router.urls)),  # Comentar hasta implementar FilesViewSet
 
-    # PWA URLs
+    # URLs para PWA y funcionalidad móvil
     path('sw.js', views.service_worker, name='service_worker'),
-    path('offline/', views.offline_page, name='offline_page'),
     path('manifest.json', views.manifest, name='manifest'),
+    path('offline/', views.offline_page, name='offline'),
+    path('install/', views.install_prompt, name='install_prompt'),
 
-    # Páginas de confirmación móvil
-    path('confirmacion/', views.confirmacion_mobile, name='confirmacion'),
+    # URLs para móviles
+    path('mobile/menu/', views.mobile_menu, name='mobile_menu'),
+    path('mobile/historial/', views.mobile_historial, name='mobile_historial'),
+    path('mobile/confirmacion/', views.confirmacion_mobile, name='mobile_confirmacion'),
+
+    # APIs para funcionalidad offline
+    path('api/sync/', views.sync_offline_data, name='sync_offline_data'),
+    path('api/user-data/', views.api_user_data, name='api_user_data'),
 
     path('get_licitaciones/', views.get_licitaciones, name="get_licitaciones"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

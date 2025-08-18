@@ -1,320 +1,452 @@
-// Clase para funciones offline en dispositivos móviles
+/**
+ * DesUr Mobile Offline Manager
+ * Maneja funcionalidad offline para dispositivos móviles
+ */
 
-class MobileOffLineManager(){
-    constructor(){
-        this.dbName = 'civitas_offline_db';
-        this.version = 1;
-        this.db = null;
-        this.IsOnline= navigator.onLine;
+class DesUrMobileManager {
+    constructor() {
+        this.isOnline = navigator.onLine;
+        this.offlineForms = [];
+        this.syncInProgress = false;
+        this.dbName = 'DesUrOfflineDB';
+        this.dbVersion = 1;
 
         this.init();
     }
 
-    async init(){
-        //Inicializa IndexedDB
-        await this.initDB();
+    async init() {
+        // Registrar Service Worker
+        await this.registerServiceWorker();
 
+        // Configurar eventos de red
+        this.setupNetworkEvents();
+
+        // Configurar manejo de formularios offline
+        this.setupOfflineFormHandling();
+
+        // Inicializar UI offline
+        this.updateUIStatus();
+
+        // Intentar sincronizar datos pendientes
+        if (this.isOnline) {
+            this.syncOfflineData();
+        }
+    }
+
+    async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                await navigator.serviceWorker.register('/sripts/sw.js');
-                console.log('Service worker registrado');
-            }catch (error){
-                console.log('Error: ', error);
-            }
-        }
-
-        window.addEventListener('online', () => this.handOnline());
-        window.addEventListener('offline', () => this.handleOffLine());
-
-        this.updateConnectionStatus();
-
-        if (this.isOnline) {
-            this.syncPendingData();
-        }
-    }
-
-    async initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, this.version);
-
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                this.db = request.result;
-                resolve(this.db);
-            };
-
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-
-                //datos ciudadanos
-
-                if (!db.objectsStoreNames.contains('pendig_data')) {
-                    const dataStore = db.createObjectsStore('pending_data', { keyPath: 'id', autoIncrement: true });
-                    dataStore.createIndex('timestamp', 'timestamp');
-                    dataStore.createIndex('synced', 'synced');
-                }
-
-                //solicitudes
-                if (!db.objectStoreNames.contains('pending_soli')) {
-                    const soliStore = db.createObjectStore('pending_soli', { keyPath: 'id', autoIncrement: true });
-                    soliStore.createIndex('timestamp', 'timestamp');
-                    soliStore.createIndex('dataId', 'dataId');
-                }
-
-                //Fotos
-                if (!dn.objectsStoreNames.contains('pending_photos')) {
-                    const photostore = db.ocreateObjectStore('pending_photos', { keyPath: 'id', autoIncrement: true });
-                    photoStore.createIndex('soliId', 'soliId');
-                }
-            };
-        });
-    }
-
-    async saveDataOffline(formData, photos = []) {
-        const transaction = this.db.transaction(['pending_data'], 'readwrite');
-        const store = transaction.objectStore('pending_data');
-
-        const data = {
-            formData: Object.fromEntries(formData),
-            timestamp: new Date().toISOString(),
-            synced: false,
-            type: 'intData'
-        };
-
-        return store.add(data);
-    }
-
-    async saveSoliOffline(formData, photos = []) {
-        const transaction = this.db.transaction(['pending_soli', 'pending_photos'], 'readwrite');
-        const soliStore = transaction.objectsStore('pending_soli');
-        const photoStore = transaction.objectStore('pending_photos');
-
-        //Guadar solicitud
-        const soliData = {
-            formData: Objects.fromEntries(formData),
-            timestamp: new Date().toISOString(),
-            synced: false,
-            type: 'soliData'
-        };
-
-        const soliResult = await soliStore.add(soliData);
-        const soliDid = soliResult;
-
-        //Guardar fotos
-        for (let i = 0; i<photos.length; i++) {
-            const photo = photos[i];
-            const reader = new FileReader();
-
-            reader.onload = async (e) => {
-                await photoStore.add({
-                    soliId: soliId,
-                    phootData: e.target.result,
-                    filename: photo.name,
-                    type: photo.type
+                const registration = await navigator.serviceWorker.register('/desur/sw.js', {
+                    scope: '/desur/'
                 });
+
+                console.log('DesUr: Service Worker registrado:', registration.scope);
+
+                // Escuchar mensajes del SW
+                navigator.serviceWorker.addEventListener('message', event => {
+                    this.handleServiceWorkerMessage(event);
+                });
+
+                // Manejar actualizaciones del SW
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            this.showUpdateAvailable();
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('DesUr: Error registrando Service Worker:', error);
+            }
+        }
+    }
+
+    setupNetworkEvents() {
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            this.updateUIStatus();
+            this.syncOfflineData();
+            this.showNotification('Conexión restaurada. Sincronizando datos...', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            this.updateUIStatus();
+            this.showNotification('Modo offline activado. Los datos se guardarán localmente.', 'warning');
+        });
+    }
+
+    setupOfflineFormHandling() {
+        // Interceptar envío de formularios
+        document.addEventListener('submit', (event) => {
+            if (!this.isOnline) {
+                event.preventDefault();
+                this.handleOfflineFormSubmit(event.target);
+            }
+        });
+
+        // Interceptar llamadas AJAX
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            try {
+                return await originalFetch(...args);
+            } catch (error) {
+                if (!this.isOnline && args[0].includes('/desur/')) {
+                    return this.handleOfflineRequest(...args);
+                }
+                throw error;
+            }
+        };
+    }
+
+    async handleOfflineFormSubmit(form) {
+        try {
+            const formData = new FormData(form);
+            const offlineForm = {
+                url: form.action || window.location.pathname,
+                method: form.method || 'POST',
+                data: Object.fromEntries(formData.entries()),
+                timestamp: Date.now(),
+                type: 'form'
             };
 
-            reader.readAsDataURL(photo);
-        }
+            await this.saveOfflineData(offlineForm);
 
-        return soliId;
-    }
+            this.showNotification('Formulario guardado offline. Se enviará automáticamente cuando recuperes la conexión.', 'info');
 
-    async getPendingData() {
-        const transaction = this.db.transaction(['pending_data'], 'readonly');
-        const store = transaction.objectStore('pending_data');
-        const index = store.index('synced');
-
-        return new Promise((resolve, rejects) => {
-            const request = index.getAll(false);
-            request.outsuccess = () => resolve(request.result);
-            request.onerror = () => rejects(request.error);
-        });
-    }
-
-    async syncPendingData() {
-        try {
-            const pendingData = await this.getPendingData();
-            console.log(`Sincronizando ${pendingData.length` elementos);
-
-            for (const item of pendingData) {
-                if (item.type === 'intData') {
-                    await this.syncDataItem(item);
-                } else if (item.type === 'soliData') {
-                    await this.syncSoliItem(item);
-                }
+            // Simular respuesta exitosa para la UI
+            if (form.dataset.successRedirect) {
+                window.location.href = form.dataset.successRedirect;
             }
 
-            this.showSyncMessage(`${pendingData.length`);
-        } catch(error) {
-            console.error('Error de sincronización:', error);
-        }
-    }
-
-    async syncDataItem(item) {
-        try {
-            const formData = new FormData();
-
-            for (const [key, value] of Object.entries(item.formData)){
-                formData.append(key, value);
-            }
-
-            formData.append('offline_sync', 'true');
-
-            const response = await fetch('/ageo/intData/',{
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': this.getCSRFToken()
-                }
-            });
-
-            if (response.ok) {
-                await this.markAsSybced('pending_data', item.id);
-                console.log('Datos sincronizados:', item.id);
-            }
         } catch (error) {
-            console.error('Error: ', error);
+            console.error('Error guardando formulario offline:', error);
+            this.showNotification('Error guardando datos offline', 'error');
         }
     }
 
-    async markAsSybced(storeName, id) {
-        const transaction = this.db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore('pending_data');
-
-        const item = await store.get(id);
-        if (item) {
-            item.synced = true;
-            await store.put(item);
-        }
-    }
-
-    getCSRFToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-    }
-
-    handleOnline() {
-        this.isOnline = true;
-        this.updateConnectionStatus();
-        this.syncPendingData();
-    }
-
-    handleOffLine(){
-        this.isOnline = false;
-        this.updateConnectionStatus();
-    }
-
-    updateConnectionStatus() {
-        const sstatusElement = document.getElementById('connection-status');
-        if (statusElement) {
-            if (this.isOnline) {
-                statusElement.style.display = 'none';
-            } else {
-                statusElement.style.display = 'block';
-                statusElement.textContent = 'Los datos se guardarpan de forma local';
-                statusElement.className = 'alert alert-warning';
-            }
-        }
-    }
-
-    showSyncMessage(message) {
-        const statusElement = document.getElementById('connection-status');
-        if (statusElement) {
-            statusElement.style.display = 'block';
-            statusElement.textContent = `${message}`;
-            statusElement.className = 'alert alert-succes';
-
-            setTimeout(() => {
-                statusElement.style.display = 'none';
-            }, 300);
-        }
-    }
-
-    async syncSoliItem(item) {
-        try {
-            const formData = new FormData();
-
-            // Agregar datos del formulario
-            for (const [key, value] of Object.entries(item.formData)) {
-                formData.append(key, value);
-            }
-
-            formData.append('offline_sync', 'true');
-
-            // Obtener fotos asociadas
-            const photos = await this.getPhotosForSoli(item.id);
-            for (const photo of photos) {
-                // Convertir data URL de vuelta a blob
-                const response = await fetch(photo.photoData);
-                const blob = await response.blob();
-                const file = new File([blob], photo.filename, { type: photo.type });
-                formData.append('fotos', file);
-            }
-
-            const response = await fetch('/ageo/soliData/', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': this.getCSRFToken()
-                }
+    async handleOfflineRequest(url, options = {}) {
+        // Para requests GET, intentar cache primero
+        if (!options.method || options.method === 'GET') {
+            return new Response('{"error": "Sin conexión"}', {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' }
             });
+        }
 
-            if (response.ok) {
-                await this.markAsSynced('pending_soli', item.id);
-                await this.removePhotosForSoli(item.id);
-                console.log('Solicitud sincronizada exitosamente');
-            }
-        } catch (error) {
-            console.error('Error sincronizando solicitud:', error);
+        // Para POST/PUT, guardar para sincronización posterior
+        if (options.body) {
+            const offlineRequest = {
+                url: url,
+                method: options.method || 'POST',
+                headers: options.headers || {},
+                body: options.body,
+                timestamp: Date.now(),
+                type: 'ajax'
+            };
+
+            await this.saveOfflineData(offlineRequest);
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Datos guardados offline',
+                offline: true
+            }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
     }
 
-    async getPhotosForSoli(soliId) {
-        const transaction = this.db.transaction(['pending_photos'], 'readonly');
-        const store = transaction.objectStore('pending_photos');
-        const index = store.index('soliId');
-
+    async saveOfflineData(data) {
         return new Promise((resolve, reject) => {
-            const request = index.getAll(soliId);
-            request.onsuccess = () => resolve(request.result);
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+
             request.onerror = () => reject(request.error);
+
+            request.onsuccess = () => {
+                const db = request.result;
+                const transaction = db.transaction(['offline_data'], 'readwrite');
+                const store = transaction.objectStore('offline_data');
+
+                store.add(data);
+                transaction.oncomplete = () => resolve();
+            };
+
+            request.onupgradeneeded = () => {
+                const db = request.result;
+                if (!db.objectStoreNames.contains('offline_data')) {
+                    const store = db.createObjectStore('offline_data', { keyPath: 'timestamp' });
+                    store.createIndex('type', 'type', { unique: false });
+                    store.createIndex('url', 'url', { unique: false });
+                }
+            };
         });
     }
 
-    async removePhotosForSoli(soliId) {
-        const transaction = this.db.transaction(['pending_photos'], 'readwrite');
-        const store = transaction.objectStore('pending_photos');
-        const index = store.index('soliId');
+    async getOfflineData() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.dbVersion);
 
-        const photos = await this.getPhotosForSoli(soliId);
-        for (const photo of photos) {
-            await store.delete(photo.id);
+            request.onerror = () => reject(request.error);
+
+            request.onsuccess = () => {
+                const db = request.result;
+                const transaction = db.transaction(['offline_data'], 'readonly');
+                const store = transaction.objectStore('offline_data');
+                const getAllRequest = store.getAll();
+
+                getAllRequest.onsuccess = () => resolve(getAllRequest.result);
+            };
+        });
+    }
+
+    async removeOfflineData(timestamp) {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+
+            request.onerror = () => reject(request.error);
+
+            request.onsuccess = () => {
+                const db = request.result;
+                const transaction = db.transaction(['offline_data'], 'readwrite');
+                const store = transaction.objectStore('offline_data');
+
+                store.delete(timestamp);
+                transaction.oncomplete = () => resolve();
+            };
+        });
+    }
+
+    async syncOfflineData() {
+        if (this.syncInProgress || !this.isOnline) return;
+
+        this.syncInProgress = true;
+
+        try {
+            const offlineData = await this.getOfflineData();
+
+            if (offlineData.length === 0) {
+                this.syncInProgress = false;
+                return;
+            }
+
+            this.showNotification(`Sincronizando ${offlineData.length} elementos...`, 'info');
+
+            let synced = 0;
+
+            for (const item of offlineData) {
+                try {
+                    let response;
+
+                    if (item.type === 'form') {
+                        const formData = new FormData();
+                        Object.entries(item.data).forEach(([key, value]) => {
+                            formData.append(key, value);
+                        });
+
+                        response = await fetch(item.url, {
+                            method: item.method,
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                    } else if (item.type === 'ajax') {
+                        response = await fetch(item.url, {
+                            method: item.method,
+                            headers: item.headers,
+                            body: item.body
+                        });
+                    }
+
+                    if (response && response.ok) {
+                        await this.removeOfflineData(item.timestamp);
+                        synced++;
+                    }
+
+                } catch (error) {
+                    console.error('Error sincronizando item:', error);
+                }
+            }
+
+            if (synced > 0) {
+                this.showNotification(`${synced} elementos sincronizados exitosamente`, 'success');
+            }
+
+        } catch (error) {
+            console.error('Error en sincronización:', error);
+        } finally {
+            this.syncInProgress = false;
         }
     }
 
-    // Actualizar el método getPendingData para incluir solicitudes
-    async getPendingData() {
-        const transaction = this.db.transaction(['pending_data', 'pending_soli'], 'readonly');
-        const dataStore = transaction.objectStore('pending_data');
-        const soliStore = transaction.objectStore('pending_soli');
-
-        const pendingData = await new Promise((resolve, reject) => {
-            const request = dataStore.index('synced').getAll(false);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
+    updateUIStatus() {
+        // Actualizar indicador de estado de conexión
+        const statusElements = document.querySelectorAll('.connection-status');
+        statusElements.forEach(element => {
+            element.textContent = this.isOnline ? 'En línea' : 'Sin conexión';
+            element.className = `connection-status ${this.isOnline ? 'online' : 'offline'}`;
         });
 
-        const pendingSoli = await new Promise((resolve, reject) => {
-            const request = soliStore.index('synced').getAll(false);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
+        // Actualizar botones y funcionalidad según estado
+        const offlineButtons = document.querySelectorAll('.offline-disabled');
+        offlineButtons.forEach(button => {
+            button.disabled = !this.isOnline;
+            if (!this.isOnline) {
+                button.title = 'Esta función requiere conexión a internet';
+            }
         });
 
-        return [...pendingData, ...pendingSoli];
+        // Mostrar/ocultar elementos específicos para offline
+        const onlineOnly = document.querySelectorAll('.online-only');
+        const offlineOnly = document.querySelectorAll('.offline-only');
+
+        onlineOnly.forEach(element => {
+            element.style.display = this.isOnline ? 'block' : 'none';
+        });
+
+        offlineOnly.forEach(element => {
+            element.style.display = this.isOnline ? 'none' : 'block';
+        });
     }
 
+    showNotification(message, type = 'info') {
+        // Crear notificación visual
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} mobile-notification`;
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${this.getIconForType(type)} me-2"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close ms-auto" aria-label="Cerrar"></button>
+            </div>
+        `;
+
+        // Posicionar en la parte superior
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 90vw;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        `;
+
+        document.body.appendChild(notification);
+
+        // Cerrar automáticamente después de 5 segundos
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+
+        // Cerrar al hacer click en el botón
+        notification.querySelector('.btn-close').addEventListener('click', () => {
+            notification.remove();
+        });
+    }
+
+    getIconForType(type) {
+        const icons = {
+            'success': 'check-circle',
+            'error': 'exclamation-triangle',
+            'warning': 'exclamation-circle',
+            'info': 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+
+    showUpdateAvailable() {
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info mobile-notification';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-download me-2"></i>
+                <span>Nueva versión disponible</span>
+                <button type="button" class="btn btn-sm btn-primary ms-2" id="update-app">Actualizar</button>
+                <button type="button" class="btn-close ms-2" aria-label="Cerrar"></button>
+            </div>
+        `;
+
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 90vw;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        `;
+
+        document.body.appendChild(notification);
+
+        notification.querySelector('#update-app').addEventListener('click', () => {
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+                window.location.reload();
+            }
+        });
+
+        notification.querySelector('.btn-close').addEventListener('click', () => {
+            notification.remove();
+        });
+    }
+
+    handleServiceWorkerMessage(event) {
+        const { data } = event;
+
+        if (data.type === 'FORM_SYNCED') {
+            if (data.success) {
+                this.showNotification('Formulario sincronizado exitosamente', 'success');
+            } else {
+                this.showNotification('Error sincronizando formulario', 'error');
+            }
+        }
+    }
+
+    // Métodos públicos para uso en la aplicación
+    async getCacheStatus() {
+        if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+            return null;
+        }
+
+        return new Promise((resolve) => {
+            const messageChannel = new MessageChannel();
+            messageChannel.port1.onmessage = (event) => {
+                resolve(event.data);
+            };
+
+            navigator.serviceWorker.controller.postMessage(
+                { type: 'GET_CACHE_STATUS' },
+                [messageChannel.port2]
+            );
+        });
+    }
+
+    async clearOfflineData() {
+        try {
+            const offlineData = await this.getOfflineData();
+            for (const item of offlineData) {
+                await this.removeOfflineData(item.timestamp);
+            }
+            this.showNotification('Datos offline eliminados', 'info');
+        } catch (error) {
+            console.error('Error limpiando datos offline:', error);
+        }
+    }
 }
 
-document.addEventListener('DOMContentLoaded', function(){
-    window.offlineManager = new MobileOffLineManager();
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    window.desurMobile = new DesUrMobileManager();
 });
+
+// Exportar para uso global
+window.DesUrMobileManager = DesUrMobileManager;

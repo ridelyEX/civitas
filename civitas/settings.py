@@ -40,7 +40,13 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 # Configuración segura de hosts permitidos
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if not DEBUG else ['*']
 
+SECURE_SSL_REDIRECT = False
+SECURE_PROXY_SSL_HEADER = None
 
+SECURE_BROWSER_XSS_FILTER = False
+SECURE_CONTENT_TYPE_NOSNIFF = False
+
+CORS_ALLOW_ALL_ORIGINS = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -67,6 +73,8 @@ MIDDLEWARE = [
     'django_user_agents.middleware.UserAgentMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'portaldu.desUr.auth.DesUrUserMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'portaldu.desUr.middleware.ServiceWorkerMiddleware',
 ]
 
 ROOT_URLCONF = 'civitas.urls'

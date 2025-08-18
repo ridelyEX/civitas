@@ -1,49 +1,461 @@
-<!-- templates/pwa/offline.html -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sin Conexión - Civitas</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/mobile.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DesUr">
+
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="{% static 'images/icon-192x192.png' %}">
+    <link rel="shortcut icon" href="{% static 'images/icon-192x192.png' %}">
+
+    <title>Sin conexión - DesUr</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        .offline-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .offline-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 0.4; }
+            100% { opacity: 0.8; }
+        }
+
+        .offline-actions {
+            margin-top: 30px;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+
+        .cached-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .content-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .content-item:last-child {
+            border-bottom: none;
+        }
+
+        .content-icon {
+            font-size: 20px;
+            margin-right: 15px;
+            width: 30px;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .connection-status.online {
+            background: rgba(40, 167, 69, 0.9);
+        }
+
+        @media (max-width: 768px) {
+            .offline-container {
+                padding: 15px;
+            }
+
+            .offline-card {
+                padding: 30px 20px;
+            }
+
+            .offline-icon {
+                font-size: 60px;
+            }
+
+            .connection-status {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container-fluid mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <div style="font-size: 4rem;">📱</div>
-                        </div>
-                        <h3>Sin Conexión a Internet</h3>
-                        <p class="text-muted">
-                            No hay conexión disponible en este momento.
-                            Tus datos guardados se sincronizarán automáticamente cuando recuperes la conexión.
-                        </p>
+    <!-- Indicador de estado de conexión -->
+    <div id="connectionStatus" class="connection-status">
+        📶 Sin conexión
+    </div>
 
-                        <div class="d-grid gap-2 mt-4">
-                            <button class="btn btn-primary" onclick="location.reload()">
-                                🔄 Intentar de Nuevo
-                            </button>
-                            <button class="btn btn-outline-secondary" onclick="history.back()">
-                                ← Regresar
-                            </button>
-                        </div>
+    <div class="offline-container">
+        <div class="offline-card">
+            <div class="offline-icon pulse">📶</div>
 
-                        <div class="mt-4">
-                            <small class="text-muted">
-                                <strong>Funcionalidades disponibles offline:</strong><br>
-                                • Capturar datos de ciudadanos<br>
-                                • Tomar fotos y crear solicitudes<br>
-                                • Ver información previamente cargada
-                            </small>
-                        </div>
+            <h1 class="h3 mb-3">Sin conexión</h1>
+            <p class="mb-4">No tienes conexión a internet, pero puedes seguir usando las funciones disponibles offline.</p>
+
+            <!-- Contenido disponible offline -->
+            <div class="cached-content">
+                <h5 class="mb-3">📋 Disponible offline:</h5>
+
+                <div class="content-item">
+                    <span class="content-icon">📝</span>
+                    <div>
+                        <strong>Formularios guardados</strong><br>
+                        <small class="text-muted">Se sincronizarán cuando vuelva la conexión</small>
+                    </div>
+                </div>
+
+                <div class="content-item">
+                    <span class="content-icon">📊</span>
+                    <div>
+                        <strong>Datos de trámites</strong><br>
+                        <small class="text-muted">Información almacenada localmente</small>
+                    </div>
+                </div>
+
+                <div class="content-item">
+                    <span class="content-icon">🏠</span>
+                    <div>
+                        <strong>Menú principal</strong><br>
+                        <small class="text-muted">Navegación básica disponible</small>
+                    </div>
+                </div>
+
+                <div class="content-item">
+                    <span class="content-icon">📱</span>
+                    <div>
+                        <strong>Funciones móviles</strong><br>
+                        <small class="text-muted">Interfaz optimizada para móvil</small>
                     </div>
                 </div>
             </div>
+
+            <!-- Acciones disponibles -->
+            <div class="offline-actions">
+                <a href="/ageo/auth/menu/" class="action-btn">
+                    🏠 Ir al menú principal
+                </a>
+
+                <button id="retryBtn" class="action-btn" onclick="checkConnection()">
+                    🔄 Reintentar conexión
+                </button>
+
+                <button id="cacheInfoBtn" class="action-btn" onclick="showCacheInfo()">
+                    📊 Ver datos guardados
+                </button>
+            </div>
+
+            <!-- Información de cache (oculta inicialmente) -->
+            <div id="cacheInfo" class="cached-content" style="display: none;">
+                <h6>📁 Información de almacenamiento:</h6>
+                <div id="cacheDetails">
+                    <p><small>Cargando información...</small></p>
+                </div>
+            </div>
+
+            <!-- Consejos offline -->
+            <div class="mt-4">
+                <small class="text-muted">
+                    💡 <strong>Consejo:</strong> Los formularios que llenes se guardarán automáticamente y se enviarán cuando recuperes la conexión.
+                </small>
+            </div>
         </div>
     </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Variables globales
+        let isOnline = navigator.onLine;
+        let cacheInfoVisible = false;
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeOfflinePage();
+        });
+
+        function initializeOfflinePage() {
+            console.log('📶 Inicializando página offline...');
+
+            // Configurar event listeners
+            setupEventListeners();
+
+            // Verificar estado inicial
+            updateConnectionStatus();
+
+            // Cargar información de cache
+            loadCacheInfo();
+
+            // Verificar datos offline
+            checkOfflineData();
+        }
+
+        function setupEventListeners() {
+            // Event listeners para cambios de conexión
+            window.addEventListener('online', () => {
+                console.log('🌐 Conexión restaurada');
+                isOnline = true;
+                updateConnectionStatus();
+                showReconnectionMessage();
+            });
+
+            window.addEventListener('offline', () => {
+                console.log('📶 Conexión perdida');
+                isOnline = false;
+                updateConnectionStatus();
+            });
+
+            // Event listener para visibilidad de la página
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    checkConnection();
+                }
+            });
+        }
+
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+
+            if (isOnline) {
+                statusElement.className = 'connection-status online';
+                statusElement.innerHTML = '🌐 Conectado';
+
+                // Mostrar botón para continuar
+                setTimeout(() => {
+                    if (isOnline) {
+                        showContinueButton();
+                    }
+                }, 2000);
+            } else {
+                statusElement.className = 'connection-status';
+                statusElement.innerHTML = '📶 Sin conexión';
+            }
+        }
+
+        function checkConnection() {
+            console.log('🔄 Verificando conexión...');
+
+            const retryBtn = document.getElementById('retryBtn');
+            retryBtn.innerHTML = '🔄 Verificando...';
+            retryBtn.disabled = true;
+
+            // Intentar hacer una petición de prueba
+            fetch('/ageo/manifest.json', {
+                method: 'HEAD',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Conexión restaurada');
+                    isOnline = true;
+                    updateConnectionStatus();
+                    showReconnectionMessage();
+                } else {
+                    throw new Error('No hay conexión');
+                }
+            })
+            .catch(error => {
+                console.log('❌ Sin conexión:', error);
+                isOnline = false;
+                updateConnectionStatus();
+            })
+            .finally(() => {
+                retryBtn.innerHTML = '🔄 Reintentar conexión';
+                retryBtn.disabled = false;
+            });
+        }
+
+        function showReconnectionMessage() {
+            const card = document.querySelector('.offline-card');
+            const reconnectMsg = document.createElement('div');
+            reconnectMsg.className = 'alert alert-success mt-3';
+            reconnectMsg.innerHTML = `
+                <strong>🎉 ¡Conexión restaurada!</strong><br>
+                <small>Puedes continuar usando la aplicación normalmente.</small>
+                <br><br>
+                <a href="/ageo/auth/menu/" class="btn btn-success btn-sm">Continuar a la aplicación</a>
+            `;
+
+            card.appendChild(reconnectMsg);
+
+            // Auto-redirect después de 5 segundos
+            setTimeout(() => {
+                window.location.href = '/ageo/auth/menu/';
+            }, 5000);
+        }
+
+        function showContinueButton() {
+            const actions = document.querySelector('.offline-actions');
+            const continueBtn = document.createElement('a');
+            continueBtn.href = '/ageo/auth/menu/';
+            continueBtn.className = 'action-btn';
+            continueBtn.style.background = 'rgba(40, 167, 69, 0.3)';
+            continueBtn.innerHTML = '✅ Continuar a la aplicación';
+
+            actions.insertBefore(continueBtn, actions.firstChild);
+        }
+
+        async function loadCacheInfo() {
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+
+                    if (registration.active) {
+                        // Solicitar información del cache al Service Worker
+                        const messageChannel = new MessageChannel();
+
+                        messageChannel.port1.onmessage = function(event) {
+                            const cacheStatus = event.data;
+                            displayCacheInfo(cacheStatus);
+                        };
+
+                        registration.active.postMessage(
+                            { type: 'GET_CACHE_STATUS' },
+                            [messageChannel.port2]
+                        );
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ No se pudo cargar información de cache:', error);
+            }
+        }
+
+        function displayCacheInfo(cacheStatus) {
+            const cacheDetails = document.getElementById('cacheDetails');
+
+            if (cacheStatus) {
+                cacheDetails.innerHTML = `
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Caches:</strong> ${cacheStatus.caches || 0}
+                        </div>
+                        <div class="col-6">
+                            <strong>Recursos:</strong> ${cacheStatus.resources || 0}
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small><strong>Versión:</strong> ${cacheStatus.version || 'N/A'}</small>
+                    </div>
+                `;
+            } else {
+                cacheDetails.innerHTML = '<small class="text-muted">No hay información de cache disponible</small>';
+            }
+        }
+
+        function showCacheInfo() {
+            const cacheInfo = document.getElementById('cacheInfo');
+            const btn = document.getElementById('cacheInfoBtn');
+
+            cacheInfoVisible = !cacheInfoVisible;
+
+            if (cacheInfoVisible) {
+                cacheInfo.style.display = 'block';
+                btn.innerHTML = '📊 Ocultar datos guardados';
+            } else {
+                cacheInfo.style.display = 'none';
+                btn.innerHTML = '📊 Ver datos guardados';
+            }
+        }
+
+        function checkOfflineData() {
+            // Verificar si hay datos offline guardados
+            try {
+                const offlineQueue = JSON.parse(localStorage.getItem('ageo_offline_queue') || '[]');
+
+                if (offlineQueue.length > 0) {
+                    showOfflineDataInfo(offlineQueue.length);
+                }
+            } catch (error) {
+                console.log('⚠️ No se pudo verificar datos offline:', error);
+            }
+        }
+
+        function showOfflineDataInfo(count) {
+            const card = document.querySelector('.offline-card');
+            const offlineDataMsg = document.createElement('div');
+            offlineDataMsg.className = 'alert alert-warning mt-3';
+            offlineDataMsg.innerHTML = `
+                <strong>📝 Datos pendientes:</strong><br>
+                <small>Tienes ${count} formulario(s) guardado(s) que se sincronizarán cuando recuperes la conexión.</small>
+            `;
+
+            card.appendChild(offlineDataMsg);
+        }
+
+        // Verificar conexión cada 30 segundos
+        setInterval(checkConnection, 30000);
+    </script>
 </body>
 </html>
