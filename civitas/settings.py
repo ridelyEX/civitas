@@ -40,13 +40,6 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 # Configuración segura de hosts permitidos
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if not DEBUG else ['*']
 
-SECURE_SSL_REDIRECT = False
-SECURE_PROXY_SSL_HEADER = None
-
-SECURE_BROWSER_XSS_FILTER = False
-SECURE_CONTENT_TYPE_NOSNIFF = False
-
-CORS_ALLOW_ALL_ORIGINS = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -73,8 +66,6 @@ MIDDLEWARE = [
     'django_user_agents.middleware.UserAgentMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'portaldu.desUr.auth.DesUrUserMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'portaldu.desUr.middleware.ServiceWorkerMiddleware',
 ]
 
 ROOT_URLCONF = 'civitas.urls'
@@ -264,15 +255,6 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
-#PWA
-PWA_APP_NAME = 'Ageo Mobile'
-PWA_APP_DESCRIPTION = 'Sistema móvil de trámites ciudadanos'
-PWA_APP_THEME_COLOR = '#007bff'
-PWA_APP_BACKGROUND_COLOR = '#ffffff'
-PWA_APP_DISPLAY = 'standalone'
-PWA_APP_SCOPE = '/ageo/'
-PWA_APP_ORIENTATION = 'portrait'
-PWA_APP_START_URL = '/ageo/'
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10*1024*1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50*1024*1024

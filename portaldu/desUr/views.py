@@ -296,7 +296,8 @@ def intData(request):
         'dir': direccion,
         'asunto': asunto,
         'uuid':uuid,
-        'google_key': settings.GOOGLE_API_KEY,
+        'local_gis_enabled': True,
+        'arcgis_services' : LocalGISService.SERVICES,
     }
     return render(request, template, context)
 
@@ -1193,6 +1194,12 @@ def validar_datos(post_data):
         errors.append("La dirección es obligatoria")
     elif len(direccion) < 10:
         errors.append("La dirección debe ser más específica")
+    else:
+        try:
+            if not LocalGISService.validate_address(direccion):
+                logger.warning(f"Direccion no encontrada en catastro: {direccion}")
+        except Exception as e:
+            logger.error(f"Error validando la dirección: {str(e)}")
 
     # Validar asunto
     asunto = post_data.get('asunto', '').strip()
@@ -1237,588 +1244,500 @@ def soli_processed(request, uid, dp):
         logger.error(f"Error procesando solicitud: {str(e)}")
         return HttpResponse('Error al procesar solicitud. Intente nuevamente.')
 
-
-# ==================== FUNCIONES PWA Y MÓVILES ====================
-
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 import json
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
-def service_worker(request):
-    """Sirve el archivo Service Worker para PWA"""
-    import os
-    from django.conf import settings
-
-    # Ruta completa al archivo Service Worker
-    sw_path = os.path.join(settings.BASE_DIR, 'portaldu', 'desUr', 'static', 'sw.js')
-
+@csrf_exempt
+@require_http_methods(["POST"])
+def geocode_view(request):
+    """Vista para geocodificación usando servicios locales"""
     try:
-        with open(sw_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-    except FileNotFoundError:
-        # Fallback si no encuentra el archivo
-        content = '''
-        console.log('DesUr SW: Service Worker básico cargado');
-        
-        self.addEventListener('install', event => {
-            console.log('DesUr SW: Instalando...');
-            self.skipWaiting();
-        });
-        
-        self.addEventListener('activate', event => {
-            console.log('DesUr SW: Activando...');
-            self.clients.claim();
-        });
-        '''
-
-    response = HttpResponse(content, content_type='application/javascript')
-    response['Cache-Control'] = 'no-cache'
-    response['Service-Worker-Allowed'] = '/desur/'
-    return response
-
-
-def manifest(request):
-    """Genera el archivo manifest.json para PWA"""
-    manifest_data = {
-        "name": "DesUr - Portal de Desarrollo Urbano",
-        "short_name": "DesUr",
-        "description": "Portal de trámites de desarrollo urbano para dispositivos móviles - Funciona sin conexión",
-        "start_url": "/ageo/auth/menu/",
-        "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#007bff",
-        "orientation": "portrait-primary",
-        "scope": "/ageo/",
-        "categories": ["government", "utilities", "productivity"],
-        "lang": "es-MX",
-        "dir": "ltr",
-        "prefer_related_applications": False,
-        "edge_side_panel": {
-            "preferred_width": 480
-        },
-        "icons": [
-            {
-                "src": "/static/images/icon-72x72.png",
-                "sizes": "72x72",
-                "type": "image/png",
-                "purpose": "maskable any"
-            },
-            {
-                "src": "/static/images/icon-96x96.png",
-                "sizes": "96x96",
-                "type": "image/png",
-                "purpose": "maskable any"
-            },
-            {
-                "src": "/static/images/icon-128x128.png",
-                "sizes": "128x128",
-                "type": "image/png",
-                "purpose": "maskable any"
-            },
-            {
-                "src": "/static/images/icon-144x144.png",
-                "sizes": "144x144",
-                "type": "image/png",
-                "purpose": "maskable any"
-            },
-            {
-                "src": "/static/images/icon-152x152.png",
-                "sizes": "152x152",
-                "type": "image/png",
-                "purpose": "maskable any"
-            },
-            {
-                "src": "/static/images/icon-192x192.png",
-                "sizes": "192x192",
-                "type": "image/png",
-                "purpose": "maskable any"
-            },
-            {
-                "src": "/static/images/icon-384x384.png",
-                "sizes": "384x384",
-                "type": "image/png",
-                "purpose": "maskable any"
-            },
-            {
-                "src": "/static/images/icon-512x512.png",
-                "sizes": "512x512",
-                "type": "image/png",
-                "purpose": "maskable any"
-            }
-        ],
-        "screenshots": [
-            {
-                "src": "/static/images/screenshot-desktop.png",
-                "sizes": "1280x720",
-                "type": "image/png",
-                "form_factor": "wide"
-            },
-            {
-                "src": "/static/images/screenshot-mobile.png",
-                "sizes": "375x667",
-                "type": "image/png",
-                "form_factor": "narrow"
-            }
-        ]
-    }
-
-    return JsonResponse(manifest_data, content_type='application/manifest+json')
-
-
-def offline_page(request):
-    """Página offline para cuando no hay conexión"""
-    return render(request, 'pwa/offline.html')
-
-
-def install_prompt(request):
-    """Página de instalación PWA"""
-    return render(request, 'pwa/install.html')
-
-
-# ==================== VISTAS MÓVILES ====================
-
-@desur_login_required
-def mobile_menu(request):
-    """Menú optimizado para dispositivos móviles"""
-    # Estadísticas rápidas para el empleado
-    tramites_hoy = soli.objects.filter(
-        processed_by=request.user,
-        fecha__date=date.today()
-    ).count()
-
-    total_tramites = soli.objects.filter(processed_by=request.user).count()
-
-    context = {
-        'empleado': request.user,
-        'tramites_hoy': tramites_hoy,
-        'total_tramites': total_tramites,
-        'is_mobile': True
-    }
-
-    return render(request, 'mobile/menu.html', context)
-
-
-@desur_login_required
-def mobile_historial(request):
-    """Historial optimizado para móviles"""
-    tramites = soli.objects.filter(
-        processed_by=request.user
-    ).select_related('data_ID').order_by('-fecha')[:20]  # Limitar a 20 más recientes
-
-    context = {
-        'tramites': tramites,
-        'empleado': request.user,
-        'is_mobile': True
-    }
-
-    return render(request, 'mobile/historial.html', context)
-
-
-@desur_login_required
-def confirmacion_mobile(request):
-    """Página de confirmación para móviles"""
-    return render(request, 'mobile/confirmacion.html', {'is_mobile': True})
-
-
-# ==================== APIs PARA FUNCIONALIDAD OFFLINE ====================
-
-@desur_login_required
-def sync_offline_data(request):
-    """API para sincronizar datos offline"""
-    if request.method == 'POST':
-        try:
+        # Verificar Content-Type y obtener datos
+        if request.content_type == 'application/json':
             data = json.loads(request.body)
-            sync_type = data.get('type')
-
-            if sync_type == 'form_data':
-                return sync_form_data(request, data)
-            elif sync_type == 'user_status':
-                return sync_user_status(request, data)
-            else:
-                return JsonResponse({'error': 'Tipo de sincronización no válido'}, status=400)
-
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'JSON inválido'}, status=400)
-        except Exception as e:
-            logger.error(f"Error en sincronización: {str(e)}")
-            return JsonResponse({'error': 'Error interno del servidor'}, status=500)
-
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
-
-
-def sync_form_data(request, data):
-    """Sincroniza datos de formularios guardados offline"""
-    try:
-        form_data = data.get('form_data', {})
-        form_type = data.get('form_type')
-
-        # Procesar según el tipo de formulario
-        if form_type == 'citizen_data':
-            return process_offline_citizen_data(request, form_data)
-        elif form_type == 'solicitud':
-            return process_offline_solicitud(request, form_data)
         else:
-            return JsonResponse({'error': 'Tipo de formulario no reconocido'}, status=400)
+            # Si viene como form data
+            data = {
+                'address': request.POST.get('address', '')
+            }
 
-    except Exception as e:
-        logger.error(f"Error procesando datos offline: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        address = data.get('address', '').strip()
 
+        # Debug para ver qué datos llegan
+        logger.debug(f"Datos recibidos en geocode_view: {data}")
+        logger.debug(f"Address extraído: '{address}'")
 
-def process_offline_citizen_data(request, form_data):
-    """Procesa datos de ciudadanos guardados offline"""
-    try:
-        # Validar datos
-        errors = validar_datos(form_data)
-        if errors:
-            return JsonResponse({'success': False, 'errors': errors}, status=400)
+        if not address:
+            return JsonResponse({
+                'success': False,
+                'error': 'Dirección requerida'
+            })
 
-        # Crear UUID si no existe
-        uuid_str = form_data.get('uuid')
-        if not uuid_str:
-            uuid_str = str(uuid.uuid4())
-            uid = Uuid.objects.create(uuid=uuid_str)
+        # Usar el servicio local de geocodificación
+        result = LocalGISService.geocode_address(address)
+
+        if result:
+            return JsonResponse({
+                'success': True,
+                'result': {
+                    'lat': result['lat'],
+                    'lng': result['lng'],
+                    'address': result['address'],
+                    'found': result['found']
+                }
+            })
         else:
-            uid, created = Uuid.objects.get_or_create(uuid=uuid_str)
+            return JsonResponse({
+                'success': False,
+                'error': 'Dirección no encontrada en el sistema local'
+            })
 
-        # Guardar datos
-        datos_persona = {
-            'nombre': form_data.get('nombre', '').upper(),
-            'pApe': form_data.get('pApe', '').upper(),
-            'mApe': form_data.get('mApe', '').upper(),
-            'bDay': form_data.get('bDay'),
-            'tel': form_data.get('tel'),
-            'curp': form_data.get('curp', '').upper(),
-            'sexo': form_data.get('sexo'),
-            'dirr': form_data.get('dir'),
-            'asunto': form_data.get('asunto'),
-            'etnia': form_data.get('etnia', 'No pertenece a una etnia'),
-            'disc': form_data.get('discapacidad', 'sin discapacidad'),
-            'vul': form_data.get('vulnerables', 'No pertenece a un grupo vulnerable'),
-            'fuuid': uid
-        }
-
-        data.objects.update_or_create(fuuid=uid, defaults=datos_persona)
-
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decodificando JSON: {str(e)}")
         return JsonResponse({
-            'success': True,
-            'message': 'Datos sincronizados correctamente',
-            'uuid': uuid_str
+            'success': False,
+            'error': 'Formato JSON inválido'
+        })
+    except Exception as e:
+        logger.error(f"Error en geocodificación: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Error interno del servidor: {str(e)}'
         })
 
-    except Exception as e:
-        logger.error(f"Error procesando datos de ciudadano offline: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-
-def process_offline_solicitud(request, form_data):
-    """Procesa solicitudes guardadas offline"""
+@csrf_exempt
+@require_http_methods(["POST"])
+def reverse_geocode_view(request):
+    """Vista para geocodificación inversa (coordenadas a dirección)"""
     try:
-        uuid_str = form_data.get('uuid')
-        if not uuid_str:
-            return JsonResponse({'success': False, 'error': 'UUID requerido'}, status=400)
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            data = {
+                'lat': request.POST.get('lat', ''),
+                'lng': request.POST.get('lng', '')
+            }
 
-        uid = get_object_or_404(Uuid, uuid=uuid_str)
-        dp = get_object_or_404(data, fuuid=uid)
+        lat = data.get('lat')
+        lng = data.get('lng')
 
-        solicitud_data = {
-            'dirr': form_data.get('dir'),
-            'info': form_data.get('info'),
-            'descc': form_data.get('desc'),
-            'puo': form_data.get('puo'),
-            'data_ID': dp,
-            'processed_by': request.user,
-            'fecha': timezone.now()
-        }
+        if not lat or not lng:
+            return JsonResponse({
+                'success': False,
+                'error': 'Coordenadas requeridas'
+            })
 
-        solicitud = soli.objects.create(**solicitud_data)
+        # Usar el servicio local de geocodificación inversa
+        result = LocalGISService.reverse_geocode(float(lat), float(lng))
 
-        # Generar folio
-        puo_texto, folio = gen_folio(dp.fuuid, solicitud.puo)
-        solicitud.folio = folio
-        solicitud.save()
+        if result:
+            return JsonResponse({
+                'success': True,
+                'address': result['address'],
+                'details': result
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'No se pudo obtener la dirección para estas coordenadas'
+            })
 
+    except (ValueError, json.JSONDecodeError) as e:
+        logger.error(f"Error en datos recibidos: {str(e)}")
         return JsonResponse({
-            'success': True,
-            'message': 'Solicitud sincronizada correctamente',
-            'folio': folio
+            'success': False,
+            'error': 'Datos inválidos'
         })
-
     except Exception as e:
-        logger.error(f"Error procesando solicitud offline: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-
-def sync_user_status(request, data):
-    """Sincroniza estado del usuario"""
-    try:
-        last_activity = data.get('last_activity')
-        if last_activity:
-            # Actualizar última actividad del usuario
-            pass
-
+        logger.error(f"Error en geocodificación inversa: {str(e)}")
         return JsonResponse({
-            'success': True,
-            'server_time': timezone.now().isoformat(),
-            'user_status': 'active'
+            'success': False,
+            'error': f'Error interno: {str(e)}'
         })
 
-    except Exception as e:
-        logger.error(f"Error sincronizando estado de usuario: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-
-@desur_login_required
-def api_user_data(request):
-    """API para obtener datos del usuario actual"""
-    user = request.user
-
-    # Estadísticas del usuario
-    total_tramites = soli.objects.filter(processed_by=user).count()
-    tramites_hoy = soli.objects.filter(
-        processed_by=user,
-        fecha__date=date.today()
-    ).count()
-
-    # Últimos trámites
-    ultimos_tramites = soli.objects.filter(
-        processed_by=user
-    ).select_related('data_ID').order_by('-fecha')[:5]
-
-    tramites_data = []
-    for tramite in ultimos_tramites:
-        tramites_data.append({
-            'folio': tramite.folio,
-            'ciudadano': f"{tramite.data_ID.nombre} {tramite.data_ID.pApe}",
-            'puo': tramite.puo,
-            'fecha': tramite.fecha.isoformat() if tramite.fecha else None,
-        })
-
-    response_data = {
-        'user': {
-            'username': user.username,
-            'nombre': user.nombre if hasattr(user, 'nombre') else '',
-            'apellido': user.apellido if hasattr(user, 'apellido') else '',
-        },
-        'stats': {
-            'total_tramites': total_tramites,
-            'tramites_hoy': tramites_hoy,
-        },
-        'ultimos_tramites': tramites_data,
-        'server_time': timezone.now().isoformat()
-    }
-
-    return JsonResponse(response_data)
-
-
-# ==================== FUNCIONES DE UTILIDAD ====================
-
-def is_mobile_device(request):
-    """Detecta si el dispositivo es móvil"""
-    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
-    mobile_keywords = ['mobile', 'android', 'iphone', 'ipad', 'windows phone', 'blackberry']
-    return any(keyword in user_agent for keyword in mobile_keywords)
-
-
-def get_device_info(request):
-    """Obtiene información del dispositivo del usuario"""
-    user_agent = request.META.get('HTTP_USER_AGENT', '')
-
-    is_mobile = is_mobile_device(request)
-    is_tablet = 'tablet' in user_agent.lower() or 'ipad' in user_agent.lower()
-    is_desktop = not is_mobile and not is_tablet
-
-    return {
-        'is_mobile': is_mobile,
-        'is_tablet': is_tablet,
-        'is_desktop': is_desktop,
-        'user_agent': user_agent
-    }
-
-
-# ==================== VISTAS DE PRUEBA PARA PWA ====================
-
-def test_pwa_functionality(request):
-    """Vista de prueba para verificar funcionalidad PWA"""
-    if not settings.DEBUG:
-        return JsonResponse({'error': 'Solo disponible en modo debug'}, status=403)
-
-    device_info = get_device_info(request)
-
-    test_results = {
-        'service_worker_registered': True,  # Se verificará en el frontend
-        'manifest_valid': True,
-        'offline_capable': True,
-        'device_info': device_info,
-        'timestamp': timezone.now().isoformat()
-    }
-
-    return JsonResponse(test_results)
-
-
-# ==================== VISTAS DE PRESUPUESTO PARTICIPATIVO ====================
-# (Las vistas de PP ya están implementadas arriba, solo agregamos las que faltan)
+# Presupuesto participativo
 
 @desur_login_required
 def gen_render(request):
-    """Vista principal de presupuesto participativo"""
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
+    """Vista principal para datos generales de presupuesto participativo"""
+    # Obtener o crear UUID
+    uuid_str = request.COOKIES.get('uuid')
+    if not uuid_str:
+        uuid_str = str(uuid.uuid4())
+        uuid_obj = Uuid.objects.create(uuid=uuid_str)
+    else:
+        try:
+            uuid_obj = Uuid.objects.get(uuid=uuid_str)
+        except Uuid.DoesNotExist:
+            uuid_obj = Uuid.objects.create(uuid=uuid_str)
 
     if request.method == 'POST':
-        form = GeneralRender(request.POST)
-        if form.is_valid():
-            uid = get_object_or_404(Uuid, uuid=uuid)
-            form_instance = form.save(commit=False)
-            form_instance.fuuid = uid
-            form_instance.save()
+        logger.debug("Procesando formulario de presupuesto participativo")
 
-            categoria = request.POST.get('categoria')
+        # Crear una copia mutable del POST data
+        post_data = request.POST.copy()
+        post_data['fuuid'] = uuid_obj.pk  # Agregar el fuuid al formulario
+
+        form = GeneralRender(post_data)  # Usar el POST data modificado
+        categoria = request.POST.get('categoria')
+        cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluviales']
+
+        if categoria and categoria in cat_values:
             request.session['categoria'] = categoria
+            request.session['pp_uuid'] = uuid_str
+            logger.info(f"Categoría de PP guardada: {categoria}")
+        else:
+            messages.error(request, "Categoría inválida")
+            response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
+            response.set_cookie('uuid', uuid_str, max_age=3600)
+            return response
 
-            if categoria == 'parque':
-                return redirect('parques')
-            elif categoria == 'escuela':
-                return redirect('escuelas')
-            elif categoria == 'cs':
-                return redirect('centros')
-            elif categoria == 'infraestructura':
-                return redirect('infraestructura')
-            elif categoria == 'pluviales':
-                return redirect('pluviales')
-
-    else:
-        form = GeneralRender()
-
-    return render(request, 'pp/general.html', {'form': form, 'uuid': uuid})
-
-
-@desur_login_required
-def parque_render(request):
-    """Vista para presupuesto participativo - parques"""
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
-
-    try:
-        uid = get_object_or_404(Uuid, uuid=uuid)
-        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
-    except:
-        return redirect('general')
-
-    if request.method == 'POST':
-        form = ParqueRender(request.POST)
         if form.is_valid():
-            form_instance = form.save(commit=False)
-            form_instance.fk_pp = pp_general
-            form_instance.save()
-            return redirect('pp_document')
+            logger.info("Formulario de PP válido, guardando datos")
+            instance = form.save(commit=False)
+            instance.fuuid = uuid_obj  # Asegurar que el fuuid esté asignado
+            instance.save()
+
+            # Redireccionar según categoría
+            match categoria:
+                case 'parque':
+                    response = redirect('parques')
+                case 'cs':
+                    response = redirect('centros')
+                case 'escuela':
+                    response = redirect('escuelas')
+                case 'infraestructura':
+                    response = redirect('infraestructura')
+                case 'pluviales':
+                    response = redirect('pluviales')
+                case _:
+                    response = redirect('gen_render')
+
+            response.set_cookie('uuid', uuid_str, max_age=3600)
+            return response
+        else:
+            logger.warning(f"Errores en formulario PP: {form.errors}")
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
-        form = ParqueRender()
+        form = GeneralRender(initial={'fuuid': uuid_obj.pk})  # Inicializar con fuuid
 
-    return render(request, 'pp/parques.html', {'form': form, 'uuid': uuid})
-
+    response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
+    response.set_cookie('uuid', uuid_str, max_age=3600)
+    return response
 
 @desur_login_required
 def escuela_render(request):
-    """Vista para presupuesto participativo - escuelas"""
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
+    """Vista para propuestas de presupuesto participativo en escuelas"""
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
 
     try:
-        uid = get_object_or_404(Uuid, uuid=uuid)
-        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
-    except:
-        return redirect('general')
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
 
     if request.method == 'POST':
         form = EscuelaRender(request.POST)
         if form.is_valid():
-            form_instance = form.save(commit=False)
-            form_instance.fk_pp = pp_general
-            form_instance.save()
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            logger.info("Propuesta de escuela guardada exitosamente")
+            messages.success(request, "Propuesta de escuela guardada exitosamente.")
             return redirect('pp_document')
+        else:
+            logger.warning(f"Errores en formulario de escuela: {form.errors}")
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = EscuelaRender()
 
-    return render(request, 'pp/escuelas.html', {'form': form, 'uuid': uuid})
+    return render(request, 'pp/escuela.html', {'form': form, 'pp_general': pp_general})
 
+@desur_login_required
+def parque_render(request):
+    """Vista para propuestas de presupuesto participativo en parques"""
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
+
+    try:
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
+
+    if request.method == 'POST':
+        form = ParqueRender(request.POST)
+        if form.is_valid():
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            logger.info("Propuesta de parque guardada exitosamente")
+            messages.success(request, "Propuesta de parque guardada exitosamente.")
+            return redirect('pp_document')
+        else:
+            logger.warning(f"Errores en formulario de parque: {form.errors}")
+            messages.error(request, "Por favor corrige los errores en el formulario")
+    else:
+        form = ParqueRender()
+
+    return render(request, 'pp/parque.html', {'form': form, 'pp_general': pp_general})
 
 @desur_login_required
 def cs_render(request):
-    """Vista para presupuesto participativo - centros comunitarios"""
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
+    """Vista para propuestas de centros comunitarios y salones de usos múltiples"""
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
 
     try:
-        uid = get_object_or_404(Uuid, uuid=uuid)
-        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
-    except:
-        return redirect('general')
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
 
     if request.method == 'POST':
         form = CsRender(request.POST)
         if form.is_valid():
-            form_instance = form.save(commit=False)
-            form_instance.fk_pp = pp_general
-            form_instance.save()
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            logger.info("Propuesta de centro/salón guardada exitosamente")
+            messages.success(request, "Propuesta de centro/salón guardada exitosamente.")
             return redirect('pp_document')
+        else:
+            logger.warning(f"Errores en formulario de centro/salón: {form.errors}")
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = CsRender()
 
-    return render(request, 'pp/centros.html', {'form': form, 'uuid': uuid})
-
+    return render(request, 'pp/centro_salon.html', {'form': form, 'pp_general': pp_general})
 
 @desur_login_required
 def infraestructura_render(request):
-    """Vista para presupuesto participativo - infraestructura"""
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
+    """Vista para propuestas de infraestructura"""
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
 
     try:
-        uid = get_object_or_404(Uuid, uuid=uuid)
-        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
-    except:
-        return redirect('general')
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
 
     if request.method == 'POST':
         form = InfraestructuraRender(request.POST)
         if form.is_valid():
-            form_instance = form.save(commit=False)
-            form_instance.fk_pp = pp_general
-            form_instance.save()
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            logger.info("Propuesta de infraestructura guardada exitosamente")
+            messages.success(request, "Propuesta de infraestructura guardada exitosamente.")
             return redirect('pp_document')
+        else:
+            logger.warning(f"Errores en formulario de infraestructura: {form.errors}")
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = InfraestructuraRender()
 
-    return render(request, 'pp/infraestructura.html', {'form': form, 'uuid': uuid})
-
+    return render(request, 'pp/infraestructura.html', {'form': form, 'pp_general': pp_general})
 
 @desur_login_required
 def pluvial_render(request):
-    """Vista para presupuesto participativo - soluciones pluviales"""
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('home')
+    """Vista para propuestas de soluciones pluviales"""
+    # Obtener UUID de la propuesta general
+    pp_uuid = request.session.get('pp_uuid')
+    if not pp_uuid:
+        messages.error(request, "No se encontró una propuesta general. Debes completar los datos generales primero.")
+        return redirect('gen_render')
 
     try:
-        uid = get_object_or_404(Uuid, uuid=uuid)
-        pp_general = get_object_or_404(PpGeneral, fuuid=uid)
-    except:
-        return redirect('general')
+        uuid_obj = Uuid.objects.get(uuid=pp_uuid)
+        pp_general = PpGeneral.objects.get(fuuid=uuid_obj)
+    except (Uuid.DoesNotExist, PpGeneral.DoesNotExist):
+        messages.error(request, "Propuesta general no encontrada.")
+        return redirect('gen_render')
 
     if request.method == 'POST':
         form = PluvialRender(request.POST)
         if form.is_valid():
-            form_instance = form.save(commit=False)
-            form_instance.fk_pp = pp_general
-            form_instance.save()
+            # Vincular con la propuesta general
+            instance = form.save(commit=False)
+            instance.fk_pp = pp_general
+            instance.save()
+            logger.info("Propuesta pluvial guardada exitosamente")
+            messages.success(request, "Propuesta pluvial guardada exitosamente.")
             return redirect('pp_document')
+        else:
+            logger.warning(f"Errores en formulario pluvial: {form.errors}")
+            messages.error(request, "Por favor corrige los errores en el formulario")
     else:
         form = PluvialRender()
 
-    return render(request, 'pp/pluviales.html', {'form': form, 'uuid': uuid})
+    return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
+
+class LocalGISService:
+    """Servicio para usar ArcGIS Server local en lugar de Google Maps"""
+
+    BASE_URL = "https://sigmunchih.mpiochih.gob.mx/server/rest/services"
+
+    SERVICES = {
+        'catastral': f"{BASE_URL}/DATOS_CATASTRALES_MIL1/MapServer",
+        'geoestadisticos': f"{BASE_URL}/DATOS_GEOESTADÍSTICOS/MapServer",
+        'gobernanza': f"{BASE_URL}/GOBERNANZA_Y_ADMINISTRACIÓN_PÚBLICA/MapServer",
+        'transporte': f"{BASE_URL}/TRANSPORTE/MapServer",
+        'maprueba': f"{BASE_URL}/Maprueba/MapServer",
+    }
+
+    @staticmethod
+    def geocode_address(address):
+        """Geocodifica una dirección usando el servicio local de ArcGIS"""
+        try:
+            # URL del servicio de geocodificación de ArcGIS Server
+            geocode_url = f"{LocalGISService.BASE_URL}/GeocodeServer/findAddressCandidates"
+
+            params = {
+                'SingleLine': address,
+                'f': 'json',
+                'outSR': '4326',  # WGS84
+                'maxLocations': 1,
+                'outFields': '*'
+            }
+
+            response = requests.get(geocode_url, params=params, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                if 'candidates' in data and len(data['candidates']) > 0:
+                    candidate = data['candidates'][0]
+                    location = candidate.get('location', {})
+
+                    return {
+                        'lat': location.get('y'),
+                        'lng': location.get('x'),
+                        'address': candidate.get('address', address),
+                        'found': True,
+                        'score': candidate.get('score', 0)
+                    }
+                else:
+                    # Fallback a coordenadas de Chihuahua si no se encuentra
+                    logger.warning(f"Dirección no encontrada en geocodificador local: {address}")
+                    return {
+                        'lat': 28.6353,
+                        'lng': -106.0889,
+                        'address': f"{address} (ubicación aproximada - Chihuahua)",
+                        'found': False,
+                        'score': 0
+                    }
+            else:
+                logger.error(f"Error en servicio de geocodificación: {response.status_code}")
+                return None
+
+        except requests.RequestException as e:
+            logger.error(f"Error de conexión al geocodificador: {str(e)}")
+            # Fallback en caso de error de conexión
+            return {
+                'lat': 28.6353,
+                'lng': -106.0889,
+                'address': f"{address} (sin conexión al geocodificador)",
+                'found': False,
+                'score': 0
+            }
+        except Exception as e:
+            logger.error(f"Error en geocodificación: {str(e)}")
+            return None
+
+    @staticmethod
+    def validate_address(address):
+        """Valida si una dirección existe en el sistema"""
+        try:
+            result = LocalGISService.geocode_address(address)
+            return result is not None and result.get('found', False)
+        except Exception as e:
+            logger.error(f"Error validando dirección: {str(e)}")
+            return False
+
+    @staticmethod
+    def reverse_geocode(lat, lng):
+        """Geocodificación inversa: coordenadas a dirección"""
+        try:
+            # URL del servicio de geocodificación inversa de ArcGIS Server
+            reverse_geocode_url = f"{LocalGISService.BASE_URL}/GeocodeServer/reverseGeocode"
+
+            params = {
+                'location': f"{lng},{lat}",  # ArcGIS usa lon,lat
+                'f': 'json',
+                'outSR': '4326',
+                'returnIntersection': 'false'
+            }
+
+            response = requests.get(reverse_geocode_url, params=params, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                if 'address' in data:
+                    address_info = data['address']
+
+                    # Construir dirección completa
+                    address_parts = []
+                    if address_info.get('Address'):
+                        address_parts.append(address_info['Address'])
+                    if address_info.get('Neighborhood'):
+                        address_parts.append(address_info['Neighborhood'])
+                    if address_info.get('City'):
+                        address_parts.append(address_info['City'])
+
+                    full_address = ', '.join(filter(None, address_parts))
+
+                    return {
+                        'address': full_address or f"Coordenadas: {lat:.6f}, {lng:.6f}",
+                        'details': address_info,
+                        'lat': lat,
+                        'lng': lng
+                    }
+                else:
+                    # Fallback si no se encuentra dirección específica
+                    return {
+                        'address': f"Chihuahua - {lat:.6f}, {lng:.6f}",
+                        'details': {},
+                        'lat': lat,
+                        'lng': lng
+                    }
+            else:
+                logger.error(f"Error en servicio de geocodificación inversa: {response.status_code}")
+                return None
+
+        except requests.RequestException as e:
+            logger.error(f"Error de conexión en geocodificación inversa: {str(e)}")
+            return {
+                'address': f"Ubicación sin conexión - {lat:.6f}, {lng:.6f}",
+                'details': {},
+                'lat': lat,
+                'lng': lng
+            }
+        except Exception as e:
+            logger.error(f"Error en geocodificación inversa: {str(e)}")
+            return None
+

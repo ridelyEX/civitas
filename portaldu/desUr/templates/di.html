@@ -3,6 +3,8 @@
 {% extends 'base.html' %} {% load static %} {% block head %}
 <link rel="stylesheet" href="{% static 'styles/form-optimized.css' %}?v=1" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 
 <title>Obras Públicas</title>
 {% endblock %} {% block body %} {% include 'nav.html' %}
@@ -223,127 +225,199 @@
   </div>
 </form>
 <div class="modal hidden" id="modal">
-  {% include 'modals/modal_map.html' %}
+    {% include 'modals/modal_map.html' %}
 </div>
 {% endblock %}
 
 {% block footer %}
 
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_key }}&libraries=places&callback=initMap" async defer></script>
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/esri-leaflet@3.0.8/dist/esri-leaflet.js"></script>
+
+<script src="{% static 'sripts/LocalGisMap.js' %}"></script>
+
 <script>
-  let map;
-  let marker;
+document.addEventListener('DOMContentLoaded', function() {
+    let localMap = null;
 
-  function initMap() {
-    const ubicacion = { lat: 28.6353, lng: -106.0889 };
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: ubicacion,
-      zoom: 15,
-    });
+    // Función global para seleccionar ubicación desde el mapa
+    window.selectMapLocation = function(address, lat, lng) {
+        document.getElementById('dir').value = address;
 
-    const geocoder = new google.maps.Geocoder();
-
-    map.addListener("click", (e) => {
-      const latLng = e.latLng;
-
-      if (marker) {
-        marker.setPosition(latLng);
-      } else {
-        marker = new google.maps.Marker({
-          position: latLng,
-          map: map,
-        });
-      }
-
-      geocoder.geocode({ location: latLng }, (results, status) => {
-        if (status === "OK" && results[0]) {
-          document.getElementById("dirr").value = results[0].formatted_address;
-        } else {
-          console.error("No se pudo obtener la dirección: " + status);
+        const inputModal = document.getElementById('dirr');
+        if (inputModal) {
+            inputModal.value = address;
         }
-      });
-    });
-  }
 
-  document.getElementById("mNext").addEventListener("click", function () {
-    const dirInput = document.getElementById("dirr").value;
-    if (!dirInput.trim()) {
-      alert("Por favor selecciona una dirección en el mapa.");
-      return;
+        console.log(`Dirección seleccionada: ${address} (${lat}, ${lng})`);
+
+        // Mostrar confirmación visual
+        const confirmMsg = document.createElement('div');
+        confirmMsg.innerHTML = `✅ Dirección seleccionada: ${address}`;
+        confirmMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 10px; border-radius: 5px; z-index: 10000;';
+        document.body.appendChild(confirmMsg);
+
+        setTimeout(() => confirmMsg.remove(), 3000);
+    };
+
+    // Función para búsqueda manual
+    window.buscarDireccion = async function() {
+        const inputModal = document.getElementById('dirr');
+        const address = inputModal.value.trim();
+
+        if (!address) {
+            alert('Por favor ingresa una dirección para buscar');
+            return;
+        }
+
+        if (address.length < 3) {
+            alert('La dirección debe tener al menos 3 caracteres');
+            return;
+        }
+
+        if (localMap) {
+            const originalValue = inputModal.value;
+            inputModal.value = 'Buscando...';
+            inputModal.disabled = true;
+
+            try {
+                const result = await localMap.geocodeAddress(address);
+
+                if (result && result.success) {
+                    console.log('✅ Dirección encontrada:', result.result);
+                } else {
+                    alert('No se pudo encontrar la dirección. Intenta con una descripción más específica.');
+                    inputModal.value = originalValue;
+                }
+            } catch (error) {
+                console.error('Error en búsqueda:', error);
+                alert('Error al buscar la dirección. Intenta nuevamente.');
+                inputModal.value = originalValue;
+            } finally {
+                inputModal.disabled = false;
+                inputModal.focus();
+            }
+        } else {
+            alert('El mapa no está listo. Espera un momento e intenta nuevamente.');
+        }
+    };
+
+    // Función para inicializar el mapa
+    function initializeMap() {
+        const mapHolder = document.querySelector('.mapholder');
+
+        if (!localMap && mapHolder && typeof LocalGISMap !== 'undefined') {
+            const mapDiv = document.createElement('div');
+            mapDiv.id = 'map';
+            mapDiv.style.cssText = 'width: 100%; height: 25rem; border: 2px solid #014277; background-color: lightgrey; cursor: crosshair;';
+
+            // Agregar instrucciones
+            const instructions = document.createElement('div');
+            instructions.innerHTML = `
+                <div style="background: #f0f8ff; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">
+                    💡 <strong>Cómo buscar:</strong><br>
+                    • Escribe en el campo de arriba para buscar una dirección<br>
+                    • Haz clic en el mapa para seleccionar una ubicación<br>
+                    • Usa el botón "Seleccionar" para confirmar
+                </div>
+            `;
+
+            mapHolder.innerHTML = '';
+            mapHolder.appendChild(instructions);
+            mapHolder.appendChild(mapDiv);
+
+            setTimeout(() => {
+                try {
+                    localMap = new LocalGISMap('map', {
+                        center: [28.6353, -106.0889],
+                        zoom: 12
+                    });
+                    console.log('Mapa inicializado correctamente');
+                } catch (error) {
+                    console.error('Error creando LocalGISMap:', error);
+                }
+            }, 100);
+        } else if (typeof LocalGISMap === 'undefined') {
+            console.error('LocalGISMap no está definido. Verifica que LocalGisMap.js se haya cargado.');
+        }
     }
-  });
+
+    // Función para abrir modal
+    window.openm = function() {
+        const modal = document.getElementById('modal');
+        modal.classList.remove('hidden');
+        modal.style.display = 'block';
+
+        const inputModal = document.getElementById('dirr');
+        if (inputModal) {
+            inputModal.value = '';
+            setTimeout(() => inputModal.focus(), 300);
+        }
+
+        setTimeout(initializeMap, 200);
+    };
+
+    // Función para cerrar modal
+    window.closem = function() {
+        const modal = document.getElementById('modal');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    };
+
+    // Función para enviar dirección
+    window.enviar = function() {
+        const direccionModal = document.getElementById('dirr').value.trim();
+        if (direccionModal) {
+            document.getElementById('dir').value = direccionModal;
+
+            // Mostrar confirmación
+            const confirmMsg = document.createElement('div');
+            confirmMsg.innerHTML = `✅ Dirección guardada: ${direccionModal}`;
+            confirmMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 10px; border-radius: 5px; z-index: 10000;';
+            document.body.appendChild(confirmMsg);
+
+            setTimeout(() => confirmMsg.remove(), 3000);
+        }
+        closem();
+    };
+
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+        const modal = document.getElementById('modal');
+        if (event.target === modal) {
+            closem();
+        }
+    };
+});
+
+// Función para habilitar campos condicionales
+function habilitar(estado) {
+    document.getElementById("etnia").disabled = !estado;
+}
+
+function habilitarD(estado) {
+    document.getElementById("disc").disabled = !estado;
+}
+
+function habilitarV(estado) {
+    document.getElementById("vulnerables").disabled = !estado;
+}
 </script>
 
+<!-- Flatpickr -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
 <script src="{% static 'sripts/modals.js' %}"></script>
 
 <script>
-  flatpickr("#bDay",{
+flatpickr("#bDay", {
     dateFormat: "Y-m-d",
     locale: "es",
-    altInput: "true",
+    altInput: true,
     altFormat: "F j, Y",
-  });
-</script>
-<script>
-  function habilitar(estado){
-      console.log(estado);
-      document.getElementById("etnia").disabled = !estado;
-      if (estado == false){
-        console.log("aqui no hay nada");
-        }else{
-        console.log("aqui hay algo");
-        }
-    }
-    function habilitarD(estado){
-      document.getElementById("disc").disabled = !estado;
-      if (estado == false){
-      console.log("aqui no hay nada");
-        }else{
-        console.log("aqui hay algo");
-        }
-    }
-
-    function habilitarV(estado){
-        document.getElementById("vulnerables").disabled = !estado;
-        if (estado == false){
-        console.log("aqui no hay nada");
-            }else{
-            console.log("aqui hay algo");
-            }
-        }
-</script>
-<script src="{% static 'sripts/btnScripts.js' %}"></script>
-<script>
-
-  //enviar
-  function enviar(){
-    const text = document.getElementById('dirr').value;
-    document.getElementById('dir').value = text;
-    closem();
-  }
-
-  //mostrar
- function openm(){
-    document.getElementById('modal').classList.remove('hidden');
-    document.getElementById('modal').style.display = 'block';
-}
-//cerrar
-function closem(){
-    document.getElementById('modal').classList.add('hidden');
-    document.getElementById('modal').style.display = 'none';
-}
-  window.onclick = function(event){
-    var modal = document.getElementById('modal');
-    if (event.target === modal){
-      modal.style.display = "none";
-    }
-  }
-
-
+});
 </script>
 
 {% endblock %}
