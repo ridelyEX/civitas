@@ -2,38 +2,30 @@ import base64
 import uuid
 from io import BytesIO
 import re
-from tempfile import NamedTemporaryFile
-import googlemaps
-
 import json
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.conf import settings
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para # Q
 from django.utils import timezone
 from django_user_agents.templatetags.user_agents import is_mobile
-from rest_framework.response import Response
-
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
     PpPluvial, PpFiles, DesUrLoginDate
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
-from django.template.loader import render_to_string, get_template
+from django.template.loader import render_to_string
 from weasyprint import HTML
-from datetime import date, datetime
-from rest_framework import viewsets
-from .serializers import FilesSerializer
+from datetime import date
 from .auth import DesUrAuthBackend, desur_login_required
 from portaldu.cmin.models import Licitaciones
 from django.views.decorators.http import require_http_methods
-import pandas as pd
 import logging
-
+from django.views.decorators.csrf import csrf_exempt
+from .services import LocalGISService
+from django.conf import settings
 # Configurar logging
 logger = logging.getLogger(__name__)
 
@@ -292,12 +284,15 @@ def intData(request):
 
     template = 'mobile/intData.html' if mobile_device else 'di.html'
 
+    service_status = LocalGISService.get_service_status()
+
     context = {
         'dir': direccion,
         'asunto': asunto,
         'uuid':uuid,
         'local_gis_enabled': True,
-        'arcgis_services' : LocalGISService.SERVICES,
+        'gis_services': LocalGISService.SERVICES,
+        'service_status': service_status,
     }
     return render(request, template, context)
 
@@ -356,6 +351,8 @@ def soliData(request):
 
     solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
 
+    service_status = LocalGISService.get_service_status()
+
     context = {
         'dir': dir,
         'asunto': asunto,
@@ -366,7 +363,9 @@ def soliData(request):
         'is_tablet': False,
         'is_pc': not mobile_device,
         'soli': solicitud,
-        'google_key': settings.GOOGLE_API_KEY,
+        'local_gis_enabled': True,
+        'gis_services': LocalGISService.SERVICES,
+        'service_status': service_status,
     }
 
     template = 'mobile/soliData.html' if mobile_device else 'ds.html'
@@ -1244,116 +1243,169 @@ def soli_processed(request, uid, dp):
         logger.error(f"Error procesando solicitud: {str(e)}")
         return HttpResponse('Error al procesar solicitud. Intente nuevamente.')
 
-import json
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def geocode_view(request):
-    """Vista para geocodificación usando servicios locales"""
+    """Vista optimizada para geocodificación rápida"""
+    start_time = timezone.now()
+
     try:
-        # Verificar Content-Type y obtener datos
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-        else:
-            # Si viene como form data
-            data = {
-                'address': request.POST.get('address', '')
-            }
-
+        data = json.loads(request.body)
         address = data.get('address', '').strip()
-
-        # Debug para ver qué datos llegan
-        logger.debug(f"Datos recibidos en geocode_view: {data}")
-        logger.debug(f"Address extraído: '{address}'")
 
         if not address:
             return JsonResponse({
                 'success': False,
-                'error': 'Dirección requerida'
+                'error': 'Dirección vacía'
             })
 
-        # Usar el servicio local de geocodificación
-        result = LocalGISService.geocode_address(address)
-
-        if result:
-            return JsonResponse({
-                'success': True,
-                'result': {
-                    'lat': result['lat'],
-                    'lng': result['lng'],
-                    'address': result['address'],
-                    'found': result['found']
-                }
-            })
-        else:
+        if len(address) < 2:
             return JsonResponse({
                 'success': False,
-                'error': 'Dirección no encontrada en el sistema local'
+                'error': 'Dirección muy corta'
             })
 
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decodificando JSON: {str(e)}")
+        logger.info(f"🔍 Geocodificando: {address}")
+
+        # Intentar geocodificación con timeout general
+        try:
+            result = LocalGISService.geocode_address(address)
+
+            processing_time = (timezone.now() - start_time).total_seconds()
+
+            if result:
+                logger.info(f"✅ Encontrado en {processing_time:.2f}s: {result['address']}")
+                return JsonResponse({
+                    'success': True,
+                    'result': result,
+                    'processing_time': processing_time
+                })
+            else:
+                logger.warning(f"❌ No encontrado en {processing_time:.2f}s: {address}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No se encontró la dirección',
+                    'suggestions': LocalGISService._get_suggestions(address),
+                    'processing_time': processing_time
+                })
+
+        except Exception as geo_error:
+            processing_time = (timezone.now() - start_time).total_seconds()
+            logger.error(f"Error geocodificación en {processing_time:.2f}s: {str(geo_error)}")
+
+            return JsonResponse({
+                'success': False,
+                'error': 'Error en el servicio de geocodificación',
+                'processing_time': processing_time
+            })
+
+    except json.JSONDecodeError:
         return JsonResponse({
             'success': False,
-            'error': 'Formato JSON inválido'
+            'error': 'Datos JSON inválidos'
         })
     except Exception as e:
-        logger.error(f"Error en geocodificación: {str(e)}")
+        processing_time = (timezone.now() - start_time).total_seconds()
+        logger.error(f"Error general en geocodificación: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': f'Error interno del servidor: {str(e)}'
+            'error': 'Error interno del servidor',
+            'processing_time': processing_time
         })
+
+@staticmethod
+def _get_suggestions(address):
+    """Proporciona sugerencias para direcciones no encontradas"""
+    suggestions = []
+
+    # Sugerencias basadas en la entrada
+    if any(word in address.lower() for word in ['casa', 'num', '#']):
+        suggestions.append("Intenta: 'Calle [nombre] [número], Chihuahua'")
+
+    if 'burkina faso' in address.lower():
+        suggestions.extend([
+            "Calle Burkina Faso 1721, Chihuahua",
+            "1721 Burkina Faso, Bosques del Pedregal",
+            "Burkina Faso, CP 31203"
+        ])
+
+    return suggestions[:3]  # Máximo 3 sugerencias
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def reverse_geocode_view(request):
-    """Vista para geocodificación inversa (coordenadas a dirección)"""
-    try:
-        if request.content_type == 'application/json':
-            data = json.loads(request.body)
-        else:
-            data = {
-                'lat': request.POST.get('lat', ''),
-                'lng': request.POST.get('lng', '')
-            }
+    """Vista para geocodificación inversa (coordenadas → dirección)"""
+    start_time = timezone.now()
 
+    try:
+        data = json.loads(request.body)
         lat = data.get('lat')
         lng = data.get('lng')
 
-        if not lat or not lng:
+        if lat is None or lng is None:
             return JsonResponse({
                 'success': False,
-                'error': 'Coordenadas requeridas'
+                'error': 'Coordenadas lat/lng son requeridas'
             })
 
-        # Usar el servicio local de geocodificación inversa
-        result = LocalGISService.reverse_geocode(float(lat), float(lng))
-
-        if result:
-            return JsonResponse({
-                'success': True,
-                'address': result['address'],
-                'details': result
-            })
-        else:
+        try:
+            lat = float(lat)
+            lng = float(lng)
+        except (ValueError, TypeError):
             return JsonResponse({
                 'success': False,
-                'error': 'No se pudo obtener la dirección para estas coordenadas'
+                'error': 'Coordenadas deben ser números válidos'
             })
 
-    except (ValueError, json.JSONDecodeError) as e:
-        logger.error(f"Error en datos recibidos: {str(e)}")
+        # Validar rango de coordenadas para Chihuahua
+        if not (-107.5 <= lng <= -105.0 and 27.0 <= lat <= 30.0):
+            return JsonResponse({
+                'success': False,
+                'error': 'Coordenadas fuera del área de cobertura (Chihuahua)'
+            })
+
+        logger.info(f"🔄 Geocodificación inversa: {lat}, {lng}")
+
+        try:
+            result = LocalGISService.reverse_geocode(lat, lng)
+            processing_time = (timezone.now() - start_time).total_seconds()
+
+            if result:
+                logger.info(f" Geocodificación inversa exitosa en {processing_time:.2f}s: {result.get('address', 'Sin dirección')}")
+                return JsonResponse({
+                    'success': True,
+                    'result': result,
+                    'processing_time': processing_time
+                })
+            else:
+                logger.warning(f" No se encontró dirección para {lat}, {lng} en {processing_time:.2f}s")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'No se encontró dirección para las coordenadas {lat:.6f}, {lng:.6f}',
+                    'processing_time': processing_time
+                })
+
+        except Exception as geo_error:
+            processing_time = (timezone.now() - start_time).total_seconds()
+            logger.error(f"Error en geocodificación inversa: {str(geo_error)}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Error en el servicio de geocodificación: {str(geo_error)}',
+                'processing_time': processing_time
+            })
+
+    except json.JSONDecodeError:
         return JsonResponse({
             'success': False,
-            'error': 'Datos inválidos'
+            'error': 'Datos JSON inválidos'
         })
     except Exception as e:
-        logger.error(f"Error en geocodificación inversa: {str(e)}")
+        processing_time = (timezone.now() - start_time).total_seconds()
+        logger.error(f"Error general en geocodificación inversa: {str(e)}")
         return JsonResponse({
             'success': False,
-            'error': f'Error interno: {str(e)}'
+            'error': 'Error interno del servidor',
+            'processing_time': processing_time
         })
 
 # Presupuesto participativo
@@ -1596,148 +1648,4 @@ def pluvial_render(request):
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
 
-class LocalGISService:
-    """Servicio para usar ArcGIS Server local en lugar de Google Maps"""
-
-    BASE_URL = "https://sigmunchih.mpiochih.gob.mx/server/rest/services"
-
-    SERVICES = {
-        'catastral': f"{BASE_URL}/DATOS_CATASTRALES_MIL1/MapServer",
-        'geoestadisticos': f"{BASE_URL}/DATOS_GEOESTADÍSTICOS/MapServer",
-        'gobernanza': f"{BASE_URL}/GOBERNANZA_Y_ADMINISTRACIÓN_PÚBLICA/MapServer",
-        'transporte': f"{BASE_URL}/TRANSPORTE/MapServer",
-        'maprueba': f"{BASE_URL}/Maprueba/MapServer",
-    }
-
-    @staticmethod
-    def geocode_address(address):
-        """Geocodifica una dirección usando el servicio local de ArcGIS"""
-        try:
-            # URL del servicio de geocodificación de ArcGIS Server
-            geocode_url = f"{LocalGISService.BASE_URL}/GeocodeServer/findAddressCandidates"
-
-            params = {
-                'SingleLine': address,
-                'f': 'json',
-                'outSR': '4326',  # WGS84
-                'maxLocations': 1,
-                'outFields': '*'
-            }
-
-            response = requests.get(geocode_url, params=params, timeout=10)
-
-            if response.status_code == 200:
-                data = response.json()
-
-                if 'candidates' in data and len(data['candidates']) > 0:
-                    candidate = data['candidates'][0]
-                    location = candidate.get('location', {})
-
-                    return {
-                        'lat': location.get('y'),
-                        'lng': location.get('x'),
-                        'address': candidate.get('address', address),
-                        'found': True,
-                        'score': candidate.get('score', 0)
-                    }
-                else:
-                    # Fallback a coordenadas de Chihuahua si no se encuentra
-                    logger.warning(f"Dirección no encontrada en geocodificador local: {address}")
-                    return {
-                        'lat': 28.6353,
-                        'lng': -106.0889,
-                        'address': f"{address} (ubicación aproximada - Chihuahua)",
-                        'found': False,
-                        'score': 0
-                    }
-            else:
-                logger.error(f"Error en servicio de geocodificación: {response.status_code}")
-                return None
-
-        except requests.RequestException as e:
-            logger.error(f"Error de conexión al geocodificador: {str(e)}")
-            # Fallback en caso de error de conexión
-            return {
-                'lat': 28.6353,
-                'lng': -106.0889,
-                'address': f"{address} (sin conexión al geocodificador)",
-                'found': False,
-                'score': 0
-            }
-        except Exception as e:
-            logger.error(f"Error en geocodificación: {str(e)}")
-            return None
-
-    @staticmethod
-    def validate_address(address):
-        """Valida si una dirección existe en el sistema"""
-        try:
-            result = LocalGISService.geocode_address(address)
-            return result is not None and result.get('found', False)
-        except Exception as e:
-            logger.error(f"Error validando dirección: {str(e)}")
-            return False
-
-    @staticmethod
-    def reverse_geocode(lat, lng):
-        """Geocodificación inversa: coordenadas a dirección"""
-        try:
-            # URL del servicio de geocodificación inversa de ArcGIS Server
-            reverse_geocode_url = f"{LocalGISService.BASE_URL}/GeocodeServer/reverseGeocode"
-
-            params = {
-                'location': f"{lng},{lat}",  # ArcGIS usa lon,lat
-                'f': 'json',
-                'outSR': '4326',
-                'returnIntersection': 'false'
-            }
-
-            response = requests.get(reverse_geocode_url, params=params, timeout=10)
-
-            if response.status_code == 200:
-                data = response.json()
-
-                if 'address' in data:
-                    address_info = data['address']
-
-                    # Construir dirección completa
-                    address_parts = []
-                    if address_info.get('Address'):
-                        address_parts.append(address_info['Address'])
-                    if address_info.get('Neighborhood'):
-                        address_parts.append(address_info['Neighborhood'])
-                    if address_info.get('City'):
-                        address_parts.append(address_info['City'])
-
-                    full_address = ', '.join(filter(None, address_parts))
-
-                    return {
-                        'address': full_address or f"Coordenadas: {lat:.6f}, {lng:.6f}",
-                        'details': address_info,
-                        'lat': lat,
-                        'lng': lng
-                    }
-                else:
-                    # Fallback si no se encuentra dirección específica
-                    return {
-                        'address': f"Chihuahua - {lat:.6f}, {lng:.6f}",
-                        'details': {},
-                        'lat': lat,
-                        'lng': lng
-                    }
-            else:
-                logger.error(f"Error en servicio de geocodificación inversa: {response.status_code}")
-                return None
-
-        except requests.RequestException as e:
-            logger.error(f"Error de conexión en geocodificación inversa: {str(e)}")
-            return {
-                'address': f"Ubicación sin conexión - {lat:.6f}, {lng:.6f}",
-                'details': {},
-                'lat': lat,
-                'lng': lng
-            }
-        except Exception as e:
-            logger.error(f"Error en geocodificación inversa: {str(e)}")
-            return None
 

@@ -243,64 +243,162 @@ document.addEventListener('DOMContentLoaded', function() {
     let localMap = null;
 
     // Función global para seleccionar ubicación desde el mapa
-    window.selectMapLocation = function(address, lat, lng) {
-        document.getElementById('dir').value = address;
-
-        const inputModal = document.getElementById('dirr');
-        if (inputModal) {
-            inputModal.value = address;
+    window.selectMapLocation = function(address, lat, lng, components = {}) {
+        // Actualizar input principal del formulario
+        const mainInput = document.getElementById('dir');
+        if (mainInput) {
+            mainInput.value = address;
         }
 
-        console.log(`Dirección seleccionada: ${address} (${lat}, ${lng})`);
+        // Actualizar input del modal
+        const modalInput = document.getElementById('dirr');
+        if (modalInput) {
+            modalInput.value = address;
+        }
 
-        // Mostrar confirmación visual
+        // Actualizar inputs específicos con componentes
+        if (components && typeof components === 'object') {
+            const fieldMappings = {
+                'calle': components.calle || '',
+                'numero': components.numero || '',
+                'colonia': components.colonia || '',
+                'codigo_postal': components.codigo_postal || '',
+                'ciudad': components.ciudad || 'Chihuahua',
+                'estado': components.estado || 'Chihuahua'
+            };
+
+            for (const [fieldName, value] of Object.entries(fieldMappings)) {
+                const field = document.getElementById(fieldName);
+                if (field && value) {
+                    field.value = value;
+                    console.log(`Campo ${fieldName} actualizado con: ${value}`);
+                }
+            }
+        }
+
+        // Mostrar confirmación con detalles
         const confirmMsg = document.createElement('div');
-        confirmMsg.innerHTML = `✅ Dirección seleccionada: ${address}`;
-        confirmMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 10px; border-radius: 5px; z-index: 10000;';
-        document.body.appendChild(confirmMsg);
+        let detailsHtml = '';
 
-        setTimeout(() => confirmMsg.remove(), 3000);
+        if (components && typeof components === 'object') {
+            const details = [];
+            if (components.calle) details.push(`Calle: ${components.calle}`);
+            if (components.numero) details.push(`Núm: ${components.numero}`);
+            if (components.colonia) details.push(`Col: ${components.colonia}`);
+            if (components.codigo_postal) details.push(`CP: ${components.codigo_postal}`);
+
+            if (details.length > 0) {
+                detailsHtml = `<small style="display:block; margin-top:4px; opacity:0.9;">${details.join(' | ')}</small>`;
+            }
+        }
+
+        confirmMsg.innerHTML = `
+            ✅ <strong>Dirección seleccionada</strong><br>
+            ${address}
+            ${detailsHtml}
+        `;
+        confirmMsg.style.cssText = `
+            position: fixed; top: 20px; right: 20px;
+            background: #4CAF50; color: white;
+            padding: 12px 16px; border-radius: 6px;
+            z-index: 10000; max-width: 300px;
+            font-size: 13px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        `;
+
+        document.body.appendChild(confirmMsg);
+        setTimeout(() => confirmMsg.remove(), 4000);
+
+        console.log('Dirección seleccionada:', {
+            address, lat, lng, components
+        });
+    };
+
+    // Función global SEPARADA para manejar la selección desde popup
+    window.selectMapLocationFromPopup = function(address, lat, lng, componentsStr) {
+        try {
+            console.log('Datos recibidos en popup:', { address, lat, lng, componentsStr });
+
+            // Parsear componentes
+            let components = {};
+            if (componentsStr && componentsStr !== '{}') {
+                // Decodificar caracteres HTML
+                const decodedStr = componentsStr.replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+                components = JSON.parse(decodedStr);
+                console.log('Componentes parseados:', components);
+            }
+
+            // Llamar a la función principal
+            window.selectMapLocation(address, lat, lng, components);
+
+        } catch (error) {
+            console.error('Error procesando selección desde popup:', error);
+            console.log('Usando fallback sin componentes');
+            // Fallback sin componentes
+            window.selectMapLocation(address, lat, lng, {});
+        }
     };
 
     // Función para búsqueda manual
     window.buscarDireccion = async function() {
         const inputModal = document.getElementById('dirr');
-        const address = inputModal.value.trim();
+        let address = inputModal.value.trim();
 
         if (!address) {
             alert('Por favor ingresa una dirección para buscar');
             return;
         }
 
+        address = address.replace(/\s+/g, ' ');
+        address = address.replace(/[^\w\sáéíóúñü#.,]/gi, ' ');
+
         if (address.length < 3) {
-            alert('La dirección debe tener al menos 3 caracteres');
+            alert('La búsqueda debe tener al menos 3 caracteres');
             return;
         }
 
         if (localMap) {
             const originalValue = inputModal.value;
-            inputModal.value = 'Buscando...';
+            const originalPlaceholder = inputModal.placeholder;
+
+            inputModal.value = 'Buscando dirección...';
             inputModal.disabled = true;
 
             try {
+                console.log(`🔍 Buscando: "${address}"`);
+
                 const result = await localMap.geocodeAddress(address);
 
                 if (result && result.success) {
-                    console.log('✅ Dirección encontrada:', result.result);
+                    console.log('✅ Búsqueda exitosa:', result.result);
+                    // El popup ya se encarga de mostrar el resultado
                 } else {
-                    alert('No se pudo encontrar la dirección. Intenta con una descripción más específica.');
-                    inputModal.value = originalValue;
+                    console.log('❌ No se encontró:', result.error);
+                    alert(`No se encontró la dirección: ${address}\n\nIntenta con:\n• Formato: "Calle Nombre #123"\n• Agregar colonia o código postal`);
                 }
+
+                inputModal.value = originalValue;
+                inputModal.disabled = false;
+
             } catch (error) {
                 console.error('Error en búsqueda:', error);
-                alert('Error al buscar la dirección. Intenta nuevamente.');
+
+                const errorMsg = document.createElement('div');
+                errorMsg.innerHTML = `❌ <strong>Error de conexión</strong><br><small>Verifica tu internet e intenta nuevamente</small>`;
+                errorMsg.style.cssText = `
+                    position: fixed; top: 20px; right: 20px;
+                    background: #f44336; color: white;
+                    padding: 12px; border-radius: 6px;
+                    z-index: 10000; max-width: 300px;
+                    font-size: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                `;
+                document.body.appendChild(errorMsg);
+                setTimeout(() => errorMsg.remove(), 4000);
+
                 inputModal.value = originalValue;
-            } finally {
                 inputModal.disabled = false;
-                inputModal.focus();
             }
-        } else {
-            alert('El mapa no está listo. Espera un momento e intenta nuevamente.');
+
+            inputModal.placeholder = originalPlaceholder;
         }
     };
 
@@ -313,14 +411,16 @@ document.addEventListener('DOMContentLoaded', function() {
             mapDiv.id = 'map';
             mapDiv.style.cssText = 'width: 100%; height: 25rem; border: 2px solid #014277; background-color: lightgrey; cursor: crosshair;';
 
-            // Agregar instrucciones
             const instructions = document.createElement('div');
             instructions.innerHTML = `
-                <div style="background: #f0f8ff; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">
-                    💡 <strong>Cómo buscar:</strong><br>
-                    • Escribe en el campo de arriba para buscar una dirección<br>
-                    • Haz clic en el mapa para seleccionar una ubicación<br>
-                    • Usa el botón "Seleccionar" para confirmar
+                <div style="
+                    background: #e3f2fd; border: 1px solid #2196f3; padding: 8px;
+                    border-radius: 4px; margin-bottom: 8px; font-size: 12px;
+                ">
+                    <strong>💡 Instrucciones:</strong><br>
+                    • <strong>Buscar:</strong> Escribe una dirección y presiona "Buscar"<br>
+                    • <strong>Hacer clic:</strong> Haz clic en cualquier punto del mapa<br>
+                    • <strong>Seleccionar:</strong> Usa el botón "Seleccionar" en el popup
                 </div>
             `;
 
@@ -334,9 +434,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         center: [28.6353, -106.0889],
                         zoom: 12
                     });
-                    console.log('Mapa inicializado correctamente');
+                    console.log('✅ Mapa inicializado correctamente');
                 } catch (error) {
-                    console.error('Error creando LocalGISMap:', error);
+                    console.error('❌ Error inicializando mapa:', error);
+                    mapDiv.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">Error cargando el mapa</div>`;
                 }
             }, 100);
         } else if (typeof LocalGISMap === 'undefined') {
@@ -344,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Función para abrir modal
+    // Resto de funciones para modal...
     window.openm = function() {
         const modal = document.getElementById('modal');
         modal.classList.remove('hidden');
@@ -359,20 +460,17 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(initializeMap, 200);
     };
 
-    // Función para cerrar modal
     window.closem = function() {
         const modal = document.getElementById('modal');
         modal.classList.add('hidden');
         modal.style.display = 'none';
     };
 
-    // Función para enviar dirección
     window.enviar = function() {
         const direccionModal = document.getElementById('dirr').value.trim();
         if (direccionModal) {
             document.getElementById('dir').value = direccionModal;
 
-            // Mostrar confirmación
             const confirmMsg = document.createElement('div');
             confirmMsg.innerHTML = `✅ Dirección guardada: ${direccionModal}`;
             confirmMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 10px; border-radius: 5px; z-index: 10000;';
@@ -383,7 +481,6 @@ document.addEventListener('DOMContentLoaded', function() {
         closem();
     };
 
-    // Cerrar modal al hacer clic fuera
     window.onclick = function(event) {
         const modal = document.getElementById('modal');
         if (event.target === modal) {
