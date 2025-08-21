@@ -10,6 +10,9 @@ from . import views
 # router.register(r'files', views.FilesViewSet, basename='files')
 
 urlpatterns = [
+    # URLs de la API REST
+    path('api/', include('portaldu.desUr.api_urls')),
+
     # URLs de autenticación
     path('auth/login/', views.desur_login_view, name='desur_login'),
     path('auth/signin/', views.desur_users_render, name='desur_users'),
