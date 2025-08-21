@@ -18,6 +18,9 @@ import locale
 from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS, \
     FILE_UPLOAD_HANDLERS
 from dotenv import load_dotenv
+
+from civitas.settings_production import FILE_UPLOAD_MAX_MEMORY_SIZE
+
 load_dotenv()
 
 
@@ -39,7 +42,6 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 # Configuración segura de hosts permitidos
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if not DEBUG else ['*']
-
 
 # Application definition
 
@@ -154,6 +156,10 @@ GOOGLE_API_KEY = os.getenv("gmapk")
 STATIC_URL = '/static/' 
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_DIRS = [
+    BASE_DIR / "static",
+    BASE_DIR / "portaldu" / "static",
+]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
@@ -252,6 +258,9 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10*1024*1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50*1024*1024
 
 if os.name == 'nt':  # Windows
     try:

@@ -1,11 +1,13 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
+from googlemaps.geocoding import geocode
 from rest_framework.routers import DefaultRouter
 from . import views
 
-router = DefaultRouter()
-router.register(r'files', views.FilesViewSet, basename='files')
+# Comentar el router hasta que se implemente FilesViewSet
+# router = DefaultRouter()
+# router.register(r'files', views.FilesViewSet, basename='files')
 
 urlpatterns = [
     # URLs de autenticación
@@ -42,6 +44,8 @@ urlpatterns = [
     path('pago/', views.pago, name="pago"),
     path('document2/', views.document2, name="document2"),
     path('save/', views.save_document, name="saveD1"),
-    path('', include(router.urls)),
-    path('get_licitaciones/', views.get_licitaciones, name="get_licitaciones")
+    path('geocode/', views.geocode_view, name="geocode"),
+    path('reverse-geocode/', views.reverse_geocode_view, name='reverse_geocode'),
+    # path('', include(router.urls)),  # Comentar hasta implementar FilesViewSet
+    path('licitaciones/', views.get_licitaciones, name='licitaciones')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

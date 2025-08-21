@@ -2,37 +2,30 @@ import base64
 import uuid
 from io import BytesIO
 import re
-from tempfile import NamedTemporaryFile
-import googlemaps
-
 import json
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.conf import settings
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para # Q
 from django.utils import timezone
-from rest_framework.response import Response
-
+from django_user_agents.templatetags.user_agents import is_mobile
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
     PpPluvial, PpFiles, DesUrLoginDate
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
-from django.template.loader import render_to_string, get_template
+from django.template.loader import render_to_string
 from weasyprint import HTML
-from datetime import date, datetime
-from rest_framework import viewsets
-from .serializers import FilesSerializer
+from datetime import date
 from .auth import DesUrAuthBackend, desur_login_required
 from portaldu.cmin.models import Licitaciones
 from django.views.decorators.http import require_http_methods
-import pandas as pd
 import logging
-
+from django.views.decorators.csrf import csrf_exempt
+from .services import LocalGISService
+from django.conf import settings
 # Configurar logging
 logger = logging.getLogger(__name__)
 
@@ -218,6 +211,9 @@ def intData(request):
     if not uuid:
         return redirect('home')
 
+    mobile_device = is_mobile(request)
+    is_offline_sync = request.POST.get('offline_sync', False)
+
     logger.debug("Procesando datos de ciudadano")
 
     try:
@@ -267,6 +263,15 @@ def intData(request):
                     defaults=datos_persona
                 )
 
+                "lógica disposisitivos móviles"
+                if mobile_device or is_offline_sync:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Datos guardados',
+                        'redirect_url': '/ageo/soliData/',
+                        'is_offline_sync': is_offline_sync
+                    })
+
                 match asunto:
                     case "DOP00005":
                         return redirect('pago')
@@ -277,60 +282,94 @@ def intData(request):
             logger.error(f"Error al procesar datos: {str(e)}")
             return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
 
+    template = 'mobile/intData.html' if mobile_device else 'di.html'
+
+    service_status = LocalGISService.get_service_status()
+
     context = {
         'dir': direccion,
         'asunto': asunto,
         'uuid':uuid,
-        'google_key': settings.GOOGLE_API_KEY,
+        'local_gis_enabled': True,
+        'gis_services': LocalGISService.SERVICES,
+        'service_status': service_status,
     }
-    return render(request, 'di.html', context)
+    return render(request, template, context)
 
 
 @desur_login_required
 def soliData(request):
     # SÍ login_required - empleados procesan solicitudes de ciudadanos
-        uuid = request.COOKIES.get('uuid')
-        if not uuid:
-            return redirect('home')
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('home')
 
-        try:
-            uid = get_object_or_404(Uuid, uuid=uuid)
+    mobile_device = is_mobile(request)
+    logger.info(f"Procesando solicitud del usuario: {request.user.username}")
 
-            is_mobile = request.user_agent.is_mobile
-            is_tablet = request.user_agent.is_tablet
-            is_pc = request.user_agent.is_pc
+    try:
+        uid = get_object_or_404(Uuid, uuid=uuid)
+        usuario_data = get_object_or_404(data, fuuid=uid)
+    except (Uuid.DoesNotExist, data.DoesNotExist):
+        logger.warning(f"Datos no encontrados: {uuid}")
+        return redirect('intData')
 
-            logger.debug("Detectando tipo de dispositivo para interfaz")
+    logger.debug("Detectando tipo de dispositivo para interfaz")
 
-            dir = request.GET.get('dir', '')
-            asunto = request.POST.get('asunto', '')
-            puo = request.POST.get('puo', '')
+    dir = request.GET.get('dir', '')
+    asunto = request.POST.get('asunto', '')
+    puo = request.POST.get('puo', '')
 
-            dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
-            if not dp:
-                return redirect('home')
+    dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
+    if not dp:
+        return redirect('home')
 
-            if request.method == 'POST':
-                return soli_processed(request, uid, dp)
+    if request.method == 'POST':
+        is_offline_sync = request.POST.get('offline_sync', False)
 
-            solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
+        if mobile_device or is_offline_sync:
+            try:
+                response = soli_processed(request, uid, dp)
 
-            context = {
-                'dir': dir,
-                'asunto': asunto,
-                'puo': puo,
-                'datos': dp,
-                'uuid': uuid,
-                'is_mobile': is_mobile,
-                'is_tablet': is_tablet,
-                'is_pc': is_pc,
-                'soli': solicitud,
-                'google_key': settings.GOOGLE_API_KEY,
-            }
+                if isinstance(response, JsonResponse):
+                    return response
 
-            return render(request, 'ds.html', context)
-        except Exception as e:
-            return user_errors(request, e)
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Solicitud procesada',
+                    'redirect_url': '/ageo/doc/',
+                    'is_offline_sync': is_offline_sync,
+                })
+            except Exception as e:
+                logger.error(f"Error al procesar solicitud: {str(e)}")
+                return JsonResponse({
+                    'success': False,
+                    'error': str(e),
+                }, status=500)
+
+        return soli_processed(request, uid, dp)
+
+    solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
+
+    service_status = LocalGISService.get_service_status()
+
+    context = {
+        'dir': dir,
+        'asunto': asunto,
+        'puo': puo,
+        'datos': dp,
+        'uuid': uuid,
+        'is_mobile': mobile_device,
+        'is_tablet': False,
+        'is_pc': not mobile_device,
+        'soli': solicitud,
+        'local_gis_enabled': True,
+        'gis_services': LocalGISService.SERVICES,
+        'service_status': service_status,
+    }
+
+    template = 'mobile/soliData.html' if mobile_device else 'ds.html'
+    return render(request, template, context)
 
 @desur_login_required
 def doc(request):
@@ -981,10 +1020,11 @@ def gen_folio(uid, puo):
     """Genera folio único para trámites con validaciones mejoradas"""
     logger.debug("Generando folio para trámite")
 
+    uid_str = str(uid.uuid)  # Mover esta línea al inicio
+
     try:
         dp = data.objects.filter(fuuid=uid).last()
-        uid_str = str(uid.uuid)
-        id_dp = dp.pk if dp else 0  # Valor por defecto si no hay datos
+        id_dp = dp.pk if dp else 0 # Valor por defecto si no hay datos
 
         fecha = date.today()
         year_str = str(fecha.year)
@@ -1037,13 +1077,12 @@ def gen_folio(uid, puo):
     except Exception as e:
         logger.error(f"Error generando folio: {str(e)}")
         return 'Error', f'ERROR-{uid_str[:8]}'
-
 def gen_pp_folio(fuuid):
     """Folio para presupuesto participativo con validaciones mejoradas"""
     try:
         pp_info = PpGeneral.objects.filter(fuuid=fuuid).last()
         uid_str = str(fuuid.uuid)
-        id_pp = pp_info.pk if pp_info else 0  # Valor por defecto
+        id_pp = pp_info.pk if pp_info else 0 # Valor por defecto
 
         fecha = date.today()
         year_str = str(fecha.year)
@@ -1154,290 +1193,220 @@ def validar_datos(post_data):
         errors.append("La dirección es obligatoria")
     elif len(direccion) < 10:
         errors.append("La dirección debe ser más específica")
+    else:
+        try:
+            if not LocalGISService.validate_address(direccion):
+                logger.warning(f"Direccion no encontrada en catastro: {direccion}")
+        except Exception as e:
+            logger.error(f"Error validando la dirección: {str(e)}")
 
     # Validar asunto
     asunto = post_data.get('asunto', '').strip()
     if not asunto:
         errors.append("El asunto es obligatorio")
-    else:
-        # Validar que sea uno de los asuntos válidos
-        asuntos_validos = [
-            'DOP00001', 'DOP00002', 'DOP00003', 'DOP00004', 'DOP00005',
-            'DOP00006', 'DOP00007', 'DOP00008', 'DOP00009', 'DOP00010',
-            'DOP00011', 'DOP00012', 'DOP00013'
-        ]
-        if asunto not in asuntos_validos:
-            errors.append("El asunto seleccionado no es válido")
-
-    # Log de validación (sin datos sensibles)
-    if errors:
-        logger.warning(f"Errores de validación detectados: {len(errors)} errores")
-        for error in errors:
-            logger.warning(f"Error de validación: {error}")
-    else:
-        logger.info("Validación de datos exitosa")
 
     return errors
 
-def cut_direction(direccion):
-    """
-    Procesa y divide una dirección en componentes con validaciones mejoradas
-    """
-    try:
-        if not direccion or not isinstance(direccion, str):
-            logger.warning("Dirección vacía o inválida recibida")
-            return "", "", ""
-
-        direccion = direccion.strip()
-        if len(direccion) < 5:
-            logger.warning("Dirección demasiado corta para procesar")
-            return direccion, "", ""
-
-        # Intentar extraer código postal
-        cp_match = re.search(r'\b\d{5}\b', direccion)
-        cp = cp_match.group() if cp_match else ""
-
-        # Remover CP de la dirección para procesar el resto
-        direccion_sin_cp = re.sub(r'\b\d{5}\b', '', direccion).strip()
-
-        # Buscar indicadores de colonia
-        indicadores_colonia = ['colonia', 'col.', 'col', 'fraccionamiento', 'fracc.', 'fracc']
-        colonia = ""
-        calle = direccion_sin_cp
-
-        for indicador in indicadores_colonia:
-            if indicador.lower() in direccion_sin_cp.lower():
-                partes = re.split(rf'\b{re.escape(indicador)}\b', direccion_sin_cp, flags=re.IGNORECASE)
-                if len(partes) == 2:
-                    calle = partes[0].strip()
-                    colonia = partes[1].strip()
-                    break
-
-        # Limpiar y validar resultados
-        calle = re.sub(r'\s+', ' ', calle).strip()
-        colonia = re.sub(r'\s+', ' ', colonia).strip()
-
-        logger.debug("Dirección procesada correctamente")
-
-        return calle, colonia, cp
-
-    except Exception as e:
-        logger.error(f"Error procesando dirección: {str(e)}")
-        return direccion, "", ""
-
-
-class FilesViewSet(viewsets.ViewSet):
-    def list(self, request):
-        return Response([])
-
-    def create(self, request):
-        return Response({})
-
-    def retrieve(self, request, pk=None):
-        return Response({})
-
-    def update(self, request, pk=None):
-        return Response({})
-
-    def destroy(self, request, pk=None):
-        return Response({})
-    pass
 
 def soli_processed(request, uid, dp):
-    """
-    Procesa solicitudes de trámites con validaciones mejoradas y manejo de errores robusto
-    """
+    """Procesa solicitudes de ciudadanos con validaciones mejoradas"""
     try:
         with transaction.atomic():
-            # Validar que la solicitud venga con método POST
-            if request.method != 'POST':
-                logger.warning("Intento de acceso a soli_processed sin método POST")
-                return JsonResponse({'error': 'Método no permitido'}, status=405)
+            solicitud_data = {
+                'dirr': request.POST.get('dir'),
+                'info': request.POST.get('info'),
+                'descc': request.POST.get('desc'),
+                'puo': request.POST.get('puo'),
+                'data_ID': dp,
+                'processed_by': request.user,
+                'fecha': timezone.now()
+            }
 
-            # Validar datos de entrada
-            dirr = request.POST.get('dir', '').strip()
-            if not dirr:
-                logger.warning("Solicitud sin dirección")
-                return JsonResponse({'error': 'La dirección es obligatoria'}, status=400)
+            if 'foto' in request.FILES:
+                solicitud_data['foto'] = request.FILES['foto']
 
-            logger.info(f"Procesando solicitud de trámite para usuario {request.user.username}")
+            solicitud = soli.objects.create(**solicitud_data)
 
-            # Procesar dirección de forma segura
-            try:
-                calle, colonia, cp = cut_direction(dirr)
-            except Exception as e:
-                logger.error(f"Error procesando dirección: {str(e)}")
-                calle, colonia, cp = dirr, "", ""
+            # Generar folio
+            puo_texto, folio = gen_folio(dp.fuuid, solicitud.puo)
+            solicitud.folio = folio
+            solicitud.save()
 
-            # Validar y limpiar campos opcionales
-            descc = request.POST.get('descc', '').strip()
-            if not descc:
-                logger.debug("Solicitud sin descripción")
-                descc = "Sin descripción proporcionada"
+            # Guardar en sesión
+            request.session['puo'] = solicitud.puo
+            request.session['folio'] = folio
 
-            info = request.POST.get('info', '').strip()
-            if not info:
-                logger.debug("Solicitud sin información adicional")
-                info = "Sin información adicional"
-
-            # Validar PUO
-            puo = request.POST.get('puo', '').strip()
-            if not puo:
-                logger.warning("Solicitud sin PUO especificado")
-                return JsonResponse({'error': 'El tipo de proceso (PUO) es obligatorio'}, status=400)
-
-            # Validar que el PUO sea válido
-            valid_puos = ['OFI', 'CRC', 'MEC', 'DLO', 'DFE', 'REG', 'DEA', 'EVA', 'PED', 'VIN', 'PPA', 'CPC']
-            if puo not in valid_puos:
-                logger.warning(f"PUO inválido recibido: {puo}")
-                return JsonResponse({'error': 'Tipo de proceso no válido'}, status=400)
-
-            request.session['puo'] = puo
-
-            # Procesar imagen con validación mejorada
-            img = img_processed(request)
-            if not img:
-                logger.warning("No se pudo procesar la imagen de la solicitud")
-                return JsonResponse({'error': 'No se pudo procesar la imagen. Verifique el formato.'}, status=400)
-
-            # Crear solicitud con validaciones
-            solicitud = soli(
-                data_ID=dp,
-                dirr=dirr,
-                calle=calle,
-                colonia=colonia,
-                cp=cp,
-                descc=descc,
-                info=info,
-                puo=puo,
-                foto=img,
-                processed_by=request.user
-            )
-
-            # Validar modelo antes de guardar
-            try:
-                solicitud.full_clean()
-                solicitud.save()
-                logger.info(f"Solicitud guardada exitosamente: ID {solicitud.pk}")
-            except ValidationError as e:
-                logger.error(f"Error de validación en solicitud: {e}")
-                return JsonResponse({'error': 'Datos de solicitud inválidos'}, status=400)
-
-            # Verificar que se guardó correctamente
-            if not soli.objects.filter(pk=solicitud.pk).exists():
-                logger.error("Error crítico: Solicitud no se registró en la base de datos")
-                raise ValidationError("Error al registrar la solicitud")
-
-            # Procesar archivos adjuntos
-            try:
-                files_processed(request, uid)
-                logger.debug("Archivos procesados correctamente")
-            except Exception as e:
-                logger.error(f"Error procesando archivos: {str(e)}")
-                # No es crítico, continuar
-
-            # Generar y asignar folio
-            try:
-                puo_txt, folio = gen_folio(uid, puo)
-                solicitud.folio = folio
-                solicitud.save(update_fields=['folio'])
-                logger.info(f"Folio asignado a solicitud: {folio}")
-            except Exception as e:
-                logger.error(f"Error generando folio: {str(e)}")
-                return JsonResponse({'error': 'Error generando folio'}, status=500)
-
+            logger.info(f"Solicitud procesada exitosamente por {request.user.username}")
             return redirect('doc')
 
-    except ValidationError as e:
-        logger.error(f"Error de validación procesando solicitud: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        logger.error(f"Error crítico procesando solicitud: {str(e)}", exc_info=True)
-        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
+        logger.error(f"Error procesando solicitud: {str(e)}")
+        return HttpResponse('Error al procesar solicitud. Intente nuevamente.')
 
-def img_processed(request):
-    """Procesa imágenes de solicitudes con validaciones mejoradas"""
-    img = None
-    imgpath = request.POST.get('src')
+@csrf_exempt
+@require_http_methods(["POST"])
+def geocode_view(request):
+    """Vista optimizada para geocodificación rápida"""
+    start_time = timezone.now()
 
-    if 'src' in request.FILES:
-        img = request.FILES['src']
-    elif imgpath and imgpath.startswith("data:image"):
+    try:
+        data = json.loads(request.body)
+        address = data.get('address', '').strip()
+
+        if not address:
+            return JsonResponse({
+                'success': False,
+                'error': 'Dirección vacía'
+            })
+
+        if len(address) < 2:
+            return JsonResponse({
+                'success': False,
+                'error': 'Dirección muy corta'
+            })
+
+        logger.info(f"🔍 Geocodificando: {address}")
+
+        # Intentar geocodificación con timeout general
         try:
-            header, encoded = imgpath.split(",", 1)
-            datos = base64.b64decode(encoded)
-            img = NamedTemporaryFile(delete=False)
-            img.write(datos)
-            img.flush()
-            img = File(img)
-        except Exception as e:
-            logger.error(f"Error procesando imagen base64: {str(e)}")
-            return None
-    else:
-        logger.warning("No se encontró imagen para procesar")
-        return None
+            result = LocalGISService.geocode_address(address)
 
-    if img:
-        name = str(img.name).split("\\")[-1]
-        if not name.endswith('.jpg'):
-            name += '.jpg'
-        img.name = name
+            processing_time = (timezone.now() - start_time).total_seconds()
 
-    return img
+            if result:
+                logger.info(f"✅ Encontrado en {processing_time:.2f}s: {result['address']}")
+                return JsonResponse({
+                    'success': True,
+                    'result': result,
+                    'processing_time': processing_time
+                })
+            else:
+                logger.warning(f"❌ No encontrado en {processing_time:.2f}s: {address}")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No se encontró la dirección',
+                    'suggestions': LocalGISService._get_suggestions(address),
+                    'processing_time': processing_time
+                })
 
-def files_processed(request, uid):
-    """Procesa archivos adjuntos con validaciones"""
-    file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
+        except Exception as geo_error:
+            processing_time = (timezone.now() - start_time).total_seconds()
+            logger.error(f"Error geocodificación en {processing_time:.2f}s: {str(geo_error)}")
 
-    if file_keys:
-        for key in file_keys:
-            try:
-                index = key.split('_')[-1]
-                file = request.FILES[key]
-                desc = request.POST.get(f'tempdesc_{index}', 'Documento sin descripción')
+            return JsonResponse({
+                'success': False,
+                'error': 'Error en el servicio de geocodificación',
+                'processing_time': processing_time
+            })
 
-                if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
-                    logger.debug("Guardando nuevo documento")
-                    documento = SubirDocs(
-                        descDoc=desc,
-                        doc=file,
-                        nomDoc=file.name,
-                        fuuid=uid,
-                    )
-                    documento.save()
-                else:
-                    logger.warning("Documento duplicado, no se guardará")
-            except Exception as e:
-                logger.error(f"Error procesando archivo {key}: {str(e)}")
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Datos JSON inválidos'
+        })
+    except Exception as e:
+        processing_time = (timezone.now() - start_time).total_seconds()
+        logger.error(f"Error general en geocodificación: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'processing_time': processing_time
+        })
 
-def user_errors(request, error):
-    """Maneja errores del sistema de forma segura"""
-    logger.error(f"Error en vista: {error}", exc_info=True)
+@staticmethod
+def _get_suggestions(address):
+    """Proporciona sugerencias para direcciones no encontradas"""
+    suggestions = []
 
-    return render(request, 'error.html', {
-        'error': {
-            'titulo': "Error del sistema",
-            'mensaje': 'Por favor, inténtelo nuevamente o contacte al administrador',
-            'codigo': 'SYS_ERROR',
-            'accion': 'Reintentar'
-        }
-    })
+    # Sugerencias basadas en la entrada
+    if any(word in address.lower() for word in ['casa', 'num', '#']):
+        suggestions.append("Intenta: 'Calle [nombre] [número], Chihuahua'")
 
-# Función auxiliar para PP
-def get_or_create_uuid(request):
-    """Obtiene o crea un UUID para las propuestas de PP"""
-    uuid_str = request.COOKIES.get('uuid') or request.session.get('pp_uuid')
+    if 'burkina faso' in address.lower():
+        suggestions.extend([
+            "Calle Burkina Faso 1721, Chihuahua",
+            "1721 Burkina Faso, Bosques del Pedregal",
+            "Burkina Faso, CP 31203"
+        ])
 
-    if uuid_str:
+    return suggestions[:3]  # Máximo 3 sugerencias
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reverse_geocode_view(request):
+    """Vista para geocodificación inversa (coordenadas → dirección)"""
+    start_time = timezone.now()
+
+    try:
+        data = json.loads(request.body)
+        lat = data.get('lat')
+        lng = data.get('lng')
+
+        if lat is None or lng is None:
+            return JsonResponse({
+                'success': False,
+                'error': 'Coordenadas lat/lng son requeridas'
+            })
+
         try:
-            return Uuid.objects.get(uuid=uuid_str)
-        except Uuid.DoesNotExist:
-            pass
+            lat = float(lat)
+            lng = float(lng)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'success': False,
+                'error': 'Coordenadas deben ser números válidos'
+            })
 
-    # Crear nuevo UUID
-    new_uuid = str(uuid.uuid4())
-    uuid_obj = Uuid.objects.create(uuid=new_uuid)
-    return uuid_obj
+        # Validar rango de coordenadas para Chihuahua
+        if not (-107.5 <= lng <= -105.0 and 27.0 <= lat <= 30.0):
+            return JsonResponse({
+                'success': False,
+                'error': 'Coordenadas fuera del área de cobertura (Chihuahua)'
+            })
+
+        logger.info(f"🔄 Geocodificación inversa: {lat}, {lng}")
+
+        try:
+            result = LocalGISService.reverse_geocode(lat, lng)
+            processing_time = (timezone.now() - start_time).total_seconds()
+
+            if result:
+                logger.info(f" Geocodificación inversa exitosa en {processing_time:.2f}s: {result.get('address', 'Sin dirección')}")
+                return JsonResponse({
+                    'success': True,
+                    'result': result,
+                    'processing_time': processing_time
+                })
+            else:
+                logger.warning(f" No se encontró dirección para {lat}, {lng} en {processing_time:.2f}s")
+                return JsonResponse({
+                    'success': False,
+                    'error': f'No se encontró dirección para las coordenadas {lat:.6f}, {lng:.6f}',
+                    'processing_time': processing_time
+                })
+
+        except Exception as geo_error:
+            processing_time = (timezone.now() - start_time).total_seconds()
+            logger.error(f"Error en geocodificación inversa: {str(geo_error)}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Error en el servicio de geocodificación: {str(geo_error)}',
+                'processing_time': processing_time
+            })
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Datos JSON inválidos'
+        })
+    except Exception as e:
+        processing_time = (timezone.now() - start_time).total_seconds()
+        logger.error(f"Error general en geocodificación inversa: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Error interno del servidor',
+            'processing_time': processing_time
+        })
 
 # Presupuesto participativo
 
@@ -1678,3 +1647,5 @@ def pluvial_render(request):
         form = PluvialRender()
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
+
+

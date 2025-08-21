@@ -6,13 +6,24 @@
   }
 
 //función global de modals
-function modals(action, id){
-    const modal = document.getElementById(id);
-    if (action === 'open'){
-    console.log("este mugrero sí está chambeando");
+function modals(action, modalId) {
+    const modal = document.getElementById(modalId);
+
+    if (action === 'open') {
         modal.classList.remove('hidden');
         modal.style.display = 'block';
-    } else {
+
+        // Si es el modal del mapa, inicializar después de mostrar
+        if (modalId === 'modal') {
+            setTimeout(() => {
+                console.log('🗺️ Inicializando mapa desde modal...');
+                if (typeof window.openm === 'function') {
+                    // Ya no llamar openm, solo inicializar el mapa
+                    initializeMap();
+                }
+            }, 100);
+        }
+    } else if (action === 'close') {
         modal.classList.add('hidden');
         modal.style.display = 'none';
     }

@@ -1,13 +1,51 @@
-<!DOCTYPE html>
+<div class="mapModal">
+  <div class="mainMap">
+    <div class="searchCont">
+      <div class="buscar">
+        <label for="dirr" class="text">Dirección:</label>
+          <div style="display: flex; gap: 5px;">
+              <input
+                    type="text"
+                    class="input"
+                    id="dirr"
+                    name="dir"
+                    placeholder="Ejemplo: Av. Universidad 123, Centro, Chihuahua"
+                    style="flex: 1;"
+                />
+                <button type="button" onclick="buscarDireccion()" style="background: #014277; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer;">
+                    🔍 Buscar
+                </button>
+                <input type="hidden" id="calle" name="calle">
+                <input type="hidden" id="numero" name="numero">
+                <input type="hidden" id="colonia" name="colonia">
+                <input type="hidden" id="codigo_postal" name="codigo_postal">
+                <input type="hidden" id="ciudad" name="ciudad" value="Chihuahua">
+                <input type="hidden" id="estado" name="estado" value="Chihuahua">
+            </div>
+            <small style="color: #666; font-size: 11px; margin-top: 3px;">
+                Ejemplo de búsqueda: "Av. Universidad, Centro, Chihuahua" o "Plaza Mayor Chihuahua"
+            </small>
+      </div>
 
-<head>
-    <style>
+      <!-- El div del mapa se incluirá desde di.html -->
+      <div class="mapholder">
+        <!-- Aquí se insertará el mapa -->
+      </div>
 
+      <div class="Ibottom">
+        <div class="lBtn">
+          <button type="button" class="back bbtn" onclick="closem()">Cerrar</button>
+        </div>
+        <div class="rBtn">
+          <button type="button" class="next nbtn" onclick="enviar()">Seleccionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-
-
-/* MAIN */
-
+<style>
+/* Mantén solo los estilos CSS, sin el HTML duplicado */
 .mainMap{
     display: flex;
     justify-content: center;
@@ -15,7 +53,6 @@
     flex-direction: column;
     flex-wrap: nowrap;
     width: 75%;
-
     height: auto;
     min-height: 80vh;
     background-color: white;
@@ -24,20 +61,16 @@
     box-sizing: border-box;
 }
 
-/* MAP */
-
 #map {
   width: 100%;
   height: 25rem;
   border: 2px solid #014277;
-  background-color:lightgrey;
+  background-color: lightgrey;
 }
 
 .searchCont{
     width: 75%;
 }
-
-/* LABEL */
 
 .buscar{
     display: flex;
@@ -69,90 +102,6 @@
     box-sizing: border-box;
 }
 
-.buscar input[type=text].input:focus {
-    outline: none;
-    border-color: #0004ff;
-}
-
-
-
-/* NEXT BUTTON */
-.next {
-    width: 130px;
-    height: 40px;
-    color: #fff;
-    border-radius: 5px;
-    padding: 10px 25px;
-    font-weight: 500;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    display: inline-block;
-    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
-    7px 7px 20px 0 rgba(0,0,0,.1),
-    4px 4px 5px 0 rgba(0,0,0,.1);
-    outline: none;
-    font-size: 15px;
-}
-
-.nbtn{
-    background: #004dff;
-    background: linear-gradient(0deg, #004dff 0%, #004dff 100%);
-    border: none;
-}
-
-.nbtn:before{
-    height: 0%;
-    width: 2px;
-}
-
-.nbtn:hover{
-    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
-    -4px -4px 6px 0 rgba(116,125,136,.5),
-    inset -4px -4px 6px 0 rgba(255,255,255,.2),
-    inset 4px 4px 6px 0 rgba(0,0,0,.4);
-}
-
-
-/* BACK BUTTON  */
-.back {
-    width: 130px;
-    height: 40px;
-    color: #fff;
-    border-radius: 5px;
-    padding: 10px 25px;
-    font-weight: 500;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    display: inline-block;
-    box-shadow: inset 2px 2px 2px 0 rgba(255, 255, 255,.5),
-    7px 7px 20px 0 rgba(0,0,0,.1),
-    4px 4px 5px 0 rgba(0,0,0,.1);
-    outline: none;
-    font-size: 15px;
-}
-
-.bbtn{
-    background: #666d7e;
-    background: linear-gradient(0deg, #666d7e 0%, #666d7e 100%);
-    border: none;
-}
-
-.bbtn:before{
-    height: 0%;
-    width: 2px;
-}
-
-.bbtn:hover{
-    box-shadow: 4px 4px 6px 0 rgba(255,255,255,.5),
-    -4px -4px 6px 0 rgba(116,125,136,.5),
-    inset -4px -4px 6px 0 rgba(255,255,255,.2),
-    inset 4px 4px 6px 0 rgba(0,0,0,.4);
-}
-
 .mapModal {
   position: fixed;
   inset: 0;
@@ -162,83 +111,21 @@
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-
 }
-
 
 .hidden {
   display: none;
 }
 
-/* BOTTOM */
-
-
 .Ibottom{
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(1, 1fr);
     gap: 9rem;
     justify-content: center;
-    width:max-content;
+    width: max-content;
     margin: 0 auto;
     padding-top: 2rem;
 }
 
-@media screen and (max-width: 768px) {
-
-    html, body{
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .mainMap .map{
-        width: 99%;
-        height: 99%;
-        border: none;
-        padding-bottom: 2rem;
-    }
-
-
-}
-
-    </style>
-</head>
-<body>
-<div class="bodi">
-<div id="mapModal" class="mapModal ">
-  <div class="mainMap">
-    <div class="searchCont">
-      <input type="hidden" name="origen" value="{{ origen }}">
-      <input type="hidden" name="uuid" value="{{ uuid }}">
-
-      <div class="buscar">
-        <label for="dirr" class="text">Dirección:</label>
-        <input
-          type="text"
-          class="input"
-          id="dirr"
-          name="dir"
-          placeholder="Dirección"
-        />
-      </div>
-
-      <div class="mapholder">
-        <div class="map" id="map"></div>
-      </div>
-
-      <div class="Ibottom">
-        <div class="lBtn">
-          <button type="button" class="back bbtn" onclick="modals('close', 'modal')">Cerrar</button>
-        </div>
-        <div class="rBtn">
-          <button type="button" class="next nbtn" id="mNext" onclick="enviar()">Seleccionar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-</body>
+/* Estilos de botones... (mantén los existentes) */
+</style>
