@@ -1,4 +1,3 @@
-import base64
 import uuid
 from io import BytesIO
 import re
@@ -12,8 +11,7 @@ from django.contrib import messages
 from django.db import models  # Agregar esta importación para # Q
 from django.utils import timezone
 from django_user_agents.templatetags.user_agents import is_mobile
-from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, \
-    PpPluvial, PpFiles, DesUrLoginDate
+from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, PpPluvial, PpFiles, DesUrLoginDate
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
                     ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
 from django.template.loader import render_to_string
@@ -502,7 +500,7 @@ def get_licitaciones(request):
         return JsonResponse({
             'codigo': licitacion.no_licitacion,
             'descripcion': licitacion.desc_licitacion,
-            'fecha': licitacion.fecha_limite.strtime('%d de %B, %Y') if licitacion.fecha_limite else '',
+            'fecha': licitacion.fecha_limite.strftime('%d de %B, %Y') if licitacion.fecha_limite else '',
         })
     except Licitaciones.DoesNotExist:
         return JsonResponse({'error': 'Licitación no encontrada'}, status=400)
@@ -517,13 +515,18 @@ def document(request):
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
-    solicitud = soli.objects.filter(data_ID=datos).select_related('data_ID')
-    documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
+    ultima_solicitud = soli.objects.filter(data_ID=datos).last()
+    documentos = SubirDocs.objects.filter(fuuid__uuid=uuid)
 
     asunto = request.session.get('asunto', 'Sin asunto')
     puo = request.session.get('puo', 'Sin PUO')
     print(puo)
-    num_folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'Sin PUO')
+    if ultima_solicitud and ultima_solicitud.folio:
+        puo_texto = ultima_solicitud.puo or 'General'
+        folio = ultima_solicitud.folio
+    else:
+        puo_session = request.session.get('puo', 'general')
+        puo_texto, folio = gen_folio(uid, puo_session)
     print(asunto)
 
     match asunto:
@@ -554,13 +557,6 @@ def document(request):
         case "DOP00013":
             asunto = "Tapiado - DOP00013"
 
-    ultima_solicitud = solicitud.last()
-    if ultima_solicitud and ultima_solicitud.folio:
-        puo_texto = num_folio[0]
-        folio = ultima_solicitud.folio
-    else:
-        puo_texto, folio = gen_folio(datos.fuuid, solicitud.last().puo if solicitud.exists() else 'no hay puo')
-
     context = {
         "asunto": asunto,
         "datos": {
@@ -577,10 +573,10 @@ def document(request):
             "vul": datos.vul if datos.vul else "No pertenece a un grupo vulnerable",
         },
         "soli": {
-            "dir": solicitud.last().dirr if solicitud.exists() else "",
-            "info": solicitud.last().info,
-            "desc": solicitud.last().descc if solicitud.exists() else "",
-            "foto": solicitud.last().foto,
+            "dir": ultima_solicitud.dirr if ultima_solicitud else "",
+            "info": ultima_solicitud.info,
+            "descc": ultima_solicitud.descc if ultima_solicitud else "",
+            "foto": ultima_solicitud.foto,
         },
         'puo':puo_texto,
         'documentos':documentos,
@@ -608,7 +604,7 @@ def save_document(request):
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     uid = get_object_or_404(Uuid, uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
-    solicitud = soli.objects.last()
+    solicitud = soli.objects.filter(data_ID=datos).select_related('data_ID')
     print(solicitud)
     if not solicitud:
         return HttpResponse("no hay solicitud", status=400)

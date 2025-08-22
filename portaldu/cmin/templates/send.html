@@ -108,7 +108,7 @@
                         <div class="buttons">
                             <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
                             {% if solicitud.seguimiento_set.count %}
-                                <a href="#" onclick="showFollowUpHistory('{{ solicitud.solicitud_ID }}')" class="send" style="background-color: #6c757d;">Ver seguimiento</a>
+                                <a href="{{solicitud.seguimiento_set.first.documento.url}}" target="_blank" class="send" style="background-color: #6c757d;">Ver seguimiento</a>
                             {% endif %}
                         </div>
                     </li>
@@ -133,6 +133,9 @@
                                 <button type="submit" class="finish" aria-label="Cerrar solicitud">Cerrar solicitud</button>
                             </form>
                             <button type="button" class="send" onclick="openFollowUpModal('{{ solicitud.solicitud_ID }}')">Seguimiento</button>
+
+                            <a href="{{ solicitud.seguimiento_set.last.documento.url }}" target="_blank" class="send">Ver último seguimiento</a>
+
                             {% else %}
                             <p>⏳ Sin seguimiento</p>
                             <form method="post" style="display: inline;">
@@ -195,6 +198,11 @@
 
     // Función para mostrar historial de seguimiento (placeholder)
     function showFollowUpHistory(solicitudId) {
+        // Aquí puedes implementar la lógica para mostrar el historial de seguimiento
+        // Por ejemplo, podrías hacer una petición AJAX para obtener los datos y mostrarlos en
+        // un modal o una nueva página.
+        // Por ahora, solo mostramos un alert como ejemplo.
+
         alert('Función para mostrar historial de seguimiento de la solicitud ' + solicitudId);
         // Aquí puedes implementar un modal o redirection para mostrar el historial
     }

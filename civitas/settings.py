@@ -99,7 +99,7 @@ DATABASES = {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
         'NAME': os.getenv('DB_NAME', 'civitas'),
         'USER': os.getenv('DB_USER', 'root'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'admin'), #admin H0L4 root
+        'PASSWORD': os.getenv('DB_PASSWORD', 'H0L4'), #admin H0L4 root
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '3306'),
         'OPTIONS': {
@@ -155,14 +155,14 @@ GOOGLE_API_KEY = os.getenv("gmapk")
 
 STATIC_URL = '/static/' 
 
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR / 'staticfiles')
 STATIC_DIRS = [
     BASE_DIR / "static",
     BASE_DIR / "portaldu" / "static",
 ]
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -176,7 +176,7 @@ AUTH_USER_MODEL = 'cmin.users'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
 
 #LOGIN_URL = 'login'
 

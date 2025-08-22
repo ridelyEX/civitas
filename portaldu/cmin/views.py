@@ -11,9 +11,8 @@ from django.contrib import messages
 from django.core.mail import EmailMessage
 import os
 from .forms import UsersRender, Login, UsersConfig, UploadExcel
-from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones
-
-
+from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones, Users
+from django.core.exceptions import ObjectDoesNotExist
 
 def master(request):
     return render(request, 'master.html')
@@ -35,20 +34,21 @@ def users_render(request):
 
 def login_view(request):
     form = Login(request.POST)
-
     if request.method == 'POST' and form.is_valid():
         usuario = form.cleaned_data['usuario']
         contrasena = form.cleaned_data['contrasena']
         user = authenticate(request, username=usuario, password=contrasena)
         if user is not None:
-            print(user)
-            login(request, user)
-            LoginDate.objects.create(user_FK=user)
-            return redirect('menu')
+            try:
+                users = Users.objects.get(username=user.username)
+                login(request, user)
+                LoginDate.objects.create(user_FK=users)
+                return redirect('menu')
+            except Users.DoesNotExist:
+                messages.error(request, "Usuario no registrado en el sistema.")
         else:
             messages.error(request, "Usuario o contraseña incorrectos")
-
-    return render(request, 'login.html', {'form':form})
+    return render(request, 'login.html', {'form': form})
 
 def logout_view(request):
     logout(request)
@@ -119,6 +119,7 @@ def seguimiento(request):
 
     solicitudes = soli.objects.all()
 
+    us = ''
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'upload':
@@ -162,6 +163,7 @@ def seguimiento(request):
     context = {
         'solicitudesE': solictudesE,
         'solicitudes': solicitudes,
+        'us': us,
     }
 
     return render(request, 'send.html', context)
