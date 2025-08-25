@@ -5,11 +5,10 @@
     integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
     crossorigin="anonymous"
   />
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="{% static 'styles/form-optimized.css' %}?v=1" />
 <link rel="stylesheet" href="{% static 'styles/adv.css' %}?v=1" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
 <title>Obras Públicas</title>
 {% endblock %} {% block body %} {% include 'nav.html' %}
 <form method="post" enctype="multipart/form-data" id="mainForm" action="{% url 'soli' %}">
@@ -211,7 +210,6 @@
 </div>
 
 {% endblock %} {% block footer %}
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/esri-leaflet@3.0.8/dist/esri-leaflet.js"></script>
 
@@ -506,9 +504,6 @@ function habilitarV(estado) {
     document.getElementById("vulnerables").disabled = !estado;
 }
 </script>
-
-
-
 
 <script src="{% static 'sripts/modals.js' %}"></script>
 

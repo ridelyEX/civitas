@@ -1,15 +1,20 @@
+import base64
 import uuid
 from io import BytesIO
 import re
 import json
+
+from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
+from django.core.files.temp import NamedTemporaryFile
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from django.db import models  # Agregar esta importación para # Q
 from django.utils import timezone
+from django.utils.timezone import now
 from django_user_agents.templatetags.user_agents import is_mobile
 from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, PpPluvial, PpFiles, DesUrLoginDate
 from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
@@ -113,7 +118,7 @@ def desur_historial(request):
 
     # Estadísticas básicas
     total_tramites = tramites.count()
-    tramites_hoy = tramites.filter(fecha__date=date.today()).count()
+    tramites_hoy = tramites.filter(fecha__date=now().date()).count()
 
     # Estadísticas por tipo de trámite (PUO)
     from django.db.models import Count
@@ -209,9 +214,6 @@ def intData(request):
     if not uuid:
         return redirect('home')
 
-    mobile_device = is_mobile(request)
-    is_offline_sync = request.POST.get('offline_sync', False)
-
     logger.debug("Procesando datos de ciudadano")
 
     try:
@@ -261,15 +263,6 @@ def intData(request):
                     defaults=datos_persona
                 )
 
-                "lógica disposisitivos móviles"
-                if mobile_device or is_offline_sync:
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'Datos guardados',
-                        'redirect_url': '/ageo/soliData/',
-                        'is_offline_sync': is_offline_sync
-                    })
-
                 match asunto:
                     case "DOP00005":
                         return redirect('pago')
@@ -279,8 +272,6 @@ def intData(request):
         except Exception as e:
             logger.error(f"Error al procesar datos: {str(e)}")
             return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
-
-    template = 'mobile/intData.html' if mobile_device else 'di.html'
 
     service_status = LocalGISService.get_service_status()
 
@@ -292,7 +283,7 @@ def intData(request):
         'gis_services': LocalGISService.SERVICES,
         'service_status': service_status,
     }
-    return render(request, template, context)
+    return render(request, 'di.html', context)
 
 
 @desur_login_required
@@ -302,72 +293,48 @@ def soliData(request):
     if not uuid:
         return redirect('home')
 
-    mobile_device = is_mobile(request)
-    logger.info(f"Procesando solicitud del usuario: {request.user.username}")
-
     try:
         uid = get_object_or_404(Uuid, uuid=uuid)
-        usuario_data = get_object_or_404(data, fuuid=uid)
-    except (Uuid.DoesNotExist, data.DoesNotExist):
-        logger.warning(f"Datos no encontrados: {uuid}")
-        return redirect('intData')
 
-    logger.debug("Detectando tipo de dispositivo para interfaz")
+        is_mobile = request.user_agent.is_mobile
+        is_tablet = request.user_agent.is_tablet
+        is_pc = request.user_agent.is_pc
 
-    dir = request.GET.get('dir', '')
-    asunto = request.POST.get('asunto', '')
-    puo = request.POST.get('puo', '')
+        logger.debug("Detectando tipo de dispositivo para interfaz")
 
-    dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
-    if not dp:
-        return redirect('home')
+        dir = request.GET.get('dir', '')
+        asunto = request.POST.get('asunto', '')
+        puo = request.POST.get('puo', '')
 
-    if request.method == 'POST':
-        is_offline_sync = request.POST.get('offline_sync', False)
+        dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
+        if not dp:
+            return redirect('home')
 
-        if mobile_device or is_offline_sync:
-            try:
-                response = soli_processed(request, uid, dp)
+        if request.method == 'POST':
+            return soli_processed(request, uid, dp)
 
-                if isinstance(response, JsonResponse):
-                    return response
+        solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
 
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Solicitud procesada',
-                    'redirect_url': '/ageo/doc/',
-                    'is_offline_sync': is_offline_sync,
-                })
-            except Exception as e:
-                logger.error(f"Error al procesar solicitud: {str(e)}")
-                return JsonResponse({
-                    'success': False,
-                    'error': str(e),
-                }, status=500)
+        service_status = LocalGISService.get_service_status()
 
-        return soli_processed(request, uid, dp)
+        context = {
+            'dir': dir,
+            'asunto': asunto,
+            'puo': puo,
+            'datos': dp,
+            'uuid': uuid,
+            'is_mobile': is_mobile,
+            'is_tablet': is_tablet,
+            'is_pc': is_pc,
+            'soli': solicitud,
+            'local_gis_enabled': True,
+            'gis_services': LocalGISService.SERVICES,
+            'service_status': service_status,
+        }
 
-    solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
-
-    service_status = LocalGISService.get_service_status()
-
-    context = {
-        'dir': dir,
-        'asunto': asunto,
-        'puo': puo,
-        'datos': dp,
-        'uuid': uuid,
-        'is_mobile': mobile_device,
-        'is_tablet': False,
-        'is_pc': not mobile_device,
-        'soli': solicitud,
-        'local_gis_enabled': True,
-        'gis_services': LocalGISService.SERVICES,
-        'service_status': service_status,
-    }
-
-    template = 'mobile/soliData.html' if mobile_device else 'ds.html'
-    return render(request, template, context)
+        return render(request, 'ds.html', context)
+    except Exception as e:
+        return user_errors(request, e)
 
 @desur_login_required
 def doc(request):
@@ -522,12 +489,13 @@ def document(request):
     puo = request.session.get('puo', 'Sin PUO')
     print(puo)
     if ultima_solicitud and ultima_solicitud.folio:
-        puo_texto = ultima_solicitud.puo or 'General'
+        _, puo_texto = gen_folio(uuid, ultima_solicitud.puo)
         folio = ultima_solicitud.folio
     else:
         puo_session = request.session.get('puo', 'general')
-        puo_texto, folio = gen_folio(uid, puo_session)
+        puo_texto, folio = gen_folio(uuid, puo_session)
     print(asunto)
+    print(puo_texto)
 
     match asunto:
         case "DOP00001":
@@ -1015,12 +983,12 @@ def wasap_msg(uid, num):
 def gen_folio(uid, puo):
     """Genera folio único para trámites con validaciones mejoradas"""
     logger.debug("Generando folio para trámite")
-
-    uid_str = str(uid.uuid)  # Mover esta línea al inicio
+    uid_str = ""
 
     try:
         dp = data.objects.filter(fuuid=uid).last()
-        id_dp = dp.pk if dp else 0 # Valor por defecto si no hay datos
+        uid_str = str(uid.uuid)
+        id_dp = dp.pk if dp else 0  # Valor por defecto si no hay datos
 
         fecha = date.today()
         year_str = str(fecha.year)
@@ -1073,6 +1041,7 @@ def gen_folio(uid, puo):
     except Exception as e:
         logger.error(f"Error generando folio: {str(e)}")
         return 'Error', f'ERROR-{uid_str[:8]}'
+
 def gen_pp_folio(fuuid):
     """Folio para presupuesto participativo con validaciones mejoradas"""
     try:
@@ -1092,6 +1061,7 @@ def gen_pp_folio(fuuid):
     except Exception as e:
         logger.error(f"Error generando folio PP: {str(e)}")
         return f'ERROR-PP-{str(fuuid.uuid)[:8]}'
+
 def validar_curp(curp):
     pattern = r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$'
     if not re.match(pattern, curp):
@@ -1205,39 +1175,187 @@ def validar_datos(post_data):
 
 
 def soli_processed(request, uid, dp):
-    """Procesa solicitudes de ciudadanos con validaciones mejoradas"""
+    """
+    Procesa solicitudes de trámites con validaciones mejoradas y manejo de errores robusto
+    """
     try:
         with transaction.atomic():
-            solicitud_data = {
-                'dirr': request.POST.get('dir'),
-                'info': request.POST.get('info'),
-                'descc': request.POST.get('desc'),
-                'puo': request.POST.get('puo'),
-                'data_ID': dp,
-                'processed_by': request.user,
-                'fecha': timezone.now()
-            }
+            # Validar que la solicitud venga con método POST
+            if request.method != 'POST':
+                logger.warning("Intento de acceso a soli_processed sin método POST")
+                return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-            if 'foto' in request.FILES:
-                solicitud_data['foto'] = request.FILES['foto']
+            # Validar datos de entrada
+            dirr = request.POST.get('dir', '').strip()
+            if not dirr:
+                logger.warning("Solicitud sin dirección")
+                return JsonResponse({'error': 'La dirección es obligatoria'}, status=400)
 
-            solicitud = soli.objects.create(**solicitud_data)
+            logger.info(f"Procesando solicitud de trámite para usuario {request.user.username}")
 
-            # Generar folio
-            puo_texto, folio = gen_folio(dp.fuuid, solicitud.puo)
-            solicitud.folio = folio
-            solicitud.save()
+            """
+            # Procesar dirección de forma segura
+            try:
+                calle, colonia, cp = cut_direction(dirr)
+            except Exception as e:
+                logger.error(f"Error procesando dirección: {str(e)}")
+                calle, colonia, cp = dirr, "", ""
+            """
 
-            # Guardar en sesión
-            request.session['puo'] = solicitud.puo
-            request.session['folio'] = folio
+            # Validar y limpiar campos opcionales
+            descc = request.POST.get('descc', '').strip()
+            if not descc:
+                logger.debug("Solicitud sin descripción")
+                descc = "Sin descripción proporcionada"
 
-            logger.info(f"Solicitud procesada exitosamente por {request.user.username}")
+            info = request.POST.get('info', '').strip()
+            if not info:
+                logger.debug("Solicitud sin información adicional")
+                info = "Sin información adicional"
+
+            # Validar PUO
+            puo = request.POST.get('puo', '').strip()
+            if not puo:
+                logger.warning("Solicitud sin PUO especificado")
+                return JsonResponse({'error': 'El tipo de proceso (PUO) es obligatorio'}, status=400)
+
+            # Validar que el PUO sea válido
+            valid_puos = ['OFI', 'CRC', 'MEC', 'DLO', 'DFE', 'REG', 'DEA', 'EVA', 'PED', 'VIN', 'PPA', 'CPC']
+            if puo not in valid_puos:
+                logger.warning(f"PUO inválido recibido: {puo}")
+                return JsonResponse({'error': 'Tipo de proceso no válido'}, status=400)
+
+            request.session['puo'] = puo
+
+            # Procesar imagen con validación mejorada
+            img = img_processed(request)
+            if not img:
+                logger.warning("No se pudo procesar la imagen de la solicitud")
+                #return JsonResponse({'error': 'No se pudo procesar la imagen. Verifique el formato.'}, status=400)
+
+            # Crear solicitud con validaciones
+            solicitud = soli(
+                data_ID=dp,
+                dirr=dirr,
+                #calle=calle,
+                #colonia=colonia,
+                #cp=cp,
+                descc=descc,
+                info=info,
+                puo=puo,
+                foto=img,
+                processed_by=request.user
+            )
+
+            # Validar modelo antes de guardar
+            try:
+                solicitud.full_clean()
+                solicitud.save()
+                logger.info(f"Solicitud guardada exitosamente: ID {solicitud.pk}")
+            except ValidationError as e:
+                logger.error(f"Error de validación en solicitud: {e}")
+                return JsonResponse({'error': 'Datos de solicitud inválidos'}, status=400)
+
+            # Verificar que se guardó correctamente
+            if not soli.objects.filter(pk=solicitud.pk).exists():
+                logger.error("Error crítico: Solicitud no se registró en la base de datos")
+                raise ValidationError("Error al registrar la solicitud")
+
+            # Procesar archivos adjuntos
+            try:
+                files_processed(request, uid)
+                logger.debug("Archivos procesados correctamente")
+            except Exception as e:
+                logger.error(f"Error procesando archivos: {str(e)}")
+                # No es crítico, continuar
+
+            # Generar y asignar folio
+            try:
+                puo_txt, folio = gen_folio(uid, puo)
+                solicitud.folio = folio
+                solicitud.save(update_fields=['folio'])
+                logger.info(f"Folio asignado a solicitud: {folio}")
+            except Exception as e:
+                logger.error(f"Error generando folio: {str(e)}")
+                return JsonResponse({'error': 'Error generando folio'}, status=500)
+
             return redirect('doc')
 
+    except ValidationError as e:
+        logger.error(f"Error de validación procesando solicitud: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        logger.error(f"Error procesando solicitud: {str(e)}")
-        return HttpResponse('Error al procesar solicitud. Intente nuevamente.')
+        logger.error(f"Error crítico procesando solicitud: {str(e)}", exc_info=True)
+        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
+
+
+def img_processed(request):
+    """Procesa imágenes de solicitudes con validaciones mejoradas"""
+    img = None
+    imgpath = request.POST.get('src')
+
+    if 'src' in request.FILES:
+        img = request.FILES['src']
+    elif imgpath and imgpath.startswith("data:image"):
+        try:
+            header, encoded = imgpath.split(",", 1)
+            datos = base64.b64decode(encoded)
+            img = NamedTemporaryFile(delete=False)
+            img.write(datos)
+            img.flush()
+            img = File(img)
+        except Exception as e:
+            logger.error(f"Error procesando imagen base64: {str(e)}")
+            return None
+    else:
+        logger.warning("No se encontró imagen para procesar")
+        return None
+
+    if img:
+        name = str(img.name).split("\\")[-1]
+        if not name.endswith('.jpg'):
+            name += '.jpg'
+        img.name = name
+
+    return img
+
+def files_processed(request, uid):
+    """Procesa archivos adjuntos con validaciones"""
+    file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
+
+    if file_keys:
+        for key in file_keys:
+            try:
+                index = key.split('_')[-1]
+                file = request.FILES[key]
+                desc = request.POST.get(f'tempdesc_{index}', 'Documento sin descripción')
+
+                if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
+                    logger.debug("Guardando nuevo documento")
+                    documento = SubirDocs(
+                        descDoc=desc,
+                        doc=file,
+                        nomDoc=file.name,
+                        fuuid=uid,
+                    )
+                    documento.save()
+                else:
+                    logger.warning("Documento duplicado, no se guardará")
+            except Exception as e:
+                logger.error(f"Error procesando archivo {key}: {str(e)}")
+
+def user_errors(request, error):
+    """Maneja errores del sistema de forma segura"""
+    logger.error(f"Error en vista: {error}", exc_info=True)
+
+    return render(request, 'error.html', {
+        'error': {
+            'titulo': "Error del sistema",
+            'mensaje': 'Por favor, inténtelo nuevamente o contacte al administrador',
+            'codigo': 'SYS_ERROR',
+            'accion': 'Reintentar'
+        }
+    })
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1643,5 +1761,4 @@ def pluvial_render(request):
         form = PluvialRender()
 
     return render(request, 'pp/pluviales.html', {'form': form, 'pp_general': pp_general})
-
 
