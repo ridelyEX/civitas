@@ -482,7 +482,12 @@ def document(request):
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
     #ultima_solicitud = soli.objects.filter(data_ID=datos).last()
-    ultima_solicitud = get_object_or_404(soli, data_ID=datos)
+    try:
+        ultima_solicitud = soli.objects.filter(data_ID=datos).latest('fecha')
+    except soli.DoesNotExist:
+        message.error(request, "No hay solicitud")
+        return redirect('soli')
+
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid)
 
     asunto = request.session.get('asunto', 'Sin asunto')
@@ -576,10 +581,13 @@ def save_document(request):
     uid = get_object_or_404(Uuid, uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
     #solicitud = soli.objects.filter(data_ID=datos).select_related('data_ID')
-    solicitud = get_object_or_404(soli, data_ID=datos)
+
+    try:
+        solicitud = soli.objects.filter(data_ID=datos).latest('fecha')
+    except soli.DoesNotExist:
+        return HttpResponse("No hay solicitud", status=400)
+
     print(solicitud)
-    if not solicitud:
-        return HttpResponse("no hay solicitud", status=400)
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
     asunto = request.session.get('asunto', 'Sin asunto')
@@ -1312,10 +1320,21 @@ def img_processed(request):
         try:
             header, encoded = imgpath.split(",", 1)
             datos = base64.b64decode(encoded)
-            img = NamedTemporaryFile(delete=False)
-            img.write(datos)
-            img.flush()
-            img = File(img)
+
+            import tempfile
+            import os
+
+            tmp_img = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+            tmp_img.write(datos)
+            tmp_img.flush()
+            tmp_img.close()
+
+            with open(tmp_img.name, 'rb') as f:
+                content = f.read()
+
+            os.unlink(tmp_img.name)
+
+            img = ContentFile(content, name='uploaded_image.jpg')
         except Exception as e:
             logger.error(f"Error procesando imagen base64: {str(e)}")
             return None
@@ -1323,7 +1342,7 @@ def img_processed(request):
         logger.warning("No se encontró imagen para procesar")
         return None
 
-    if img:
+    if img and hasattr(img, 'name'):
         name = str(img.name).split("\\")[-1]
         if not name.endswith('.jpg'):
             name += '.jpg'
