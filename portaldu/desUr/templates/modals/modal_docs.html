@@ -294,7 +294,7 @@ input[type="file"] {
         <div class="form" id="upDocs">
           <input type="hidden" name="uuid" value="{{ uuid }}">
           <div class="textbox">
-            <input type="text" class="desc" id="descc" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
+            <input type="text" class="desc" id="descp" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
           </div>
           <input type="file" id="ffile" name="ffile">
           <div class="text">
@@ -321,115 +321,170 @@ input[type="file"] {
 <footer>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const uploadSection = document.getElementById('uploadSection');
-      const showUploadBtn = document.getElementById('showUpload');
-      const searchBtn = document.getElementById('search');
-      const fileInput = document.getElementById('ffile');
-      const uploadForm = document.getElementById('upDocs');
-      const tbody = document.getElementById('body');
-      const save = document.getElementById('saveDoc');
+        const uploadSection = document.getElementById('uploadSection');
+        const showUploadBtn = document.getElementById('showUpload');
+        const searchBtn = document.getElementById('search');
+        const fileInput = document.getElementById('ffile');
+        const uploadForm = document.getElementById('upDocs');
+        const tbody = document.getElementById('body');
+        const save = document.getElementById('saveDoc');
 
+        let tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+        renderTempDocs();
 
+        showUploadBtn.addEventListener('click', function() {
+            uploadSection.classList.toggle('active');
+        });
 
-      let tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
-      renderTempDocs();
+        searchBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
 
-      showUploadBtn.addEventListener('click', function() {
-        console.log('a ver si jala');
-        uploadSection.classList.toggle('active');
-        console.log('sí chambeó');
-      });
+        fileInput.addEventListener('change', function() {
+            if (this.files[0]) {
+                document.getElementById('document').textContent = this.files[0].name;
+            }
+        });
 
-      searchBtn.addEventListener('click', function() {
-        fileInput.click();
-      });
+        save.addEventListener('click', function() {
+            const file = fileInput.files[0];
+            const descInput = document.getElementById('descp'); // ✅ ID correcto
 
-      fileInput.addEventListener('change', function() {
-        document.getElementById('document').textContent = this.files[0].name;
-      });
+            if (!descInput) {
+                alert("Error: No se pudo obtener el campo de descripción");
+                return;
+            }
 
-      save.addEventListener('click', function() {
+            const descripcion = descInput.value.trim();
 
-        const file = fileInput.files[0];
-        const descc = document.getElementById('descc');
+            if (!descripcion) {
+                alert('Ingrese una descripción para el documento');
+                descInput.focus();
+                return;
+            }
 
-        if (!descc) {
-          console.error("no hay nada oiga");
-          alert("No se pudo obtener nada");
-          return;
+            if (!file) {
+                alert('Seleccione un archivo');
+                return;
+            }
+
+            // Validar tipo de archivo
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Tipo de archivo no permitido. Use: JPG, PNG, PDF, DOC, DOCX');
+                return;
+            }
+
+            // Validar tamaño (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 5MB');
+                return;
+            }
+
+            const tempDoc = {
+                name: file.name,
+                desc: descripcion,
+                file: file,
+                type: file.type,
+                size: file.size
+            };
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempDoc.fileData = e.target.result;
+                tempDocs.push(tempDoc);
+                sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
+                renderTempDocs();
+            };
+
+            reader.onerror = function() {
+                alert('Error al leer el archivo');
+            };
+
+            reader.readAsDataURL(file);
+
+            // Limpiar formulario - ✅ IDs correctos
+            descInput.value = '';
+            fileInput.value = '';
+            document.getElementById('document').textContent = '';
+            uploadSection.classList.remove('active');
+        });
+
+        // Agregar al formulario principal antes del envío
+        const mainForm = document.getElementById('mainForm') || document.querySelector('form[method="post"]');
+        if (mainForm) {
+            mainForm.addEventListener('submit', function(e) {
+                const tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+
+                if (tempDocs.length > 0) {
+                    // Crear campos ocultos para cada documento
+                    tempDocs.forEach((doc, index) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = `temp_doc_${index}`;
+                        input.value = JSON.stringify({
+                            name: doc.name,
+                            desc: doc.desc,
+                            fileData: doc.fileData,
+                            type: doc.type
+                        });
+                        mainForm.appendChild(input);
+
+                    });
+
+                    // Agregar contador
+                    const countInput = document.createElement('input');
+                    countInput.type = 'hidden';
+                    countInput.name = 'temp_docs_count';
+                    countInput.value = tempDocs.length;
+                    mainForm.appendChild(countInput);
+                }
+            });
+                        sessionStorage.removeItem('tempDocs');
         }
-
-        const descripcion = descc.value;
-
-        console.log("a ver si hay desc pue" + descc);
-        console.log(descripcion);
-
-        if(!file) {
-          alert('seleccione un archivo');
-          return;
-        }
-
-        const tempDoc = {
-          name: file.name,
-          desc: descripcion,
-          file: file
-        };
-
-        tempDocs.push(tempDoc);
-        sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          tempDocs[tempDocs.length -1].fileData = e.target.result;
-          sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
-          //actualizar tabla
-          renderTempDocs();
-        };
-
-        reader.readAsDataURL(file);
-
-        //actualizar tabla
-        //renderTempDocs();
-
-        //limpieza
-        document.getElementById('desc').value = '';
-        fileInput.value = '';
-        document.getElementById('document').textContent = '';
-        uploadSection.classList.remove('active');
-      });
-
     });
 
+    window.addEventListener('beforeunload', function() {
+        if (document.querySelector('.alert-success')) {
+            sessionStorage.removeItem('tempDocs');
+        }
+    });
+
+    function clearTempDocs() {
+        sessionStorage.removeItem('tempDocs');
+        renderTempDocs();
+    }
+
     function renderTempDocs() {
-      const tbody = document.getElementById('body');
-      const tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+        const tbody = document.getElementById('body');
+        const tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
 
-      tbody.innerHTML = '';
-      if (tempDocs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3"> no hay documentos subidos</td></tr>';
-        return;
-      }
+        tbody.innerHTML = '';
+        if (tempDocs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3">No hay documentos subidos</td></tr>';
+            return;
+        }
 
-      tempDocs.forEach((doc, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-           <td>${doc.name}</td>
-            <td>${doc.desc}</td>
-            <td>
-                <button type="button" class="img" onclick="removeTempDoc(${index})">
-                    <img src="/static/images/delete.png" class="bbsura">
-                </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-      });
+        tempDocs.forEach((doc, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${doc.name}</td>
+                <td>${doc.desc}</td>
+                <td>
+                    <button type="button" class="img" onclick="removeTempDoc(${index})">
+                        <img src="/static/images/delete.png" class="bbsura">
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
     function removeTempDoc(index) {
-      let tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
-      tempDocs.splice(index, 1);
-      sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
-      renderTempDocs();
+        let tempDocs = JSON.parse(sessionStorage.getItem('tempDocs') || '[]');
+        tempDocs.splice(index, 1);
+        sessionStorage.setItem('tempDocs', JSON.stringify(tempDocs));
+        renderTempDocs();
     }
 
     function deleteDoc(docId) {

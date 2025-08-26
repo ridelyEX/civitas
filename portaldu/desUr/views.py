@@ -590,6 +590,7 @@ def save_document(request):
     print(solicitud)
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid).order_by('-nomDoc')
 
+
     asunto = request.session.get('asunto', 'Sin asunto')
     puo = request.session.get('puo', 'Sin PUO')
     print(puo)
@@ -1253,60 +1254,91 @@ def soli_processed(request, uid, dp):
                 logger.warning("No se pudo procesar la imagen de la solicitud")
                 #return JsonResponse({'error': 'No se pudo procesar la imagen. Verifique el formato.'}, status=400)
 
-            # Crear solicitud con validaciones
-            solicitud = soli(
-                data_ID=dp,
-                dirr=dirr,
-                #calle=calle,
-                #colonia=colonia,
-                #cp=cp,
-                descc=descc,
-                info=info,
-                puo=puo,
-                foto=img,
-                processed_by=request.user
-            )
+            # En la función soli_processed, corregir estas líneas:
 
-            # Validar modelo antes de guardar
-            try:
-                solicitud.full_clean()
-                solicitud.save()
-                logger.info(f"Solicitud guardada exitosamente: ID {solicitud.pk}")
-            except ValidationError as e:
-                logger.error(f"Error de validación en solicitud: {e}")
-                return JsonResponse({'error': 'Datos de solicitud inválidos'}, status=400)
+        temp_docs_count = request.POST.get('temp_docs_count', '0')
+        if temp_docs_count.isdigit():
+            count = int(temp_docs_count)
+            logger.info(f"Procesando {count} documentos temporales")
 
-            # Verificar que se guardó correctamente
-            if not soli.objects.filter(pk=solicitud.pk).exists():
-                logger.error("Error crítico: Solicitud no se registró en la base de datos")
-                raise ValidationError("Error al registrar la solicitud")
+            # ✅ Obtener el objeto Uuid correctamente según el tipo de uid
+            if isinstance(uid, str):
+                uuid_obj = get_object_or_404(Uuid, uuid=uid)
+            else:
+                # uid ya es un objeto Uuid
+                uuid_obj = uid
 
-            # Procesar archivos adjuntos
-            try:
-                files_processed(request, uid)
-                logger.debug("Archivos procesados correctamente")
-            except Exception as e:
-                logger.error(f"Error procesando archivos: {str(e)}")
-                # No es crítico, continuar
+            for i in range(count):
+                temp_doc_data = request.POST.get(f'temp_doc_{i}')
+                if temp_doc_data:
+                    print(f"Documento {i}: {temp_doc_data[:100]}")
+                    try:
+                        doc_info = json.loads(temp_doc_data)
+                        file_data = doc_info['fileData']
 
-            # Generar y asignar folio
-            try:
-                puo_txt, folio = gen_folio(uid, puo)
-                solicitud.folio = folio
-                solicitud.save(update_fields=['folio'])
-                logger.info(f"Folio asignado a solicitud: {folio}")
-            except Exception as e:
-                logger.error(f"Error generando folio: {str(e)}")
-                return JsonResponse({'error': 'Error generando folio'}, status=500)
+                        # Remover el prefijo data:tipo;base64, si existe
+                        if ',' in file_data:
+                            file_data = file_data.split(',')[1]
 
-            return redirect('doc')
+                        file_content = base64.b64decode(file_data)
+                        file_name = doc_info['name']
+                        file_desc = doc_info['desc']
 
-    except ValidationError as e:
-        logger.error(f"Error de validación procesando solicitud: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=400)
+                        # Crear archivo Django
+                        django_file = ContentFile(file_content, name=file_name)
+
+                        # Guardar en la base de datos con el objeto correcto
+                        nuevo_doc = SubirDocs(
+                            nomDoc=file_name,
+                            descDoc=file_desc,
+                            fuuid=uuid_obj,  # ✅ Usar el objeto Uuid correcto
+                            doc=django_file  # ✅ Verificar que el campo sea 'doc' no 'ffile'
+                        )
+                        nuevo_doc.save()
+                        logger.info(f"Documento temporal guardado: {file_name}")
+
+                    except (json.JSONDecodeError, KeyError, ValueError) as e:
+                        logger.error(f"Error procesando documento temporal {i}: {str(e)}")
+                        continue
+                    except Exception as e:
+                        logger.error(f"Error guardando documento temporal {i}: {str(e)}")
+                        continue
+
+        # Procesar imagen
+        img = img_processed(request)
+
+        # ✅ Generar folio con el objeto correcto
+        if isinstance(uid, str):
+            uuid_obj_folio = get_object_or_404(Uuid, uuid=uid)
+        else:
+            uuid_obj_folio = uid
+
+        puo_txt, folio = gen_folio(uuid_obj_folio, puo)
+
+        # Crear la solicitud
+        nueva_solicitud = soli(
+            dirr=dirr,
+            info=info,
+            descc=descc,
+            foto=img,
+            data_ID=dp,
+            puo=puo,
+            processed_by=request.user,
+            folio=folio
+        )
+        nueva_solicitud.save()
+
+        logger.info(f"Solicitud procesada exitosamente: {folio}")
+        messages.success(request, "Solicitud procesada exitosamente")
+        return redirect('doc')
+
     except Exception as e:
-        logger.error(f"Error crítico procesando solicitud: {str(e)}", exc_info=True)
-        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
+        logger.error(f"Error crítico procesando solicitud: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
+        messages.error(request, "Error al procesar la solicitud")
+        return redirect('soli')
 
 
 def img_processed(request):
@@ -1359,10 +1391,29 @@ def files_processed(request, uid):
             try:
                 index = key.split('_')[-1]
                 file = request.FILES[key]
-                desc = request.POST.get(f'tempdesc_{index}', 'Documento sin descripción')
+                desc_field_names = [
+                    f'tempdesc_{index}',
+                    f'desc {index}',
+                    f'descripcion_{index}',
+                    'desc',
+                    'description'
+                ]
+
+                desc = 'Documento sin descripcion'
+
+                for desc_field in desc_field_names:
+                    if desc_field in request.POST:
+                        desc = request.POST.get(desc_field, '').strip()
+                        if desc:
+                            break
+
+                if desc == 'Documento sin descripcion':
+                    file_name =getattr(file, 'name', '')
+                    if file_name:
+                        desc = file_name.rsplit('.', 1)[0].replace('_', ' ').replace('-', ' ')
 
                 if not SubirDocs.objects.filter(fuuid=uid, nomDoc=file.name).exists():
-                    logger.debug("Guardando nuevo documento")
+                    logger.debug(f"Guardando nuevo documento: {file.name}")
                     documento = SubirDocs(
                         descDoc=desc,
                         doc=file,
