@@ -16,11 +16,11 @@
 <input type="hidden" name="uuid" value="{{ data.uuid }}">
 
   <div class="main" id="main">
-    <div class="titulo"><h1>Datos de la solicitud</h1></div>
+    <div class="titulo"><h1>DATOS DE LA SOLICITUD</h1></div>
     <input type="hidden" name="asunto" value="{{ asunto }}" />
     <div class="left">
       <div class="form">
-        <label for="dir" class="text">Dirección del servicio:</label>
+        <label for="dir" class="text">DIRECCIÓN DEL SERVICIO:</label>
         <input
           type="text"
           id="dir"
@@ -48,7 +48,7 @@
         </div>
         <br />
 
-        <label for="desc" class="text">Descripción del servicio:</label>
+        <label for="desc" class="text">DESCRIPCIÓN DEL SERVICIO:</label>
         <br />
         <textarea
           class="tArea1"
@@ -81,9 +81,9 @@
           </div>
 
           <div class="nFoto">
-            Ejemplo:
+            EJEMPLO:
             <img src="{% static 'images/EjemploFoto.png' %}" alt="mono" class="mono">
-            <label for="searchPhoto" class="text">Añadir foto</label>
+            <label for="searchPhoto" class="text">AÑADIR FOTO</label>
             <button
               type="button"
               class="search sbtn"
@@ -114,14 +114,14 @@
               <span class="addicon">
                 <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
               </span>
-              <span class="txt">Documentación</span>
+              <span class="txt">DOCUMENTACIÓN</span>
             </button>
           </div>
 
 
 
           <div class="nPuesto">
-            <label for="puo" class="text">Origen de solicitud</label>
+            <label for="puo" class="text">ORIGEN DE SOLICITUD</label>
             <select class="select" name="puo" id="puo" required oninvalid="this.setCustomValidity('Seleccione el origen de gestión')" oninput="this.setCustomValidity('')">
               <option value="">Origen de gestión</option>
               <option value="OFI">Oficio</option>
@@ -138,7 +138,7 @@
               <option value="CPC">Coordinación de Participación Ciudadana</option>
             </select>
 
-          <label for="ofi" class="text">Número de oficio:</label>
+          <label for="ofi" class="text">NÚMERO DE OFICIO:</label>
           <input
             type="text"
             id="ofi"
@@ -153,7 +153,7 @@
 
           <!-- fak -->
         </div>
-        <label for="info" class="text">Referencias:</label>
+        <label for="info" class="text">REFERENCIAS DE LA UBICACIÓN:</label>
         <br />
         <textarea
           class="tArea"

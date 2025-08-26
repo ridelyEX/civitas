@@ -12,11 +12,11 @@
   {% csrf_token %}
   <div class="main">
     <div class="titulo">
-      <h1><b>Datos del interesado</b></h1>
+      <h1><b>DATOS DEL INTERESADO</b></h1>
     </div>
     <div class="left">
       <div class="form">
-        <label for="nombre" class="text">Nombre:</label>
+        <label for="nombre" class="text">NOMBRE:</label>
         <input
           type="text"
           class="input"
@@ -29,7 +29,7 @@
             oninput="this.setCustomValidity('')"
         />
 
-        <label for="pApe" class="text">Apellido paterno:</label>
+        <label for="pApe" class="text">APELLIDO PATERNO:</label>
         <input
           type="text"
           id="pApe"
@@ -41,7 +41,7 @@
             oninput="this.setCustomValidity('')"
         />
 
-        <label for="mApe" class="text">Apellido materno:</label>
+        <label for="mApe" class="text">APELLIDO MATERNO:</label>
         <input
           type="text"
           id="mApe"
@@ -53,7 +53,7 @@
             oninput="this.setCustomValidity('')"
         />
 
-        <label for="bDay" class="text">Fecha de nacimiento:</label>
+        <label for="bDay" class="text">FECHA DE NACIMIENTO:</label>
         <input
           id="bDay"
           name="bDay"
@@ -66,7 +66,7 @@
 
 
 
-        <label for="asunto" class="text">Asunto:</label>
+        <label for="asunto" class="text">ASUNTO:</label>
         <select class="select" id="asunto" name="asunto" required oninvalid="this.setCustomValidity('Ingrese un asunto')" oninput="this.setCustomValidity('')">
           <option value="">Seleccione una opción</option>
           <option value="DOP00001">Arreglo de calles de terracería</option>
@@ -81,7 +81,7 @@
           <option value="DOP00007">Retiro de escombro y material de arrastre
           </option>
           <option value="DOP00008">Solicitud de material caliche/Fresado (especificar)</option>
-          <option value="DOP00009">Solicitud de pavimentación de calles</option>
+          <option value="DOP00009">Solicitud de pavimentación de calles concreto hidráulico</option>
           <option value="DOP00010">Solicitud de reductores de velocidad</option>
           <option value="DOP00011">Solicitud de pintura para señalamientos viales</option>
           <option value="DOP00012">Arreglo de derrumbe de bardas</option>
@@ -90,14 +90,14 @@
 
          <div class="field">
           <fieldset>
-            <legend>¿Pertenece a alguna etnia?</legend>
+            <legend>¿PERTENECE A ALGUNA ETNIA?</legend>
             <label for="ets">
             <input type="radio" id="ets" class="radio" name="et" onclick="habilitar(true)">
               Sí</label>
             <label for="etn">
             <input type="radio" id="etn" class="radio" name="et" onclick="habilitar(false)">
               No</label><br>
-            <label for="etnia" class="text">Etnia:</label>
+            <label for="etnia" class="text">ETNIA:</label>
             <input type="text" id="etnia" name="etnia" class="input" placeholder="Etnia" disabled>
           </fieldset>
         </div>
@@ -105,7 +105,7 @@
     </div>
     <div class="right">
       <div class="form">
-        <label for="tel" class="text">Teléfono:</label>
+        <label for="tel" class="text">TELÉFONO:</label>
         <input
           type="text"
           id="tel"
@@ -133,7 +133,7 @@
           oninput="this.setCustomValidity('')"
         />
 
-        <label for="sexo" class="text">Género:</label>
+        <label for="sexo" class="text">GÉNERO:</label>
         <select class="select" id="sexo" name="sexo" required oninvalid="this.setCustomValidity('Ingrese su sexo')" oninput="this.setCustomValidity('')">
           <option value="">Seleccione un opción</option>
           <option value="hombre">Hombre</option>
@@ -143,7 +143,7 @@
 
 
 
-        <label for="dir" class="text" >Dirección:</label>
+        <label for="dir" class="text" >DIRECCIÓN:</label>
         <input
           type="text"
           id="dir"
@@ -170,14 +170,14 @@
 
          <div class="field">
           <fieldset>
-            <legend>¿Tiene alguna discapacidad?</legend>
+            <legend>¿TIENE ALGUNA DISCAPACIDAD?</legend>
             <label for="discs">
             <input type="radio" id="discs" name="disc" class="radio" onclick="habilitarD(true)">
               Sí</label>
             <label for="discn">
             <input type="radio" id="discn" name="disc" class="radio" onclick="habilitarD(false)">
               No</label><br>
-            <label for="disc" class="text">Discapacidad:</label>
+            <label for="disc" class="text">DISCAPACIDAD:</label>
             <select name="discapacidad" id="disc" class="select" disabled>
               <option value="">Seleccione una opción</option>
               <option value="Persona con discapacidad motriz">Persona con discapacidad motriz</option>
@@ -193,14 +193,14 @@
     </div>
      <div class="field">
           <fieldset>
-            <legend>¿Pertenece a algún grupo vulnerable?</legend>
+            <legend>¿PERTENECE A ALGÚN GRUPO VULNERABLE?</legend>
             <label for="vulnerabless">
             <input type="radio" id="vulnerabless" name="vul" class="radio" onclick="habilitarV(true)">
               Sí</label>
             <label for="vulnerablesn">
             <input type="radio" id="vulnerablesn" name="vul" class="radio" onclick="habilitarV(false)">
               No</label><br>
-            <label for="vulnerables" class="text">Grupo vulnerable:</label>
+            <label for="vulnerables" class="text">GRUPO VULNERABLE:</label>
             <select name="vulnerables" id="vulnerables" class="select" disabled>
               <option value="">Seleccione una opción</option>
               <option value="Padre o madre soltero(a), divorciado(a) o viudo(a)">Padre o madre soltero(a), divorciado(a) o viudo(a)</option>

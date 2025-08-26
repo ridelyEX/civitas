@@ -304,6 +304,8 @@ def soliData(request):
         dir = request.GET.get('dir', '')
         asunto = request.POST.get('asunto', '')
         puo = request.POST.get('puo', '')
+        fecha = date.today()
+        print(fecha)
 
         dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
         if not dp:
@@ -329,6 +331,7 @@ def soliData(request):
             'local_gis_enabled': True,
             'gis_services': LocalGISService.SERVICES,
             'service_status': service_status,
+            'fecha': fecha,
         }
 
         return render(request, 'ds.html', context)
@@ -485,7 +488,7 @@ def document(request):
     try:
         ultima_solicitud = soli.objects.filter(data_ID=datos).latest('fecha')
     except soli.DoesNotExist:
-        message.error(request, "No hay solicitud")
+        logger.error(request, "No hay solicitud")
         return redirect('soli')
 
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid)
@@ -553,6 +556,7 @@ def document(request):
             "info": ultima_solicitud.info,
             "descc": ultima_solicitud.descc if ultima_solicitud else "",
             "foto": ultima_solicitud.foto,
+            "fecha": ultima_solicitud.fecha,
         },
         'puo':puo_txt,
         'documentos':documentos,
@@ -652,6 +656,7 @@ def save_document(request):
             "info": solicitud.info,
             "desc": solicitud.descc if solicitud else "",
             "foto": solicitud.foto,
+            "fecha": solicitud.fecha,
         },
         'puo': puo_txt,
         'documentos': documentos,
