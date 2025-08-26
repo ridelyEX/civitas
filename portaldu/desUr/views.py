@@ -253,7 +253,6 @@ def intData(request):
                     'etnia': request.POST.get('etnia', 'No pertenece a una etnia'),
                     'disc': request.POST.get('discapacidad', 'sin discapacidad'),
                     'vul': request.POST.get('vulnerables', 'No pertenece a un grupo vulnerable'),
-                    'fuuid': uid
                 }
 
                 logger.info("Datos de ciudadano procesados correctamente")
@@ -482,20 +481,24 @@ def document(request):
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
-    ultima_solicitud = soli.objects.filter(data_ID=datos).last()
+    #ultima_solicitud = soli.objects.filter(data_ID=datos).last()
+    ultima_solicitud = get_object_or_404(soli, data_ID=datos)
     documentos = SubirDocs.objects.filter(fuuid__uuid=uuid)
 
     asunto = request.session.get('asunto', 'Sin asunto')
     puo = request.session.get('puo', 'Sin PUO')
     print(puo)
+
+    uuid_obj = get_object_or_404(Uuid, uuid=uuid)
+
     if ultima_solicitud and ultima_solicitud.folio:
-        _, puo_texto = gen_folio(uuid, ultima_solicitud.puo)
+        puo_txt, _ = gen_folio(uuid_obj, ultima_solicitud.puo)
         folio = ultima_solicitud.folio
     else:
         puo_session = request.session.get('puo', 'general')
-        puo_texto, folio = gen_folio(uuid, puo_session)
+        puo_txt, folio = gen_folio(uuid_obj, puo_session)
     print(asunto)
-    print(puo_texto)
+    print(puo_txt)
 
     match asunto:
         case "DOP00001":
@@ -546,7 +549,7 @@ def document(request):
             "descc": ultima_solicitud.descc if ultima_solicitud else "",
             "foto": ultima_solicitud.foto,
         },
-        'puo':puo_texto,
+        'puo':puo_txt,
         'documentos':documentos,
         'folio': folio,
     }
@@ -572,7 +575,8 @@ def save_document(request):
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     uid = get_object_or_404(Uuid, uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
-    solicitud = soli.objects.filter(data_ID=datos).select_related('data_ID')
+    #solicitud = soli.objects.filter(data_ID=datos).select_related('data_ID')
+    solicitud = get_object_or_404(soli, data_ID=datos)
     print(solicitud)
     if not solicitud:
         return HttpResponse("no hay solicitud", status=400)
@@ -581,8 +585,15 @@ def save_document(request):
     asunto = request.session.get('asunto', 'Sin asunto')
     puo = request.session.get('puo', 'Sin PUO')
     print(puo)
-    num_folio = gen_folio(datos.fuuid, solicitud.puo if solicitud else 'Sin PUO')
     print(asunto)
+
+    if solicitud and solicitud.folio:
+        puo_txt, folio = gen_folio(uid, solicitud.puo), solicitud.folio
+
+        puo_txt = puo_txt[0]
+        folio = solicitud.folio
+    else:
+        puo_txt, folio = gen_folio(uid, solicitud.puo if solicitud else 'general')
 
     match asunto:
         case "DOP00001":
@@ -612,13 +623,6 @@ def save_document(request):
         case "DOP00013":
             asunto = "Tapiado - DOP00013"
 
-    ultima_solicitud = solicitud
-    if ultima_solicitud and ultima_solicitud.folio:
-        puo_texto = num_folio[0]
-        folio = ultima_solicitud.folio
-    else:
-        puo_texto, folio = gen_folio(datos.fuuid, solicitud.puo if solicitud else 'no hay puo')
-
     context = {
         "asunto": asunto,
         "datos": {
@@ -640,7 +644,7 @@ def save_document(request):
             "desc": solicitud.descc if solicitud else "",
             "foto": solicitud.foto,
         },
-        'puo': puo_texto,
+        'puo': puo_txt,
         'documentos': documentos,
         'folio': folio,
     }
@@ -649,7 +653,7 @@ def save_document(request):
     pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
     pdf_file = ContentFile(buffer.getvalue())
     nomDoc = f'VS_{asunto}_{datos.nombre}_{datos.pApe}.pdf'
-    doc = Files(nomDoc=nomDoc, fuuid=uid, soli_FK=ultima_solicitud)
+    doc = Files(nomDoc=nomDoc, fuuid=uid, soli_FK=solicitud)
     doc.finalDoc.save(nomDoc, pdf_file)
 
     return render(request, 'documet/save.html', {'doc':doc})
@@ -946,8 +950,8 @@ def wasap_msg(uid, num):
 
     dp = data.objects.filter(fuuid=uid).last()
     if dp:
-        id_dp = dp.pk
-        print(id_dp)
+    {uuid_id = dp.pk
+        print{uuid_id)
 
     screen_w = win.winfo_screenwidth()
     screen_h = win.winfo_screenheight()
@@ -986,9 +990,16 @@ def gen_folio(uid, puo):
     uid_str = ""
 
     try:
-        dp = data.objects.filter(fuuid=uid).last()
-        uid_str = str(uid.uuid)
-        id_dp = dp.pk if dp else 0  # Valor por defecto si no hay datos
+        if isinstance(uid, str):
+            uuid_obj = Uuid.objects.get(uuid=uid)
+        elif isinstance(uid, Uuid):
+            uuid_obj = uid
+        else:
+            raise ValueError(f"UUID inválido {type(uid)}")
+
+
+        uuid_id = uuid_obj.prime
+        uid_str = str(uuid_obj.uuid)
 
         fecha = date.today()
         year_str = str(fecha.year)
@@ -996,47 +1007,47 @@ def gen_folio(uid, puo):
 
         match puo:
             case 'OFI':
-                folio = f'GOP-OFI-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Oficio'
+                folio = f'GOP-OFI-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Oficio'
             case 'CRC':
-                folio = f'GOP-CRC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'CRC'
+                folio = f'GOP-CRC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'CRC'
             case 'MEC':
-                folio = f'GOP-MEC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Marca el cambio'
+                folio = f'GOP-MEC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Marca el cambio'
             case 'DLO':
-                folio = f'GOP-DLO-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Diputado Local'
+                folio = f'GOP-DLO-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Diputado Local'
             case 'DFE':
-                folio = f'GOP-DFE-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Diputado Federal'
+                folio = f'GOP-DFE-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Diputado Federal'
             case 'REG':
-                folio = f'GOP-REG-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Regidores'
+                folio = f'GOP-REG-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Regidores'
             case 'DEA':
-                folio = f'GOP-DEA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Despacho del Alcalde'
+                folio = f'GOP-DEA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Despacho del Alcalde'
             case 'EVA':
-                folio = f'GOP-EVA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Evento con el Alcalde'
+                folio = f'GOP-EVA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Evento con el Alcalde'
             case 'PED':
-                folio = f'GOP-PED-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Presencial en Dirección'
+                folio = f'GOP-PED-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Presencial en Dirección'
             case 'VIN':
-                folio = f'GOP-VIN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Vinculación'
+                folio = f'GOP-VIN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Vinculación'
             case 'PPA':
-                folio = f'GOP-PPA-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Presupuesto participativo'
+                folio = f'GOP-PPA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Presupuesto participativo'
             case 'CPC':
-                folio = f'GOP-CPC-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'Coordinación de Participación Ciudadana'
+                folio = f'GOP-CPC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'Coordinación de Participación Ciudadana'
             case _:
-                folio = f'GOP-GEN-{id_dp:05d}-{uid_str[:4]}/{year_slice}'
-                puo = 'General'
+                folio = f'GOP-GEN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                puo_txt = 'General'
 
         logger.info(f"Folio generado correctamente: {folio}")
-        return puo, folio
+        return puo_txt, folio
 
     except Exception as e:
         logger.error(f"Error generando folio: {str(e)}")
@@ -1204,6 +1215,7 @@ def soli_processed(request, uid, dp):
 
             # Validar y limpiar campos opcionales
             descc = request.POST.get('descc', '').strip()
+            print(descc)
             if not descc:
                 logger.debug("Solicitud sin descripción")
                 descc = "Sin descripción proporcionada"
@@ -1379,7 +1391,7 @@ def geocode_view(request):
                 'error': 'Dirección muy corta'
             })
 
-        logger.info(f"🔍 Geocodificando: {address}")
+        logger.info(f" Geocodificando: {address}")
 
         # Intentar geocodificación con timeout general
         try:
@@ -1388,14 +1400,14 @@ def geocode_view(request):
             processing_time = (timezone.now() - start_time).total_seconds()
 
             if result:
-                logger.info(f"✅ Encontrado en {processing_time:.2f}s: {result['address']}")
+                logger.info(f" Encontrado en {processing_time:.2f}s: {result['address']}")
                 return JsonResponse({
                     'success': True,
                     'result': result,
                     'processing_time': processing_time
                 })
             else:
-                logger.warning(f"❌ No encontrado en {processing_time:.2f}s: {address}")
+                logger.warning(f" No encontrado en {processing_time:.2f}s: {address}")
                 return JsonResponse({
                     'success': False,
                     'error': 'No se encontró la dirección',
@@ -1478,7 +1490,7 @@ def reverse_geocode_view(request):
                 'error': 'Coordenadas fuera del área de cobertura (Chihuahua)'
             })
 
-        logger.info(f"🔄 Geocodificación inversa: {lat}, {lng}")
+        logger.info(f" Geocodificación inversa: {lat}, {lng}")
 
         try:
             result = LocalGISService.reverse_geocode(lat, lng)
