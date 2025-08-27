@@ -302,10 +302,43 @@ def soliData(request):
         logger.debug("Detectando tipo de dispositivo para interfaz")
 
         dir = request.GET.get('dir', '')
-        asunto = request.POST.get('asunto', '')
+        asunto = request.session.get('asunto', '')
+        print(asunto)
         puo = request.POST.get('puo', '')
         fecha = date.today()
         print(fecha)
+
+        asunto_desc = asunto
+
+        match asunto:
+            case "DOP00001":
+                asunto_desc = "ARREGLO DE TERRACERÍA"
+            case "DOP00002":
+                asunto_desc = "BACHEO DE CALLES"
+            case "DOP00003":
+                asunto_desc = "LIMPIEZA DE ARROYOS AL SUR DE LA CIUDAD"
+            case "DOP00004":
+                asunto_desc = "LIMPIEZA O MANTENIMIENTO DE REJILLAS PLUVIALES"
+            case "DOP00005":
+                asunto_desc = "PAGO DE COSTO POR PARTICIPACIÓN EN LICITACIONES DE OBRA PÚBLICA"
+            case "DOP00006":
+                asunto_desc = "REHABILITACIÓN DE CALLES"
+            case "DOP00007":
+                asunto_desc = "RETIRO DE ESCOMBRO Y MATERIAL DE ARRASTRE"
+            case "DOP00008":
+                asunto_desc = "SOLICITUD DE MATERIAL CALICHE/FRESADO"
+            case "DOP00009":
+                asunto_desc = "SOLICITUD DE PAVIMENTACIÓN DE CALLES"
+            case "DOP00010":
+                asunto_desc = "SOLICITUD DE REDUCTORES DE VELOCIDAD"
+            case "DOP00011":
+                asunto_desc = "SOLICITUD DE PINTURA PARA SEÑALAMIENTOS VIALES"
+            case "DOP00012":
+                asunto_desc = "AREGLO DE DERRUMBES DE BARDAS"
+            case "DOP00013":
+                asunto_desc = "TAPIADO"
+
+        print(asunto_desc)
 
         dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
         if not dp:
@@ -321,6 +354,7 @@ def soliData(request):
         context = {
             'dir': dir,
             'asunto': asunto,
+            'asunto_desc': asunto_desc,
             'puo': puo,
             'datos': dp,
             'uuid': uuid,

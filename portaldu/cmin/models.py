@@ -19,6 +19,24 @@ class CustomUser(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    def create_user(self, creator_user, email, password=None, is_staff=False, is_superuser=False,**extra_fields):
+        if not creator_user.can_create_user_type(is_staff, is_superuser):
+            user_type = "superusuario" if is_superuser else "staff" if is_staff else "otra cosa"
+            raise PermissionError(f"No tienes permisos para crear un {user_type}")
+
+        extra_fields['is_staff'] = is_staff
+        extra_fields['is_superuser'] = is_superuser
+        return self.create_user(email, password, **extra_fields)
+
+    def get_superusers(self):
+        return self.filter(is_superuser=True)
+
+    def get_staff(self):
+        return self.filter(is_staff=False, is_superuser=False)
+
+    def get_regular(self):
+        return self.filter(is_staff=False, is_superuser=False)
+
 class Users(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     bday = models.DateField()
@@ -35,6 +53,46 @@ class Users(AbstractUser, PermissionsMixin):
 
     def __str__(self):
         return self.username
+
+    @property
+    def get_user_type(self):
+        if self.is_superuser:
+            return'Superman'
+        elif self.is_staff:
+            return 'Staff'
+        else:
+            return 'Regular'
+
+    def can_create_user_type(self, target_is_staff, target_is_superuser):
+        if self.is_superuser:
+            return True
+        elif self.is_staff:
+            return not target_is_staff and not target_is_superuser
+        else:
+            return False
+
+    def get_allowed_user(self):
+        if self.is_superuser:
+            return[
+                ('superuser', 'Superusuario'),
+                ('staff','Staff'),
+                ('user','Invitado'),
+            ]
+        elif self.is_staff:
+            return [('user', 'Invitado')]
+        else:
+            return []
+
+    def can_manage_users(self):
+        return self.is_superuser or self.is_staff
+
+    def get_manageable_user(self):
+        if self.is_superuser:
+            return Users.objects.all()
+        elif self.is_staff:
+            return Users.objects.filter(is_staff=False, is_superuser=False)
+        else:
+            return Users.objects.none()
 
 
 class LoginDate(models.Model):
@@ -72,6 +130,13 @@ class SolicitudesPendientes(models.Model):
 
 
 class SolicitudesEnviadas(models.Model):
+    PRIORIDAD_CHOICES = [
+        ('Baja', 'Baja'),
+        ('Media', 'Media'),
+        ('Alta', 'Alta'),
+    ]
+
+
     solicitud_ID = AutoField(primary_key=True)
     nomSolicitud = models.CharField(max_length=150)
     fechaEnvio = models.DateField(auto_now=True)
@@ -79,6 +144,8 @@ class SolicitudesEnviadas(models.Model):
     doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
     solicitud_FK = models.ForeignKey(SolicitudesPendientes, on_delete=models.CASCADE, verbose_name='solicitudes')
     folio = models.CharField(max_length=50, null=True, blank=True)
+    categoria = models.CharField(max_length=100, null=True, blank=True)
+    prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default='Media')
 
     class Meta:
         db_table = 'SolicitudesEnviadas'

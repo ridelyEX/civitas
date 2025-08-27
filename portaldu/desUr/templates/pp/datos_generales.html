@@ -18,15 +18,15 @@
         <div class="container">
             <input type="hidden" name="fuuid" value="{{ form.fuuid.value|default:'' }}">
 
-            <h1>Datos generales</h1>
-            <p>Por favor, completa los siguientes datos para participar en el presupuesto participativo.</p>
+            <h1>DATOS GENERALES</h1>
+            <p>Por favor, complete los siguientes datos para participar en el presupuesto participativo.</p>
             <div class="row-md-6 form-group">
-                <label for="id_nombre_promovente" class="label">Nombre del promovente:</label>
+                <label for="id_nombre_promovente" class="label">NOMBRE DEL PROMOVENTE:</label>
                 {{form.nombre_promovente}}
-                <label for="id_telefono" class="label">Celular:</label>
+                <label for="id_telefono" class="label">TELÉFONO/CELULAR:</label>
                 {{form.telefono}}
             <br>
-                <label for="categoria">Categoria</label>
+                <label for="categoria">CATEGORÍA</label>
                 <select name="categoria" id="categoria" class="form-cat">
                     <option value="">-- Seleccione una opción --</option>
                     <option value="parque">Parques</option>
@@ -36,36 +36,36 @@
                     <option value="pluviales">Arroyos / Solución pluvial</option>
                 </select>
             <br>
-                <label for="id_direccion_proyecto" class="label">Dirección del proyecto:</label>
+                <label for="id_direccion_proyecto" class="label">DIRECCIÓN DEL PROYECTO:</label>
                 {{form.direccion_proyecto}}
             <br>
-                <label for="id_desc_p" class="label">Descripción del estado actual de la instalación</label>
+                <label for="id_desc_p" class="label">DESCRIPCIÓN DEL ESTADO ACTUAL DE LA INSTALACIÓN</label>
                 {{form.desc_p}}
             </div>
             <br>
             <div class=" check-group">
                 <div class="check">
-                    <label for="id_cfe" class="label">Instalación CFE</label>
+                    <label for="id_cfe" class="label">INSTALACIÓN CFE</label>
                     {{form.cfe}}
                 </div>
                 <div class="check">
-                    <label for="id_agua" class="label">Instalación agua potable</label>
+                    <label for="id_agua" class="label">INSTALACIÓN AGUA POTABLE</label>
                     {{form.agua}}
                 </div>
                 <div class="check">
-                    <label for="id_drenaje" class="label">Instalación drenaje</label>
+                    <label for="id_drenaje" class="label">INSTALACIÓN DRENAJE</label>
                     {{form.drenaje}}
                 </div>
                 <div class="check">
-                    <label for="id_impermeabilizacion" class="label">Impermeabilización</label>
+                    <label for="id_impermeabilizacion" class="label">IMPERMEABILIZANTE</label>
                     {{form.impermeabilizacion}}
                 </div>
                 <div class="check">
-                    <label for="id_climas" class="label">Climas</label>
+                    <label for="id_climas" class="label">CLIMAS</label>
                     {{form.climas}}
                 </div>
                 <div class="check">
-                    <label for="id_alumbrado" class="label">Alumbrado</label>
+                    <label for="id_alumbrado" class="label">ALUMBRADO</label>
                     {{form.alumbrado}}
                 </div>
             </div>

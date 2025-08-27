@@ -17,20 +17,38 @@ from django.core.exceptions import ObjectDoesNotExist
 def master(request):
     return render(request, 'master.html')
 
+@login_required
 def users_render(request):
+    if not request.user.can_manage_users():
+        messages.error(request, "No tienes permisos para crear usuarios.")
+        return redirect('login')
+
     if request.method == 'POST':
         print(request.POST)
-        form = UsersRender(request.POST, request.FILES)
+        form = UsersRender(request.POST, request.FILES, creator_user=request.user)
         if form.is_valid():
             print("estamos dentro")
-            cleaned_data = form.cleaned_data
-            form.save()
-            return redirect('login')
+            try:
+                is_staff = form.cleaned_data.get('is_staff', False)
+                is_superuser = form.cleaned_data.get('is_superuser', False)
+
+                if not request.user.can_create_user_type(is_staff, is_superuser):
+                    user_type = "superusuario" if is_superuser else "staff" if is_staff else "otra cosa"
+                    messages.error(request, f"NO tienes permisos para crear {user_type}")
+                    return render(request, 'users.html', {'form': form})
+
+                form.save()
+                messages.success(request, "Usuario creado correctamente.")
+                return redirect('login')
+
+            except Exception as e:
+                messages.error(requesst, f"Error al crear usuario: {str(e)}")
+                return render(request, 'users.html', {'form': form})
+
     else:
         print("no estamos dentro")
         form = UsersRender()
     return render(request, 'users.html', {'form':form})
-
 
 def login_view(request):
     form = Login(request.POST)
@@ -78,12 +96,15 @@ def tables(request):
 
     solictudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
 
+    prioridad_choices = SolicitudesEnviadas.PRIORIDAD_CHOICES
+
     solicitudes = soli.objects.all()
 
     context = {
         'solicitudesP': solicitudesP,
         'solicitudesE': solictudesE,
         'solicitudes': solicitudes,
+        'prioridad_choices': prioridad_choices,
     }
 
     return render(request, 'tables.html', context)
@@ -180,6 +201,8 @@ def sendMail(request):
         solicitud_id = request.POST.get('solicitud_id')
         correo_destino = request.POST.get('correo')
         msg = request.POST.get('mensaje')
+        prioridad = request.POST.get('prioridad', '')
+
 
         if not solicitud_id or not correo_destino:
             messages.error(request, "Todos los campos son obligatorios.")
@@ -213,7 +236,6 @@ def sendMail(request):
 
             solicitud = documento.soli_FK
             folio = solicitud.folio if solicitud else None
-
             solicitudP, created = SolicitudesPendientes.objects.get_or_create(
                 doc_FK=documento,
                 destinatario=correo_destino,
@@ -254,6 +276,7 @@ def sendMail(request):
                     doc_FK=documento,
                     solicitud_FK=solicitudP,
                     folio=folio,
+                    prioridad=prioridad
                 )
                 messages.success(request, f"Correo enviado correctamente a {correo_destino}")
                 print("Correo enviado exitosamente")

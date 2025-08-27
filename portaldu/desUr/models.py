@@ -178,6 +178,7 @@ class PpGeneral(models.Model):
         ('bueno', 'Bueno'),
         ('regular', 'Regular'),
         ('malo', 'Malo'),
+        ('no existe', 'No existe'),
     ]
     
     INSTALATION_CHOICES = [

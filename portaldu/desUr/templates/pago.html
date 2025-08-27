@@ -5,7 +5,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.min.js" integrity="sha384-VQqxDN0EQCkWoxt/0vsQvZswzTHUVOImccYmSyhJTp7kGtPed0Qcx8rK9h9YEgx+" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-    <title>Pago de licitaciones</title>
+    <title>PAGO DE LICITACIONES</title>
 {% endblock %}
 
 
@@ -15,16 +15,16 @@
         <div class="container">
             <div class="head">
                 <div class="titulo">
-                    <h1>Licitación Pública Nacional</h1><br>
+                    <h1>LICITACIÓN DE OBRA PÚBLICA</h1><br>
                 </div>
 
                 <!-- Selector de licitación -->
                 <div class="selector">
-                    <p>Total licitaciones: {{ licitaciones|length }}</p>
+                    <p>LICITACIONES: {{ licitaciones|length }}</p>
                     {% for licitacion in licitaciones %}
                         <p>{{ licitacion.licitacion_ID }} - {{ licitacion.no_licitacion }}</p>
                     {% endfor %}
-                    <label for="licitacion_select">Seleccionar licitación:</label>
+                    <label for="licitacion_select">SELECCIONAR LICITACIÓN:</label>
                     <select name="licitacion" id="licitacion_select" class="input">
                         <option value="">Seleccione una licitación</option>
                         {% for licitacion in licitaciones %}
@@ -42,8 +42,8 @@
 
                 <div class="formulario">
                     <div class="Fecha">
-                        <p>Seleccione la fecha en la que se realiza el trámite</p>
-                        <label for="fecha" class="text">Fecha:</label>
+                        <p>SELECCIONE LA FECHA EN LA QUE SE REALIZA EL TRÁMITE</p>
+                        <label for="fecha" class="text">FECHA:</label>
                         <input
                             type="text"
                             name="fecha"
@@ -56,7 +56,7 @@
                         <input type="text" class="txt" id="descripcion_licitacion" readonly placeholder="Licitación">
                     </div>
                     <div class="nom">
-                        <label for="pfm" class="text">Persona física o moral</label>
+                        <label for="pfm" class="text">PERSONA FÍSICA O MORAL</label>
                         <input
                             type="text"
                             name="pfm"

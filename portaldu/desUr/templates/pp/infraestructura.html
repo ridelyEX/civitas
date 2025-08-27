@@ -15,107 +15,112 @@
     <form action="" method="post">
         {% csrf_token %}
         <div class="container">
-            <h1>Infraestructura</h1>
+            <h1>INFRAESTRUCUTURA URBANA</h1>
             <div class="form-group">
                 <div class="simple-dropdown">
-                    <button class="simple-toggle">Infraestructura</button>
+                    <button class="simple-toggle">INFRAESTRUCTURA URBANA</button>
                     <div class="simple-menu">
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_barda}}  Barda perimetral
+                                {{form.infraestructura_barda}}  BARDA PERIMETRAL
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_banquetas}} Banquetas
+                                {{form.infraestructura_banquetas}} BANQUETAS
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_muro}} Muro de contención
+                                {{form.infraestructura_muro}} MURO DE CONTENCIÓN
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_camellon}} Intervención de camellón
+                                {{form.infraestructura_camellon}} INTERVENCIÓN DE CAMELLÓN
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_crucero}} Crucero seguro / Cruce peatonal
+                                {{form.infraestructura_crucero}} CRUCERO SEGURO / CRUCE PEATONAL
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_ordenamiento}} Ordenamiento vehicular en calle
+                                {{form.infraestructura_ordenamiento}} ORDENAMIENTO VEHICULAR DE CALLE
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_er}} Escalinas / rampas
+                                {{form.infraestructura_er}} ESCALINATAS / RAMPAS
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_mejora}} Mejoramiento de imagen vehicular (pintura)
+                                {{form.infraestructura_mejora}} MEJORAMIENTO DE IMAGEN VEHICULAR (PINTURA)
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_peatonal}} Paso peatonal
+                                {{form.infraestructura_peatonal}} PASO PEATONAL
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_bayoneta}} Bayoneta / retorno
+                                {{form.infraestructura_bayoneta}} BAYONETA / RETORNO
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_topes}} Pasos pompeyanos / reductores de velocidad
+                                {{form.infraestructura_topes}} PASOS POMPEYANOS / REDUCTORES DE VELOCIDAD
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.infraestructura_puente}} Puente vehicular
+                                {{form.infraestructura_puente}} PUENTE VEHICULAR
                             </label>
                         </div>
                     </div>
 
                 </div>
                 <div class="simple-dropdown">
-                    <button class="simple-toggle">Pavimentación</button>
+                    <button class="simple-toggle">PAVIMENTACIÓN</button>
                     <div class="simple-menu">
                         <div class="simple-item">
                             <label>
-                                {{form.pavimentacion_asfalto}} Asfalto
+                                {{form.pavimentacion_asfalto}} PAVIMENTACIÓN DE ASFALTO
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.pavimentacion_rehabilitacion}} Rehabilitación
+                                {{form.pavimentacion_concreto}} PAVIMENTACIÓN DE CONCRETO HIDRÁULICO
+                            </label>
+                        </div>
+                        <div class="simple-item">
+                            <label>
+                                {{form.pavimentacion_rehabilitacion}} REHABILITACIÓN DE PAVIMENTO
                             </label>
                         </div>
                     </div>
                 </div>
                 <div class="simple-dropdown">
-                    <button class="simple-toggle">Rehabilitación</button>
+                    <button class="simple-toggle">REHABILITACIÓN</button>
                     <div class="simple-menu">
                         <div class="simple-item">
                             <label>
-                                {{form.señalamiento_pintura}} Pintura
+                                {{form.señalamiento_pintura}} PINTURA
                             </label>
                         </div>
                         <div class="simple-item">
                             <label>
-                                {{form.señalamiento_señales}} Señales verticales
+                                {{form.señalamiento_señales}} SEÑALES VERTICALES
                             </label>
                         </div>
                     </div>
 
                 </div>
                 <br>
-                <label for="id_desc_p" class="label">Notas importantes sobre la propuesta</label>
+                <label for="id_desc_p" class="label">NOTAS SOBRE LA PROPUESTA</label>
                 {{form.notas_propuesta}}
             </div>
         </div>
