@@ -17,6 +17,39 @@
 
 <footer>
     {% block footer %}
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {% elif message.tags == 'success' %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {% elif message.tags == 'warning' %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {% elif message.tags == 'info' %}
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {% else %}
+                <div class="alert alert-primary alert-dismissible fade show" role="alert">
+            {% endif %}
+                <strong>{{ message.tags|capfirst }}:</strong> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% endif %}
+        <script>
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
+                });
+            }, 5000);
+        </script>
     {% endblock %}
 </footer>
 

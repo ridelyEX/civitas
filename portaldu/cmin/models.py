@@ -147,6 +147,19 @@ class SolicitudesEnviadas(models.Model):
     categoria = models.CharField(max_length=100, null=True, blank=True)
     prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default='Media')
 
+    usuario_asignado = models.ForeignKey(
+        Users, on_delete=models.SET_NULL, null=True, blank=True, related_name='solicitudes_asignadas', verbose_name='Usuario Asignado'
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ('pendiente', 'Pendiente'),
+            ('en_proceso', 'En Proceso'),
+            ('completado', 'Completado')
+        ],
+        default='pendiente'
+    )
+
     class Meta:
         db_table = 'SolicitudesEnviadas'
         ordering = ['solicitud_ID']

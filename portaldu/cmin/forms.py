@@ -16,7 +16,6 @@ class UsersRender(forms.ModelForm):
             'username': forms.TextInput(attrs={'class':'formcontrol'}),
             'bday': forms.DateInput(attrs={'class':'formcontrol', 'type':'date'}),
             'foto': forms.FileInput(attrs={'class':'foto', 'accept':'image/*'}),
-            'is_staff': forms.CheckboxInput(attrs={'class':'form-check-input'}),
         }
 
     def __init__(self, *args, creator_user=None, **kwargs):
@@ -29,9 +28,9 @@ class UsersRender(forms.ModelForm):
                 self.fields['is_superuser'].widget.attrs['disabled'] = True
                 self.fields['is_superuser'].initial = False
 
-            if not creator_user.can_manage:users():
-            self.fields['is_staff'].widget.attrs['disabled'] = True
-            self.fields['is_superuser'].widget.attrs['disabled'] = True
+            if not creator_user.can_manage_users():
+                self.fields['is_staff'].widget.attrs['disabled'] = True
+                self.fields['is_superuser'].widget.attrs['disabled'] = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -53,6 +52,17 @@ class UsersRender(forms.ModelForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data["password"])
+
+        if self.cleaned_data.get('password'):
+            user.set_password(self.cleaned_data['password'])
+
+        if self.creator_user and self.creator_user.is_superuser:
+            user.is_staff = True
+            user.is_superuser = False
+        elif self.creator_user and self.creator_user.is_staff:
+            user.is_staff = False
+            user.is_superuser = False
+
         if commit:
             user.save()
         return user

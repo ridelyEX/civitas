@@ -1,0 +1,180 @@
+{% extends 'master.html' %}
+
+{% block title %}Bandeja de Entrada{% endblock %}
+
+{% block content %}{% include 'navmin.html' %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Mi Bandeja de Entrada</h2>
+
+            <!-- Estadísticas -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5>Total</h5>
+                            <h3>{{ stats.total }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5>Pendientes</h5>
+                            <h3>{{ stats.pendientes }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5>En Proceso</h5>
+                            <h3>{{ stats.en_proceso }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5>Completadas</h5>
+                            <h3>{{ stats.completadas }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select name="estado" class="form-control">
+                                    <option value="">Todos los estados</option>
+                                    {% for estado_val, estado_label in estado_choices %}
+                                        <option value="{{ estado_val }}" {% if estado_filtro == estado_val %}selected{% endif %}>
+                                            {{ estado_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select name="prioridad" class="form-control">
+                                    <option value="">Todas las prioridades</option>
+                                    {% for prioridad_val, prioridad_label in prioridad_choices %}
+                                        <option value="{{ prioridad_val }}" {% if prioridad_filtro == prioridad_val %}selected{% endif %}>
+                                            {{ prioridad_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary">Filtrar</button>
+                                <a href="{% url 'bandeja_entrada' %}" class="btn btn-secondary">Limpiar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabla de solicitudes -->
+            <div class="card">
+                <div class="card-body">
+                    {% if solicitudes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Solicitud</th>
+                                        <th>Fecha Envío</th>
+                                        <th>Prioridad</th>
+                                        <th>Estado</th>
+                                        <th>Remitente</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for solicitud in solicitudes %}
+                                        <tr>
+                                            <td>{{ solicitud.folio|default:"Sin folio" }}</td>
+                                            <td>{{ solicitud.nomSolicitud }}</td>
+                                            <td>{{ solicitud.fechaEnvio|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <span class="badge badge-{% if solicitud.prioridad == 'alta' %}danger{% elif solicitud.prioridad == 'media' %}warning{% else %}info{% endif %}">
+                                                    {{ solicitud.get_prioridad_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-{% if solicitud.estado == 'completado' %}success{% elif solicitud.estado == 'en_proceso' %}info{% else %}warning{% endif %}">
+                                                    {{ solicitud.get_estado_display }}
+                                                </span>
+                                            </td>
+                                            <td>{{ solicitud.user_FK.get_full_name|default:solicitud.user_FK.username }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <!-- Botón para cambiar estado -->
+                                                    <button class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#estadoModal{{ solicitud.solicitud_ID }}">
+                                                        Cambiar Estado
+                                                    </button>
+
+                                                    <!-- Ver documento -->
+                                                    {% if solicitud.doc_FK.finalDoc %}
+                                                        <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank" class="btn btn-outline-info btn-sm">
+                                                            Ver Doc
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+
+                                                <!-- Modal para cambiar estado -->
+                                                <div class="modal fade" id="estadoModal{{ solicitud.solicitud_ID }}">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Cambiar Estado</h5>
+                                                                <button type="button" class="close" data-dismiss="modal">
+                                                                    <span>&times;</span>
+                                                                </button>
+                                                            </div>
+                                                            <form method="POST" action="{% url 'actualizar_estado' %}">
+                                                                {% csrf_token %}
+                                                                <div class="modal-body">
+                                                                    <input type="hidden" name="solicitud_id" value="{{ solicitud.solicitud_ID }}">
+                                                                    <div class="form-group">
+                                                                        <label>Nuevo Estado:</label>
+                                                                        <select name="estado" class="form-control" required>
+                                                                            {% for estado_val, estado_label in estado_choices %}
+                                                                                <option value="{{ estado_val }}" {% if solicitud.estado == estado_val %}selected{% endif %}>
+                                                                                    {{ estado_label }}
+                                                                                </option>
+                                                                            {% endfor %}
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                                                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <h5>No tienes solicitudes asignadas</h5>
+                            <p class="text-muted">Las solicitudes asignadas a ti aparecerán aquí.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

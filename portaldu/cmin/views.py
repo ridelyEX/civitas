@@ -1,8 +1,10 @@
+import logging
+
 import pandas as pd
 from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
@@ -13,6 +15,7 @@ import os
 from .forms import UsersRender, Login, UsersConfig, UploadExcel
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones, Users
 from django.core.exceptions import ObjectDoesNotExist
+logger = logging.getLogger(__name__)
 
 def master(request):
     return render(request, 'master.html')
@@ -39,15 +42,15 @@ def users_render(request):
 
                 form.save()
                 messages.success(request, "Usuario creado correctamente.")
-                return redirect('login')
+                return redirect('menu')
 
             except Exception as e:
-                messages.error(requesst, f"Error al crear usuario: {str(e)}")
+                messages.error(request, f"Error al crear usuario: {str(e)}")
                 return render(request, 'users.html', {'form': form})
 
     else:
         print("no estamos dentro")
-        form = UsersRender()
+        form = UsersRender(creator_user=request.user)
     return render(request, 'users.html', {'form':form})
 
 def login_view(request):
@@ -61,10 +64,16 @@ def login_view(request):
                 users = Users.objects.get(username=user.username)
                 login(request, user)
                 LoginDate.objects.create(user_FK=users)
-                return redirect('menu')
+
+                if user.is_superuser:
+                    return redirect('menu')
+                elif user.is_staff:
+                    return redirect('bandeja_entrada')
             except Users.DoesNotExist:
+                logger.error("Usuario no registrado en el sistema.")
                 messages.error(request, "Usuario no registrado en el sistema.")
         else:
+            logger.error("Usuario o contraseña incorrectos")
             messages.error(request, "Usuario o contraseña incorrectos")
     return render(request, 'login.html', {'form': form})
 
@@ -97,6 +106,7 @@ def tables(request):
     solictudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
 
     prioridad_choices = SolicitudesEnviadas.PRIORIDAD_CHOICES
+    users = Users.objects.filter(is_staff=True, is_active=True).order_by('username')
 
     solicitudes = soli.objects.all()
 
@@ -105,6 +115,7 @@ def tables(request):
         'solicitudesE': solictudesE,
         'solicitudes': solicitudes,
         'prioridad_choices': prioridad_choices,
+        'users': users,
     }
 
     return render(request, 'tables.html', context)
@@ -202,7 +213,18 @@ def sendMail(request):
         correo_destino = request.POST.get('correo')
         msg = request.POST.get('mensaje')
         prioridad = request.POST.get('prioridad', '')
+        usuario = request.POST.get('usuario', '')
 
+        usuario_fk = None
+
+        if usuario:
+            try:
+                usuario_fk = Users.objects.get(username=usuario)
+                logger.debug(f"Usuario asignado encontrado: {usuario_fk.username}")
+            except Users.DoesNotExist:
+                messages.error(request, f"Usuario asignado no encontrado: {usuario}")
+                logger.warning(f"Usuario asignado no encontrado: {usuario}")
+                return redirect('tablas')
 
         if not solicitud_id or not correo_destino:
             messages.error(request, "Todos los campos son obligatorios.")
@@ -236,13 +258,23 @@ def sendMail(request):
 
             solicitud = documento.soli_FK
             folio = solicitud.folio if solicitud else None
-            solicitudP, created = SolicitudesPendientes.objects.get_or_create(
-                doc_FK=documento,
-                destinatario=correo_destino,
-                defaults={
-                    'nomSolicitud': documento.nomDoc or f"Solicitud-{documento.fDoc_ID}",
-                    'fechaSolicitud': timezone.now().date(),
-                }
+
+            solicitud_data = {
+                'nomSolicitud': documento.nomDoc or f"Solicitud-{documento.fDoc_ID}",
+                'fechaSolicitud': timezone.now().date(),
+                'destinatario': correo_destino,
+            }
+
+
+            nommbre_solicitud = documento.nomDoc or f"solicitud-{documento.fDoc_ID}"
+
+            logger.debug(f"Todo se envia {correo_destino}, {documento.nomDoc}, {documento.finalDoc.path}")
+
+            email = EmailMessage(
+                subject=f'Solicitud: {nommbre_solicitud}',
+                body=msg or f'Se adjunta la solicitud {nommbre_solicitud}.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[correo_destino],
             )
 
             # Agrega logs para depuración
@@ -250,12 +282,6 @@ def sendMail(request):
             print(f"Documento: {documento.nomDoc}, ID: {documento.fDoc_ID}")
             print(f"Adjunto: {documento.finalDoc.path if documento.finalDoc else 'No hay adjunto'}")
 
-            email = EmailMessage(
-                subject=f'Solicitud: {solicitudP.nomSolicitud}',
-                body=msg or f'Se adjunta la solicitud {solicitudP.nomSolicitud}.',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[correo_destino],
-            )
 
             if documento.finalDoc:
                 archivo_path = documento.finalDoc.path
@@ -269,34 +295,44 @@ def sendMail(request):
             from smtplib import SMTPAuthenticationError, SMTPException
             try:
                 email.send(fail_silently=False)  # Cambia a False para ver errores
+                logger.debug("Se mandó chido")
 
+                solicitudP, created = SolicitudesPendientes.objects.get_or_create(
+                    doc_FK=documento,
+                    destinatario=correo_destino,
+                    defaults={
+                        'nomSolicitud': documento.nomDoc or f"Solicitud-{documento.fDoc_ID}",
+                        'fechaSolicitud': timezone.now().date(),
+                    }
+                )
                 solicitud_enviada = SolicitudesEnviadas.objects.create(
                     nomSolicitud=solicitudP.nomSolicitud,
                     user_FK=request.user,
                     doc_FK=documento,
                     solicitud_FK=solicitudP,
                     folio=folio,
-                    prioridad=prioridad
+                    prioridad=prioridad,
+                    usuario_asignado=usuario_fk,
                 )
                 messages.success(request, f"Correo enviado correctamente a {correo_destino}")
-                print("Correo enviado exitosamente")
+                logger.debug("Correo enviado exitosamente")
             except SMTPAuthenticationError as e:
-                print(f"Error de autenticación: {str(e)}")
+                logger.error(f"Error de autenticación: {str(e)}")
                 messages.error(request, "Error de autenticación con el servidor de correo. Verifica las credenciales.")
                 return redirect('tablas')
             except SMTPException as e:
-                print(f"Error SMTP: {str(e)}")
+                logger.error(f"Error SMTP: {str(e)}")
                 messages.error(request, f"Error SMTP: {str(e)}")
                 return redirect('tablas')
             except Exception as e:
-                print(f"Error desconocido al enviar: {str(e)}")
+                logger.error(f"Error desconocido al enviar: {str(e)}")
                 messages.error(request, f"Error al enviar el correo: {str(e)}")
                 return redirect('tablas')
 
         except Files.DoesNotExist:
             messages.error(request, "No se encontró el documento especificado.")
         except Exception as e:
-            print(f"Error general: {str(e)}")
+            logger.error(f"Error general: {str(e)}")
             messages.error(request, f"Error al procesar la solicitud: {str(e)}")
 
     return redirect('tablas')
@@ -346,7 +382,6 @@ def seguimiento_docs(request, solicitud_id):
             print("No se encontró archivo en request.FILES")
 
     return redirect('seguimiento')
-
 
 def custom_handler404(request, exception=None):
     context = {}
@@ -398,8 +433,68 @@ def subir_excel(request):
     return render(request, 'excel/upload_excel.html', {"form":form,
                                                                                 "licitaciones": licitaciones_activas})
 
+def is_staff_user(user):
+    return user.is_authenticated and user.is_staff
 
+@user_passes_test(is_staff_user, login_url='login')
+def bandeja_entrada(request):
+    solicitudes_asignadas = SolicitudesEnviadas.objects.filter(
+        usuario_asignado=request.user
+    ).select_related('doc_FK', 'user_FK', 'solicitud_FK').order_by('-fechaEnvio')
 
+    estado_filtro = request.GET.get('estado', '')
+    prioridad_filtro = request.GET.get('prioridad', '')
+
+    if estado_filtro:
+        solicitudes_asignadas = solicitudes_asignadas.filter(estado=estado_filtro)
+
+    if prioridad_filtro:
+        solicitudes_asignadas = solicitudes_asignadas.filter(prioridad=prioridad_filtro)
+
+    stats = {
+        'total': solicitudes_asignadas.count(),
+        'pendientes': solicitudes_asignadas.filter(estado='pendiente').count(),
+        'en_proceso': solicitudes_asignadas.filter(estado='en_proceso').count(),
+        'completadas': solicitudes_asignadas.filter(estado='completado').count(),
+    }
+
+    context = {
+        'solicitudes': solicitudes_asignadas,
+        'stats': stats,
+        'estado_filtro': estado_filtro,
+        'prioridad_filtro': prioridad_filtro,
+        'estado_choices': [
+            ('pendiente', 'Pendiente'),
+            ('en_proceso', 'En Proceso'),
+            ('completado', 'Completado')
+        ],
+        'prioridad_choices': SolicitudesEnviadas.PRIORIDAD_CHOICES
+    }
+
+    return render(request, 'bandeja_entrada.html', context)
+
+@user_passes_test(is_staff_user, login_url='login')
+def actualizar_estado_solicitud(request):
+    if request.method == 'POST':
+        solicitud_id = request.POST.get('solicitud_id')
+        nuevo_estado = request.POST.get('estado')
+
+        try:
+            solicitud = get_object_or_404(
+                SolicitudesEnviadas,
+                solicitud_ID=solicitud_id,
+                usuario_asignado=request.user
+            )
+
+            solicitud.estado = nuevo_estado
+            solicitud.save()
+
+            messages.success(request, f"Estado actualizado a {nuevo_estado}")
+
+        except Exception as e:
+            messages.error(request, f"Error al actualizar estado: {str(e)}")
+
+    return redirect('bandeja_entrada')
 
 """
 def test_email(request):

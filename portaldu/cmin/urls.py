@@ -12,6 +12,9 @@ urlpatterns = [
     path('user_conf/', view.user_conf, name='user_conf'),
     path('seguimiento/', view.seguimiento, name='seguimiento'),
     path('menu/', view.menu, name='menu'),
+    #Bandeja de entrada
+    path('bandeja/', view.bandeja_entrada, name='bandeja_entrada'),
+    path('actualizar-estado/', view.actualizar_estado_solicitud, name='actualizar_estado'),
     # excel
     path('excel/', view.subir_excel, name="excel"),
 ]

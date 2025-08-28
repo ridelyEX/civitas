@@ -88,13 +88,23 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="usuario">Asigne un usuario</label>
+                    <select name="usuario" class="form-control" id="usuario">
+                        <option value="">-- Seleccione un usuario --</option>
+                        {% for user in users %}
+                            <option value="{{ user.username }}"
+                                    data-email="{{ user.email }}"
+                            >{{ user.username }} - {{ user.email }}</option>
+                        {% endfor %}
+                    </select>
                     <label for="correo">Correo electrónico del destinatario:</label>
                     <input type="email" id="correo" name="correo" class="form-control">
                 </div>
                 <div class="form-group">
                     <label for="prioridad">Prioridad</label>
-                    <select name="prioridad" id="prioridad">
-                        {% for value, display in prioridad_choices  %}
+                    <select name="prioridad" id="prioridad" class="form-control">
+                            <option value="">-- Nivel de prioridad --</option>
+                        {% for value, display in prioridad_choices %}
                             <option value="{{ value }}">{{ display }}</option>
                         {% endfor %}
                     </select>
@@ -115,6 +125,5 @@
 <footer class="footer"></footer>
 
 <script src="{% static 'cminScripts/cminBtns.js' %}"></script>
-
 <script src="{% static 'cminScripts/cminModal.js' %}"></script>
 {% endblock %}
