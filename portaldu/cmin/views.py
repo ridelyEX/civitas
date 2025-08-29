@@ -7,6 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
+from django.template.autoreload import template_changed
 from django.utils import timezone
 from portaldu.desUr.models import Files, soli
 from django.contrib import messages
@@ -446,6 +447,13 @@ def bandeja_entrada(request):
     ).select_related('solicitud_FK', 'user_FK').order_by('-seguimiento_ID', '-fechaSeguimiento')
     evidencia_solicitud = {}
 
+    stats = {
+        'total': solicitudes_asignadas.count(),
+        'pendientes': solicitudes_asignadas.filter(estado='pendiente').count(),
+        'en_proceso': solicitudes_asignadas.filter(estado='en_proceso').count(),
+        'completadas': solicitudes_asignadas.filter(estado='completado').count(),
+    }
+
     estado_filtro = request.GET.get('estado', '')
     prioridad_filtro = request.GET.get('prioridad', '')
 
@@ -455,18 +463,12 @@ def bandeja_entrada(request):
     if prioridad_filtro:
         solicitudes_asignadas = solicitudes_asignadas.filter(prioridad=prioridad_filtro)
 
+
     for evidencia in evidencias:
         solicitud_id = evidencia.solicitud_FK.solicitud_ID
         if solicitud_id not in evidencia_solicitud:
             evidencia_solicitud[solicitud_id] = []
         evidencia_solicitud[solicitud_id].append(evidencia)
-
-    stats = {
-        'total': solicitudes_asignadas.count(),
-        'pendientes': solicitudes_asignadas.filter(estado='pendiente').count(),
-        'en_proceso': solicitudes_asignadas.filter(estado='en_proceso').count(),
-        'completadas': solicitudes_asignadas.filter(estado='completado').count(),
-    }
 
     context = {
         'solicitudes': solicitudes_asignadas,
@@ -498,6 +500,10 @@ def actualizar_estado_solicitud(request):
                 solicitud_ID=solicitud_id,
                 usuario_asignado=request.user
             )
+
+            if solicitud.estado == 'completado':
+                messages.error(request, "No se puede cambiar el estado de una solicitud completada.")
+                return redirect('bandeja_entrada')
 
             solicitud.estado = nuevo_estado
             solicitud.save()

@@ -1,5 +1,4 @@
 {% extends 'master.html' %}
-
 {% block head %}
     {% load bootstrap5 %}
     {% bootstrap_css %}
@@ -121,9 +120,13 @@
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <!-- Botón para cambiar estado -->
+                                                    {% if solicitud.estado != 'completado' %}
                                                     <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#estadoModal{{ solicitud.solicitud_ID }}">
                                                         Cambiar Estado
                                                     </button>
+                                                    {% else %}
+                                                    <span>Solicitud completada</span>
+                                                    {% endif %}
 
                                                     <!-- Ver documento -->
                                                     {% if solicitud.doc_FK.finalDoc %}
@@ -133,7 +136,17 @@
                                                     {% endif %}
 
                                                     <!-- Seguimiento -->
-                                                    <a href="{% url 'evidencias_solicitud' solicitud.solicitud_ID %}" class="btn btn-outline-secondary btn-sm">Ver evidencias</a>
+                                                    {% for solicitud_id, evidencias_lista in evidencias.items %}
+                                                        {% if eolicitud_id == solicitud.solicitud_ID %}
+                                                            {% for evidencia in evidencias_lista %}
+                                                                {% if evidencia.documento %}
+                                                                    <a href="{{ evidencia.documento.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                                                        Ver Evidencia
+                                                                    </a>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% endfor %}
 
                                                 </div>
 
