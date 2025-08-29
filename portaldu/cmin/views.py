@@ -441,6 +441,10 @@ def bandeja_entrada(request):
     solicitudes_asignadas = SolicitudesEnviadas.objects.filter(
         usuario_asignado=request.user
     ).select_related('doc_FK', 'user_FK', 'solicitud_FK').order_by('-fechaEnvio')
+    evidencias = Seguimiento.objects.filter(
+        solicitud_FK__in=solicitudes_asignadas
+    ).select_related('solicitud_FK', 'user_FK').order_by('-seguimiento_ID', '-fechaSeguimiento')
+    evidencia_solicitud = {}
 
     estado_filtro = request.GET.get('estado', '')
     prioridad_filtro = request.GET.get('prioridad', '')
@@ -451,6 +455,12 @@ def bandeja_entrada(request):
     if prioridad_filtro:
         solicitudes_asignadas = solicitudes_asignadas.filter(prioridad=prioridad_filtro)
 
+    for evidencia in evidencias:
+        solicitud_id = evidencia.solicitud_FK.solicitud_ID
+        if solicitud_id not in evidencia_solicitud:
+            evidencia_solicitud[solicitud_id] = []
+        evidencia_solicitud[solicitud_id].append(evidencia)
+
     stats = {
         'total': solicitudes_asignadas.count(),
         'pendientes': solicitudes_asignadas.filter(estado='pendiente').count(),
@@ -460,6 +470,7 @@ def bandeja_entrada(request):
 
     context = {
         'solicitudes': solicitudes_asignadas,
+        'evidencias': evidencia_solicitud,
         'stats': stats,
         'estado_filtro': estado_filtro,
         'prioridad_filtro': prioridad_filtro,
@@ -478,6 +489,8 @@ def actualizar_estado_solicitud(request):
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')
         nuevo_estado = request.POST.get('estado')
+        seguimiento = None
+
 
         try:
             solicitud = get_object_or_404(
@@ -488,8 +501,29 @@ def actualizar_estado_solicitud(request):
 
             solicitud.estado = nuevo_estado
             solicitud.save()
+            if nuevo_estado == 'pendiente':
+                messages.success(request, f"Estado actualizado a pendiente")
+            elif nuevo_estado == 'en_proceso':
+                messages.success(request, f"Estado actualizado a en proceso")
+            elif nuevo_estado == 'completado':
 
-            messages.success(request, f"Estado actualizado a {nuevo_estado}")
+                try:
+                    evidencia = request.FILES.get('evidencia')
+                    nom_evidencia = evidencia.name if evidencia else ''
+                    observacion = request.POST.get('observaciones', '')
+                    seguimiento = Seguimiento.objects.create(
+                        documento=evidencia,
+                        nomSeg=nom_evidencia,
+                        comentario=observacion if observacion else 'Evidencia de cierre',
+                        solicitud_FK=solicitud,
+                        user_FK=request.user
+                    )
+                    seguimiento.save()
+                    logger.debug(f"evidencia {observacion}")
+                except seguimiento.DoesNotExist:
+                    messages.error(request, "No se puede completar sin evidencia.")
+                    return redirect('bandeja_entrada')
+                messages.success(request, f"Estado actualizado a completado")
 
         except Exception as e:
             messages.error(request, f"Error al actualizar estado: {str(e)}")

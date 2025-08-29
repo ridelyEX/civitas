@@ -1,5 +1,11 @@
 {% extends 'master.html' %}
 
+{% block head %}
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+{% endblock %}
+
 {% block title %}Bandeja de Entrada{% endblock %}
 
 {% block content %}{% include 'navmin.html' %}
@@ -115,7 +121,7 @@
                                             <td>
                                                 <div class="btn-group btn-group-sm">
                                                     <!-- Botón para cambiar estado -->
-                                                    <button class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#estadoModal{{ solicitud.solicitud_ID }}">
+                                                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#estadoModal{{ solicitud.solicitud_ID }}">
                                                         Cambiar Estado
                                                     </button>
 
@@ -125,6 +131,10 @@
                                                             Ver Doc
                                                         </a>
                                                     {% endif %}
+
+                                                    <!-- Seguimiento -->
+                                                    <a href="{% url 'evidencias_solicitud' solicitud.solicitud_ID %}" class="btn btn-outline-secondary btn-sm">Ver evidencias</a>
+
                                                 </div>
 
                                                 <!-- Modal para cambiar estado -->
@@ -133,11 +143,10 @@
                                                         <div class="modal-content">
                                                             <div class="modal-header">
                                                                 <h5 class="modal-title">Cambiar Estado</h5>
-                                                                <button type="button" class="close" data-dismiss="modal">
-                                                                    <span>&times;</span>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal">
                                                                 </button>
                                                             </div>
-                                                            <form method="POST" action="{% url 'actualizar_estado' %}">
+                                                            <form method="POST" action="{% url 'actualizar_estado' %}" enctype="multipart/form-data">
                                                                 {% csrf_token %}
                                                                 <div class="modal-body">
                                                                     <input type="hidden" name="solicitud_id" value="{{ solicitud.solicitud_ID }}">
@@ -151,9 +160,15 @@
                                                                             {% endfor %}
                                                                         </select>
                                                                     </div>
+                                                                    <div class="form-group evidencia" id="evidencia" hidden>
+                                                                        <label>Subir evidencia</label>
+                                                                        <input type="file" name="evidencia" class="form-control" accept=".pdf">
+                                                                        <label for="observaciones">Observaciones:</label>
+                                                                        <input type="text" name="observaciones" id="observaciones" class="form-control" placeholder="Observaciones" required>
+                                                                    </div>
                                                                 </div>
                                                                 <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                                                                     <button type="submit" class="btn btn-primary">Actualizar</button>
                                                                 </div>
                                                             </form>
@@ -177,4 +192,25 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block footer %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const estadoSelects = document.querySelectorAll('select[name="estado"]');
+        estadoSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                const modal = this.closest('.modal');
+                const evidenciaDiv = modal.querySelector('.evidencia');
+                if (this.value === 'completado') {
+                    evidenciaDiv.removeAttribute('hidden');
+                    evidenciaDiv.querySelector('input').setAttribute('required', 'required');
+                } else {
+                    evidenciaDiv.setAttribute('hidden', 'hidden');
+                    evidenciaDiv.querySelector('input').removeAttribute('required');
+                }
+            });
+        });
+    });
+</script>
+
 {% endblock %}
