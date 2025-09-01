@@ -3,7 +3,7 @@
 {% block head %}
     {% load bootstrap5 %}
     {% bootstrap_css %}
-    {% bootstrap_javascript %}
+
 
 <style>
     .logout-btn {
@@ -40,6 +40,11 @@
                 <span style="color: white;">ADMIN</span>
                 {% endif %}
             </a>
+            {% if user.is_authenticated %}
+            <div class="notificaciones">
+                {% include 'notificaciones/notificaciones.html' %}
+            </div>
+            {% endif %}
             <div class="button">
                 <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}

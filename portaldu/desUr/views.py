@@ -232,7 +232,6 @@ def intData(request):
                 'datos': request.POST,
                 'dir': direccion,
                 'uuid': uuid,
-                'google_key': settings.GOOGLE_API_KEY,
             })
 
         try:
@@ -267,6 +266,7 @@ def intData(request):
                         return redirect('pago')
                     case _:
                         return redirect('soli')
+                        logger.error("no jala esto")
 
         except Exception as e:
             logger.error(f"Error al procesar datos: {str(e)}")

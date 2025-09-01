@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager, Permission
 from django.db import models
 from django.db.models import AutoField
 from django.forms import FileField
+from django.urls import reverse
 
 from portaldu.desUr.models import Files
 
@@ -197,6 +198,23 @@ class Close(models.Model):
 
     def __str__(self):
         return f"Cierre {self.close_ID} - {self.solicitud_FK.nomSolicitud}"
+
+
+class Notifications(models.Model):
+    notification_ID = models.AutoField(primary_key=True)
+    user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    msg = models.TextField()
+    link = models.URLField(blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+
+    class Meta:
+        db_table = 'Notificaciones'
+        ordering = ['-notification_ID']
+
+    def __str__(self):
+        return self.msg or "Notificación sin mensaje"
 
 
 #Excel

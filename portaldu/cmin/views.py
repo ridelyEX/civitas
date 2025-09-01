@@ -1,6 +1,8 @@
 import logging
 
 import pandas as pd
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -8,13 +10,15 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.autoreload import template_changed
+from django.urls import reverse
 from django.utils import timezone
 from portaldu.desUr.models import Files, soli
 from django.contrib import messages
 from django.core.mail import EmailMessage
 import os
 from .forms import UsersRender, Login, UsersConfig, UploadExcel
-from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones, Users
+from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones, Users, \
+    Notifications
 from django.core.exceptions import ObjectDoesNotExist
 logger = logging.getLogger(__name__)
 
@@ -493,7 +497,6 @@ def actualizar_estado_solicitud(request):
         nuevo_estado = request.POST.get('estado')
         seguimiento = None
 
-
         try:
             solicitud = get_object_or_404(
                 SolicitudesEnviadas,
@@ -535,6 +538,59 @@ def actualizar_estado_solicitud(request):
             messages.error(request, f"Error al actualizar estado: {str(e)}")
 
     return redirect('bandeja_entrada')
+
+"""
+Notificaciones Django
+"""
+
+@login_required
+def notifications(request):
+    notificaciones = Notifications.objects.filter(user_FK=request.user).order_by('-created_at')
+
+    Notifications.objects.filter(user_FK=request.user, is_read=False).update(is_read=True)
+
+    context = {
+        'notificaciones': notificaciones
+    }
+
+    return render(request, 'notificaciones.html', context)
+
+@login_required
+def marcar_notificacion(request, notificacion_id):
+    try:
+        notificacion = get_object_or_404(Notifications, pk=notificacion_id, user_FK=request.user)
+        notificacion.is_read = True
+        notificacion.save()
+        return JsonResponse({'status':'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+@receiver(post_save, sender=SolicitudesEnviadas)
+def solicitud_notificacion(sender, instance, created, **kwargs):
+    if created and instance.usuario_asignado:
+        msg = f"Se ha asignado una nueva solicitud: {instance.nomSolicitud}"
+        link = reverse('bandeja_entrada')
+        Notifications.objects.create(
+            user_FK=instance.usuario_asignado,
+            msg=msg,
+            link=link,
+            is_read=False
+        )
+
+# Crear notificación al guardar seguimiento
+@receiver(post_save, sender=Seguimiento)
+def seguimiento_notificacion(sender, instance, created, **kwargs):
+    if created:
+        solicitud_e = instance.solicitud_FK
+        if solicitud_e and solicitud_e.user_FK:
+            msg = f"Se ha agregado un nuevo seguimiento a la solicitud '{solicitud_e.nomSolicitud}'."
+            link = reverse('seguimiento')
+            Notifications.objects.create(
+                user_FK=solicitud_e.user_FK,
+                msg=msg,
+                link=link,
+                is_read=False
+            )
 
 """
 def test_email(request):

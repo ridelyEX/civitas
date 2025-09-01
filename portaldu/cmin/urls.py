@@ -15,6 +15,9 @@ urlpatterns = [
     #Bandeja de entrada
     path('bandeja/', view.bandeja_entrada, name='bandeja_entrada'),
     path('actualizar-estado/', view.actualizar_estado_solicitud, name='actualizar_estado'),
+    #Notificaciones
+    path('notificaciones/', view.notifications, name='notificaciones'),
+    path('marcar-leida/<int:notificacion_id>/', view.marcar_notificacion, name="marcar_notificacion"),
     # excel
     path('excel/', view.subir_excel, name="excel"),
 ]

@@ -1,0 +1,52 @@
+<!--div class="notification-icon">
+    <a href="{% url 'notificaciones' %}">
+        <i class="fas fa-bell">
+            {% if unread_count > 0 %}
+                <span class="badge">{{ unread_count }}</span>
+            {% endif %}
+        </i>
+    </a>
+</div>
+
+<div class="notifications-dropdown">
+    {% for notification in unread_notifications %}
+        <div class="notification-item">
+            <a href="{{ notification.link }}">
+                {{ notification.msg }}
+                <small>{{ notification.created_At|timesince }}</small>
+            </a>
+        </div>
+    {% empty %}
+    {% endfor %}
+</div-->
+
+<div class="btn-group">
+    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        Notificaciones
+        {% if unread_count > 0 %}
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ unread_count }}
+        </span>
+        {% else %}
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            0
+        </span>
+        {% endif %}
+    </button>
+    <ul class="dropdown-menu">
+        {% for notification in unread_notifications %}
+            <li>
+                <a class="dropdown-item" href="{{ notification.link }}">
+                    {{ notification.msg }}
+                    <small class="text-muted d-block">
+                        {{ notification.created_at|timesince }}
+                    </small>
+                </a>
+            </li>
+        {% empty %}
+            <li>
+                <a href="#" class="dropdown-item">No hay notificaciones nuevas</a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
