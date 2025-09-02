@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.autoreload import template_changed
 from django.urls import reverse
@@ -19,6 +19,8 @@ import os
 from .forms import UsersRender, Login, UsersConfig, UploadExcel
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones, Users, \
     Notifications
+from django.db.models import Q
+from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 logger = logging.getLogger(__name__)
 
@@ -108,7 +110,7 @@ def tables(request):
     solicitudesG = SolicitudesPendientes.objects.values_list('doc_FK_id', flat=True)
     solicitudesP = Files.objects.exclude(fDoc_ID__in=solicitudesG).order_by('-fDoc_ID')
 
-    solictudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
+    solicitudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
 
     prioridad_choices = SolicitudesEnviadas.PRIORIDAD_CHOICES
     users = Users.objects.filter(is_staff=True, is_active=True).order_by('username')
@@ -117,7 +119,7 @@ def tables(request):
 
     context = {
         'solicitudesP': solicitudesP,
-        'solicitudesE': solictudesE,
+        'solicitudesE': solicitudesE,
         'solicitudes': solicitudes,
         'prioridad_choices': prioridad_choices,
         'users': users,
@@ -152,9 +154,66 @@ def save_request(request): #saveSoli
 
 @login_required
 def seguimiento(request):
-    solictudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
+    solicitudesE = SolicitudesEnviadas.objects.all().select_related(
+        'doc_FK', 'user_FK', 'solicitud_FK', 'usuario_asignado'
+    ).prefetch_related('close_set', 'seguimiento_set').order_by('-fechaEnvio')
 
     solicitudes = soli.objects.all()
+
+    search_query = request.GET.get('search', '').strip()
+    estado_filter = request.GET.get('estado', '')
+    usuario_filter = request.GET.get('usaurio', '')
+    fecha_desde = request.GET.get('fecha_desde', '')
+    fecha_hasta = request.GET.get('fecha_hasta', '')
+    prioridad_filter = request.GET.get('prioridad', '')
+
+    if search_query:
+        solicitudesE = solicitudesE.filter(
+            Q(nomSolicitud__icontains=search_query) |
+            Q(doc_FK__soli_FK__folio__icontains=search_query) |
+            Q(solicitud_FK__destinatario__icontains=search_query)
+        )
+
+    if estado_filter:
+        if estado_filter == 'cerrada':
+            solicitudesE = solicitudesE.filter(close__isnull=False)
+        elif estado_filter == 'activa':
+            solicitudesE = solicitudesE.filter(close__isnull=True)
+        elif estado_filter == 'con_seguimiento':
+            solicitudesE = solicitudesE.filter(seguimiento__isnull=False)
+        elif estado_filter == 'sin_seguimiento':
+            solicitudesE = solicitudesE.filter(seguimiento__isnull=True)
+
+    if usuario_filter:
+        solicitudesE = solicitudesE.filter(user_FK__username__icontains=usuario_filter)
+
+    if prioridad_filter:
+        solicitudesE = solicitudesE.filter(prioridad=prioridad_filter)
+
+    if fecha_desde:
+        try:
+            fecha_desde_obj = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+            solicitudesE = solicitudesE.filter(fechaEnvio__gte=fecha_desde_obj)
+        except ValueError:
+            pass
+
+    if fecha_hasta:
+        try:
+            fecha_hasta_obj = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+            solicitudesE = solicitudesE.filter(fechaEnvio__lte=fecha_hasta_obj)
+        except ValueError:
+            pass
+
+    #Listas para los filtros
+    usuarios_enviadores = Users.objects.filter(
+        solicitudesenviadas__isnull=False
+    ).distinct().values('username', 'first_name', 'last_name')
+
+    #estadísticas
+    total_solicitudes = solicitudesE.count()
+    cerradas = solicitudesE.filter(close__isnull=False).count()
+    activas = solicitudesE.filter(close__isnull=True).count()
+    con_seguimiento = solicitudesE.filter(seguimiento__isnull=False).count()
 
     us = ''
     if request.method == 'POST':
@@ -198,9 +257,23 @@ def seguimiento(request):
                 messages.error(request, "No se pudo identificar la solicitud a cerrar")
 
     context = {
-        'solicitudesE': solictudesE,
+        'solicitudesE': solicitudesE,
         'solicitudes': solicitudes,
         'us': us,
+        'usuarios_enviadores': usuarios_enviadores,
+        'prioridad_choices': SolicitudesEnviadas.PRIORIDAD_CHOICES,
+        'search_query': search_query,
+        'estado_filter': estado_filter,
+        'usuario_filter': usuario_filter,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'prioridad_filter': prioridad_filter,
+        'stats': {
+            'total': total_solicitudes,
+            'cerradas': cerradas,
+            'activas': activas,
+            'con_seguimiento': con_seguimiento
+        }
     }
 
     return render(request, 'send.html', context)
@@ -529,10 +602,20 @@ def actualizar_estado_solicitud(request):
                     )
                     seguimiento.save()
                     logger.debug(f"evidencia {observacion}")
-                except seguimiento.DoesNotExist:
-                    messages.error(request, "No se puede completar sin evidencia.")
-                    return redirect('bandeja_entrada')
+                except Exception as e:
+                    if nuevo_estado == 'completado':
+                        messages.error(request, "No se puede completar sin evidencia.")
+                        solicitud.estado = 'en_proceso'
+                        solicitud.save()
+                        return redirect('bandeja_entrada')
+                    else:
+                        messages.error(request, f"error: {str(e)}")
+
                 messages.success(request, f"Estado actualizado a completado")
+
+            else:
+                print("nada")
+                messages.warning(request, "Sin estado cambiado.")
 
         except Exception as e:
             messages.error(request, f"Error al actualizar estado: {str(e)}")

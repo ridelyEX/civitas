@@ -212,12 +212,16 @@
             select.addEventListener('change', function() {
                 const modal = this.closest('.modal');
                 const evidenciaDiv = modal.querySelector('.evidencia');
+                const evidenciaInput = evidenciaDiv.querySelector('input[name="evidencia"]');
+                const observacionesInput = evidenciaDiv.querySelector('input[name="observaciones"]');
                 if (this.value === 'completado') {
                     evidenciaDiv.removeAttribute('hidden');
-                    evidenciaDiv.querySelector('input').setAttribute('required', 'required');
+                    if (evidenciaInput) evidenciaInput.setAttribute('required', 'required');
+                    if (observacionesInput) observacionesInput.setAttribte('required', required);
                 } else {
                     evidenciaDiv.setAttribute('hidden', 'hidden');
-                    evidenciaDiv.querySelector('input').removeAttribute('required');
+                    if (evidenciaInput) evidenciaInput.removeAttribute('required');
+                    if (observacionesInput) observacionesInput.removeAttribute('required');
                 }
             });
         });

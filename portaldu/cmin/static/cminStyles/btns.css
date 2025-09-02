@@ -1,0 +1,16 @@
+.usr-opc{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    gap: 1rem;
+}
+
+.noti-btn{
+    border-radius: 50px;
+}
+
+span .noti{
+    height: 1.5rem;
+    width: 1.5rem;
+}
