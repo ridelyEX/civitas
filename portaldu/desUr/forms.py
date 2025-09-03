@@ -319,6 +319,8 @@ class InfraestructuraRender(forms.ModelForm):
                 attrs={'class': 'check-form-control'}),
             'pavimentacion_asfalto': forms.CheckboxInput(
                 attrs={'class': 'check-form-control'}),
+            'pavimentacion_concreto': forms.CheckboxInput(
+                attrs={"class": 'check-form-control'}),
             'paviemntacion_rehabilitacion': forms.CheckboxInput(
                 attrs={'class': 'check-form-control'}),
             'señalamiento_pintura': forms.CheckboxInput(

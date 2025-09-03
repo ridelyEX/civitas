@@ -20,5 +20,6 @@ urlpatterns = [
     path('marcar-leida/<int:notificacion_id>/', view.marcar_notificacion, name="marcar_notificacion"),
     # excel
     path('excel/', view.subir_excel, name="excel"),
+    path('importar/', view.get_excel, name="importar_excel")
 ]
 

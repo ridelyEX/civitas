@@ -365,6 +365,7 @@ class PpInfraestructura(models.Model):
 
     # Campos para Pavimentación
     pavimentacion_asfalto = models.BooleanField(verbose_name="Asfalto", default=False)
+    pavimentacion_concreto = models.BooleanField(verbose_name="hidraulico", default=False)
     pavimentacion_rehabilitacion = models.BooleanField(verbose_name="Rehabilitación", default=False)
 
     # Campos para Señalamiento Vial

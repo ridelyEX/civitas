@@ -12,7 +12,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.template.autoreload import template_changed
 from django.urls import reverse
 from django.utils import timezone
-from portaldu.desUr.models import Files, soli
+from portaldu.desUr.models import Files, soli, data
 from django.contrib import messages
 from django.core.mail import EmailMessage
 import os
@@ -506,10 +506,141 @@ def subir_excel(request):
                 messages.error(request, f"Error al procesar el archivo: {str(e)}")
                 return render(request, 'excel/upload_excel.html', {"form":form,
                                                                                             "licitaciones": licitaciones_activas})
+
     else:
         form = UploadExcel()
     return render(request, 'excel/upload_excel.html', {"form":form,
                                                                                 "licitaciones": licitaciones_activas})
+
+
+#Generar excel
+def get_excel(request):
+    """
+    qs = Seguimiento.objects.all().values('fechaSeguimiento', 'nomSeg')
+
+    data = pd.DataFrame(list(qs))
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="reporte_seguimiento.xlsx"'
+
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        data.to_excel(writer, sheet_name='Seguimientos', index=False)
+    """
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="reporte_completo.xlsx"'
+
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+
+        qs_ciudadano = data.objects.all().values() #Obtener query set del ciudadano
+        df_ciudadano = pd.DataFrame(list(qs_ciudadano)) #Listar los datos del ciudadano en un dataframe
+        df_ciudadano = convertir_fecha(df_ciudadano) #Convertir las fechas al formato adecuado
+        df_ciudadano.rename(columns={ #Renombrar columnas de la tabla
+            'nombre': 'Nombre',
+            'pApe': 'Apellido paterno',
+            'mApe': 'Apellido materno',
+            'bDay': 'Fecha de nacimiento',
+            'tel': 'Teléfono',
+            'curp': 'CURP',
+            'sexo': 'Género',
+            'dirr': 'Dirección',
+            'asunto': 'Asunto',
+            'etnia': 'Etnia',
+            'disc': 'Discapacidad',
+            'vul': 'Grupo vulnerable'
+        }, inplace=True)
+
+        df_ciudadano.to_excel(writer, sheet_name='Ciudadanos', index=False) #Nombrar la hoja de ciudadanos
+
+        qs_solicitud = soli.objects.all().values(
+            'soli_ID', 'data_ID', 'processed_by', 'dirr', 'descc', 'fecha', 'info', 'puo', 'folio'
+        ) #Obtener query set con campos específicos de la solicitud
+        df_solicitud = pd.DataFrame(list(qs_solicitud)) #Listar los datos de la solicitud en un dataframe
+        df_solicitud = convertir_fecha(df_solicitud) #Convertir las fechas al formato adecuado
+        df_solicitud.rename(columns={ #Renombrar columnas de la tabla soli
+            'soli_ID': 'ID Solicitud',
+            'data_ID': 'ID Ciudadano',
+            'processed_by': 'ID de usuario que procesó',
+            'dirr': 'Dirección',
+            'descc': 'Descripción de la solicitud',
+            'fecha': 'Fecha de la solicitud',
+            'info': 'Referencias de la ubicación',
+            'puo': 'Origen de la solicitud',
+            'folio': 'Folio de la solicitud',
+        }, inplace=True)
+
+        df_solicitud.to_excel(writer, sheet_name='Solicitudes', index=False) #Nombrar la hoja de solicitudes
+
+        qs_solicitudes_pendientes = SolicitudesPendientes.objects.all().values(
+            'solicitud_ID', 'nomSolicitud', 'fechaSolicitud', 'destinatario', 'doc_FK'
+        ) #Obtener query set con campos específicos de las solicitudes pendientes
+        df_solicitudes_pendientes = pd.DataFrame(list(qs_solicitudes_pendientes)) #Listar los datos de las solicitudes pendientes en un dataframe
+        df_solicitudes_pendientes = convertir_fecha(df_solicitudes_pendientes) #Convertir las fechas al formato adecuado
+        df_solicitudes_pendientes.rename(columns={ #Renombrar columnas de la tabla soli
+            'solicitud_ID': 'ID Solicitud Pendiente',
+            'doc_FK': 'ID Documento asociado',
+            'nomSolicitud': 'Nombre de la solicitud',
+            'fechaSolicitud': 'Fecha de la solicitud',
+            'destinatario': 'Destinatario',
+        }, inplace=True)
+
+        df_solicitudes_pendientes.to_excel(writer, sheet_name='Solicitudes pendientes', index=False) #Nombrar la hoja de solicitudes pendientes
+
+        qs_solicitudes_enviadas = SolicitudesEnviadas.objects.all().values() #Obtener query set de las solicitudes enviadas
+        df_solicitudes_enviadas = pd.DataFrame(list(qs_solicitudes_enviadas)) #Listar los datos de las solicitudes enviadas en un dataframe
+        df_solicitudes_enviadas = convertir_fecha(df_solicitudes_enviadas) #Convertir las fechas al formato adecuado
+        df_solicitudes_enviadas.rename(columns={ #Renombrar columnas de la tabla SolicitudesEnviadas
+            'solicitud_ID': 'ID Solicitud Enviada',
+            'user_FK': 'ID Usuario que envió',
+            'doc_FK': 'ID Documento asociado',
+            'solicitud_FK': 'ID Solicitud pendiente asociada',
+            'usuario_asignado': 'ID Usuario asignado',
+            'nomSolicitud': 'Nombre de la solicitud',
+            'fechaEnvio': 'Fecha de envío',
+            'folio': 'Folio',
+            'categoria': 'Categoría',
+            'prioridad': 'Prioridad',
+            'estado': 'Estado'
+        }, inplace=True)
+
+        df_solicitudes_enviadas.to_excel(writer, sheet_name='Solicitudes enviadas', index=False)
+
+
+
+        return response
+
+
+
+    qs_ciudadano = data.objects.all().values()
+
+
+    return render(request, 'excel/import_xlsx.html')
+
+
+def convertir_fecha(df):
+    for column in df.columns:
+        if df[column].dtype == 'object':
+            try:
+                dt_series = pd.to_datetime(df[column], errors='coerce')
+
+                if pd.api.types.is_datetime64_any_dtype(dt_series) and not dt_series.isna().all():
+                    if hasattr(dt_series.dt, 'tz') and dt_series.dt.tz is not None:
+                        df[column] = dt_series.dt.tz_localize(None)
+                    else:
+                        df[column] = dt_series
+            except Exception:
+                continue
+
+        elif pd.api.types.is_datetime64_any_dtype(df[column]):
+            try:
+                if hasattr(df[column].dt, 'tz') and df[column].dt.tz is not None:
+                    df[column] = df[column].dt.tz_localize(None)
+            except Exception:
+                continue
+
+
+    return df
+
+#End excel
 
 def is_staff_user(user):
     return user.is_authenticated and user.is_staff
