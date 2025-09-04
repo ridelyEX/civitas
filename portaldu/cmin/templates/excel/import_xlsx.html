@@ -10,3 +10,9 @@
 {% endblock %}
 
 {% block content %}{% include 'navmin.html' %}
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">excel</button>
+</form>
+
+{% endblock %}
