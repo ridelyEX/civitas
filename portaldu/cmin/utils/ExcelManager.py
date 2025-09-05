@@ -1,4 +1,8 @@
+import logging
 import pandas as pd
+import warnings
+
+logger = logging.getLogger(__name__)
 
 class ExcelManager:
     def __init__(self):
@@ -22,89 +26,79 @@ class ExcelManager:
             'datetime': workbook.add_format({
                 'num_format': 'dd/mm/yyyy hh:mm',
                 'border': 1
+            }),
+            'text': workbook.add_format({
+                'text_wrap': True,
+                'valign': 'vcenter',
+                'border': 1,
             })
         }
 
-        self.data_formats = workbook.add_format({
-            'border': 1,
-            'align': 'center',
-            'valign': 'vcenter',
-            'text_wrap': True,
-        })
-
-        self.date_formats = workbook.add_format({
-            'border': 1,
-            'align': 'center',
-            'valign': 'vcenter',
-            'text_wrap': True,
-            'num_format': 'dd/mm/yyyy'
-        })
-
-        self.datetime_formats = workbook.add_format({
-            'border': 1,
-            'align': 'center',
-            'valign': 'vcenter',
-            'text_wrap': True,
-            'num_format': 'dd/mm/yyyy hh:mm'
-        })
-
-    def convertir_fecha(self, df):
+    def datetime_columns(self, df):
+        datetime_columns = []
+        
         for column in df.columns:
             if df[column].dtype == 'object':
-                try:
-                    dt_series = pd.to_datetime(df[column], errors='coerce')
-
-                    if pd.api.types.is_datetime64_any_dtype(dt_series) and not dt_series.isna().all():
-                        if hasattr(dt_series.dt, 'tz') and dt_series.dt.tz is not None:
-                            df[column] = dt_series.dt.tz_localize(None)
-                        else:
-                            df[column] = dt_series
-                except Exception:
-                    continue
-
-            elif pd.api.types.is_datetime64_any_dtype(df[column]):
-                try:
-                    if hasattr(df[column].dt, 'tz') and df[column].dt.tz is not None:
-                        df[column] = df[column].dt.tz_localize(None)
-                except Exception:
-                    continue
-
-        return df
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    dt_series = pd.to_datetime(
+                        df[column],
+                        errors='coerce',
+                        format='%Y-%m-%d',
+                        infer_datetime_format=True
+                    )
+                    
+                if dt_series.notna().sum() > len(df) * 0.5:
+                    datetime_columns.append(column)
+                    
+                    df[column] = dt_series
+        return datetime_columns
 
 
     def auto_adjust_columns(self, df, worksheet):
         for i, col in enumerate(df.columns):
             max_length = max(
-                df[col].astype(str).map(len).max() if not df.empty else 0,
-                len(str(col))
+                len(str(col)),
+                df[col].astype(str).str.len().max() if not df[col].empty else 0,
             )
 
-            worksheet.set_column(i, i, min(max_length +2, 50))
+            width = min(max(max_length + 2, 10), 50)
+            worksheet.set_column(i, i, width)
 
     def process_sheet(self, df, sheet_name, writer):
-        if df.empty:
-            return
+        try:
+            if df.empty:
+                return
 
-        df = self.convertir_fecha(df)
+            datetime_columns = self.datetime_columns(df)
 
-        df.to_excel(writer, sheet_name=sheet_name, index=False, startrow=1, header=False)
+            df.to_excel(writer, sheet_name=sheet_name, index=False, startrow=1, header=False)
 
-        worksheet = writer.sheets[sheet_name]
+            worksheet = writer.sheets[sheet_name]
 
-        for col_num, value in enumerate(df.columns.values):
-            worksheet.write(0, col_num, value, self.formats)
-
+            self._apply_formats(worksheet, df, datetime_columns)
+            
+            self.auto_adjust_columns(worksheet, df)
+        
+        except Exception as e:
+            logger.error(f"Error procesando la hoja {sheet_name}:{str(e)}")
+            raise
+        
+        
+    def _apply_formats(self, worksheet,df, datetime_columns):
+        for col_num, column in enumerate(df.columns):
+            worksheet.write(0, col_num, column, self.formats['header'])
+            
         for row_num in range(1, len(df) + 1):
-            for col_num in range(len(df.columns)):
-                cell_value = df.iloc[row_num-1, col_num]
-
-                if pd.isna(cell_value):
-                    worksheet.write(row_num, col_num, '', self.data_formats)
-                elif isinstance(cell_value, pd.Timestamp):
-                    worksheet.write(row_num, col_num, cell_value, self.datetime_formats)
-                elif isinstance(cell_value, pd.Timestamp):
-                    worksheet.write(row_num, col_num, cell_value, self.date_formats)
+            for col_num, column in enumerate(df.columns):
+                value = df.iloc[row_num -1, col_num]
+                
+                if pd.isna(value):
+                    worksheet.write(row_num, col_num, '', self.formats['text'])
+                elif column in datetime_columns:
+                    if pd.notna(value):
+                        worksheet.write_datetime(row_num, col_num, value, self.formats['datetime'])
+                    else:
+                        worksheet.write(row_num, col_num, '', self.formats['text'])
                 else:
-                    worksheet.write(row_num, col_num, str(cell_value), self.date_formats)
-
-        self.auto_adjust_columns(worksheet, df)
+                    worksheet.write(row_num, col_num, str(value), self.formats['text'])
