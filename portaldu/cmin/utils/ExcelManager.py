@@ -51,7 +51,15 @@ class ExcelManager:
                 if dt_series.notna().sum() > len(df) * 0.5:
                     datetime_columns.append(column)
                     
-                    df[column] = dt_series
+                    df[column] = dt_series.dt.tz_localize(None) if dt_series.dt.tz is not None else dt_series
+        
+            elif pd.api.types.is_datetime64_any_dtype(df[column]):
+                datetime_columns.append(column)
+
+                if hasattr(df[column].dtype, 'tz') and df[column].dtype.tz is not None:
+                    df[column] = df[column].dt.tz_localize(None)
+        
+        
         return datetime_columns
 
 
@@ -68,18 +76,21 @@ class ExcelManager:
     def process_sheet(self, df, sheet_name, writer):
         try:
             if df.empty:
+                logger.warning(f"DataFrame vacío {sheet_name}")
                 return
+            
+            df_copy = df.copy()
 
-            datetime_columns = self.datetime_columns(df)
+            datetime_columns = self.datetime_columns(df_copy)
 
-            df.to_excel(writer, sheet_name=sheet_name, index=False, startrow=1, header=False)
+            df_copy.to_excel(writer, sheet_name=sheet_name, index=False, startrow=1, header=False)
 
             worksheet = writer.sheets[sheet_name]
 
-            self._apply_formats(worksheet, df, datetime_columns)
-            
-            self.auto_adjust_columns(worksheet, df)
-        
+            self._apply_formats(worksheet, df_copy, datetime_columns)
+
+            self.auto_adjust_columns(df_copy, worksheet)
+
         except Exception as e:
             logger.error(f"Error procesando la hoja {sheet_name}:{str(e)}")
             raise

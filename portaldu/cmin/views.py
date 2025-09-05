@@ -614,6 +614,8 @@ def get_excel(request):
                             df.rename(columns=rename_dict, inplace=True)
 
                             manager.process_sheet(df, config['nombre'], writer)
+                        else:
+                            logger.warning(f"No hay datos para exportar en {config['nombre']}")
 
                     except Exception as e:
                         logger.error(f"Error en {config['nombre']}: {str(e)}")
@@ -622,6 +624,7 @@ def get_excel(request):
                 return response
 
         except Exception as e:
+            logger.error(f"Error al generar el archivo Excel: {str(e)}")
             messages.error(request, f"Error al generar el archivo excel: {str(e)}")
             return redirect('menu')
 
