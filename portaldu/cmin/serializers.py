@@ -1,17 +1,18 @@
 from rest_framework import serializers
-from .models import EncuestasOffline, EncuestasOnline
+from .models import EncuestasOffline, EncuestasOnline, EncuestaModel
+
 
 class OfflineSerializer(serializers.ModelSerializer):
     class Meta:
         model = EncuestasOffline
         fields = '__all__'
 
-class OnlienSerializer(serializers.ModelSerializer):
+class OnlineSerializer(serializers.ModelSerializer):
     class Meta:
         model = EncuestasOnline
         fields = '__all__'
 
 class EncuestaSerializer(serializers.Serializer):
     class Meta:
-        model = EncuestaSerializer
+        model = EncuestaModel
         fields = '__all__'

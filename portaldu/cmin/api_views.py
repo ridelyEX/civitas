@@ -5,8 +5,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
 import uuid
 
-from portaldu.cmin.models import EncuestasOffline
-from portaldu.cmin.serializers import OfflineSerializer
+from portaldu.cmin.models import EncuestasOffline, EncuestasOnline
+from portaldu.cmin.serializers import OfflineSerializer, OnlineSerializer
 
 
 class AgeoMobileViewSet(viewsets.ViewSet):
@@ -46,7 +46,7 @@ class AgeoMobileViewSet(viewsets.ViewSet):
                 'message': f'Error al procesar la encuesta: {str(e)}',
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, method=['post'])
+    @action(detail=False, methods=['post'])
     def recibir_encuesta_online(self, request):
         try:
             serializer = OnlineSerializer(data=request.data)

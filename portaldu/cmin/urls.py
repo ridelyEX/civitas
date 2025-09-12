@@ -1,5 +1,5 @@
 from . import views as view
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
     path('main/', view.master, name='master'),
@@ -20,7 +20,7 @@ urlpatterns = [
     path('marcar-leida/<int:notificacion_id>/', view.marcar_notificacion, name="marcar_notificacion"),
     # excel
     path('excel/', view.subir_excel, name="excel"),
-    path('importar/', view.get_excel, name="importar_excel")
-    path('api/', include('portaldu.cmin.api_urls'))
+    path('importar/', view.get_excel, name="importar_excel"),
+    path('api/', include('portaldu.cmin.api_urls')),
 ]
 
