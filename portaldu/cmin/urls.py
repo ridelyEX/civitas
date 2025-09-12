@@ -21,5 +21,6 @@ urlpatterns = [
     # excel
     path('excel/', view.subir_excel, name="excel"),
     path('importar/', view.get_excel, name="importar_excel")
+    path('api/', include('portaldu.cmin.api_urls'))
 ]
 

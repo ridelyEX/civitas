@@ -233,4 +233,74 @@ class Licitaciones(models.Model):
     def __str__(self):
         return self.no_licitacion or "Licitación sin número"
 
+#Encuesta flutter
+class EncuestasOffline(models.Model):
+    encuesta_ID = models.AutoField(primary_key=True)
+    f_uuid = models.CharField(blank=True, null=True, max_length=100)
+    fecha_respuesta = models.CharField(max_length=100, blank=True, null=True)
+    escuela = models.CharField(max_length=255, blank=True, null=True)
+    colonia = models.CharField(max_length=255, blank=True, null=True)
+    rol_social = models.CharField(max_length=255, blank=True, null=True)
+    genero = models.CharField(max_length=100, blank=True, null=True)
+    nivel_escolar = models.CharField(max_length=100, blank=True, null=True)
+    grado_escolar = models.CharField(max_length=100, blank=True, null=True)
+    comunidad_indigena = models.CharField(max_length=100, blank=True, null=True)
+    grupo_vulnerable = models.CharField(max_length=100, blank=True, null=True)
+    tipo_proyecto = models.CharField(max_length=100, blank=True, null=True)
+    pregunta_1 = models.IntegerField(blank=True, null=True)
+    pregunta_2 = models.CharField(max_length=255, blank=True, null=True)
+    pregunta_3 = models.IntegerField(blank=True, null=True)
+    pregunta_4 = models.IntegerField(blank=True, null=True)
+    pregunta_5 = models.IntegerField(blank=True, null=True)
+    pregunta_6 = models.IntegerField(blank=True, null=True)
+    pregunta_7 = models.IntegerField(blank=True, null=True)
+    pregunta_8 = models.IntegerField(blank=True, null=True)
+    pregunta_9 = models.IntegerField(blank=True, null=True)
+    pregunta_10 = models.IntegerField(blank=True, null=True)
+    pregunta_11 = models.IntegerField(blank=True, null=True)
+    pregunta_12 = models.CharField(max_length=255, blank=True, null=True)
+    pregunta_13 = models.IntegerField(blank=True, null=True)
+    pregunta_14 = models.IntegerField(blank=True, null=True)
+    pregunta_15 = models.CharField(max_length=255, blank=True, null=True)
+    pregunta_16 = models.CharField(max_length=255, blank=True, null=True)
+    pregunta_17 = models.CharField(max_length=255, blank=True, null=True)
+    foto_url = models.CharField(max_length=255, blank=True, null=True)
+    sincronizado = models.IntegerField(default=0)
+    completada = models.IntegerField(default=0)
+    created_at = models.CharField(max_length=100, blank=True, null=True)
+    updated_at = models.CharField(max_length=100, blank=True, null=True)
+
+    
+class EncuestasOnline(models.Model):
+    encuesta_ID = models.AutoField(primary_key=True)
+    usuario_ID = models.CharField(max_length=100, blank=True, null=True)
+    f_uuid = models.CharField(blank=True, null=True, max_length=100)
+    fecha_respuesta = models.CharField(max_length=100, blank=True, null=True)
+    completada = models.IntegerField(default=0)
+    respuestas = models.TextField(blank=True, null=True)
+    encuesta_FK = models.ForeignKey('EncuestaModel', on_delete=models.CASCADE, verbose_name='encuesta')
+
+    class Meta:
+        db_table = 'encuestas_online'
+        ordering = ['-encuesta_ID']
+        verbose_name = "Encuesta Online"
+
+    def __str__(self):
+        return f"Encuesta {self.encuesta_ID} - Usuario {self.usuario_ID}"
+
+class EncuestaModel(models.Model):
+    encuesta_ID = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=255 , blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True)
+    fecha_creacion = models.CharField(max_length=100, blank=True, null=True)
+    activa = models.IntegerField(default=1)
+    preguntas = models.TextField(blank=True, null=True)  # JSON o texto con las preguntas de la encuesta
+
+    class Meta:
+        db_table = 'encuesta'
+        ordering = ['-fecha_creacion']
+        verbose_name = "Encuesta"
+
+    def __str__(self):
+        return self.nombre
 # Create your models here.

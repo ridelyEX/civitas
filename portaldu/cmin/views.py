@@ -1,5 +1,4 @@
 import logging
-
 import pandas as pd
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -21,6 +20,12 @@ from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Segui
     Notifications
 from django.db.models import Q
 from datetime import datetime
+
+# Autenticación por token
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
 from django.core.exceptions import ObjectDoesNotExist
 
 from .utils.ExcelManager import ExcelManager
@@ -795,6 +800,22 @@ def seguimiento_notificacion(sender, instance, created, **kwargs):
                 link=link,
                 is_read=False
             )
+
+# Tokens para api de encuestas
+@api_view(['post'])
+def get_auth_token(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    if not username or not password:
+        return Response({'error': 'Se requieren ambos campos: username y password'}, status=400)
+
+    user = authenticate(username=username, password=password)
+    if user is not None:
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key})
+    else:
+        return Response({'error': 'Credenciales inválidas'}, status=401)
 
 """
 def test_email(request):

@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'portaldu.cmin.apps.CminConfig',
     'bootstrap5',
     'django_user_agents',
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -128,6 +130,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -149,7 +159,7 @@ LOCALE_PATHS = [
 DATE_FORMAT = 'j \d\e F \d\e Y'
 
 
-GOOGLE_API_KEY = os.getenv("gmapk")
+#GOOGLE_API_KEY = os.getenv("gmapk")
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
