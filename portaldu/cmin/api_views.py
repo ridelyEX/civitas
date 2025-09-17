@@ -45,7 +45,7 @@ class AgeoMobileViewSet(viewsets.ViewSet):
             else:
                 logger.error(f"Errores de validación: {serializer.errors}")
 
-                for field, errors in serializer.error.items():
+                for field, errors in serializer.errors.items():
                     logger.error(f"Error en el campo '{field}': {errors}")
                 return Response({
                     'status': 'error',
