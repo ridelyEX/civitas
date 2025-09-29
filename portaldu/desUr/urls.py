@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
-from googlemaps.geocoding import geocode
 from rest_framework.routers import DefaultRouter
 from . import views
 
@@ -11,7 +10,7 @@ from . import views
 
 urlpatterns = [
     # URLs de la API REST
-    path('api/', include('portaldu.desUr.api_urls')),
+    path('api_sol/', include('portaldu.desUr.api_urls')),
 
     # URLs de autenticación
     path('auth/login/', views.desur_login_view, name='desur_login'),
