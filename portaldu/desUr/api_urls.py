@@ -10,6 +10,11 @@ urlpatterns = [
     # URLs del router (CRUD completo)
     path('', include(router.urls)),
 
+    path('uuid/', api_views.CiudadanosViewSet.as_view({'post': 'recibir_datos'}), name='api-uuid'),
+    path('data/', api_views.CiudadanosViewSet.as_view({'post': 'recibir_datos'}), name='api-data'),
+    path('soli/', api_views.CiudadanosViewSet.as_view({'post': 'recibir_datos'}), name='api-soli'),
+    path('files/', api_views.CiudadanosViewSet.as_view({'post': 'recibir_datos'}), name='api-files'),
+
 
     #path('solicitudes/upload-pdf/', api_views.CiudadanosViewSet.)
 

@@ -7,11 +7,27 @@ class FilesSerializer(serializers.ModelSerializer):
         model = Files
         fields = '__all__'
 
+    def validate(self, attrs):
+        fuuid = attrs.get('fuuid')
+        if fuuid and not isinstance(fuuid, Uuid):
+            try:
+                attrs['fuuid'] = Uuid.objects.get(prime=fuuid)
+            except Uuid.DoesNotExist:
+                raise serializers.ValidationError('UUID no válido')
+
+            soli_fk = attrs.get('soli_FK')
+            if soli_fk and not isinstance(soli_fk, soli):
+                try:
+                    attrs['soli_FK'] = soli.objects.get(soli_ID=soli_fk)
+                except soli.DoesNotExist:
+                    raise serializers.ValidationError("Solicitud no válida")
+
+            return attrs
+
 class UuidSerializer(serializers.ModelSerializer):
     class Meta:
         model = Uuid
         fields = '__all__'
-        read_only_fields = ['uuid']
 
 class CiudadanoSerializer(serializers.ModelSerializer):
     """Serializer para datos de ciudadanos"""
@@ -34,7 +50,6 @@ class CiudadanoSerializer(serializers.ModelSerializer):
             'asunto', 'tel', 'curp', 'sexo', 'dirr', 'disc',
             'etnia', 'vul', 'edad', 'nombre_completo'
         ]
-        read_only_fields = ['data_ID']
 
     def get_edad(self, obj):
         """Calcular edad del ciudadano"""
@@ -102,7 +117,6 @@ class SolicitudSerializer(serializers.ModelSerializer):
             'dirr', 'calle', 'colonia', 'cp', 'descc', 'fecha', 'info',
             'puo', 'foto', 'folio'
         ]
-        read_only_fields = ['soli_ID', 'fecha', 'folio']
 
 class DocumentoSerializer(serializers.ModelSerializer):
     """Serializer para documentos subidos"""
@@ -111,4 +125,3 @@ class DocumentoSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubirDocs
         fields = '__all__'
-        read_only_fields = ['doc_ID', 'fechaDoc']
