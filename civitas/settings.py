@@ -76,7 +76,7 @@ INSTALLED_APPS = [
     'portaldu.cmin.apps.CminConfig',
 
     # Third party apps
-    'bootstrap5',
+    'django_bootstrap5',
     'django_user_agents',
     'rest_framework',
     'rest_framework.authtoken',
@@ -128,7 +128,7 @@ WSGI_APPLICATION = 'civitas.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.mysql'),
-        'NAME': os.getenv('DB_NAME', 'civitas'),
+        'NAME': os.getenv('DB_NAME', 'ageo'),
         'USER': os.getenv('DB_USER', 'root'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'admin'), #admin H0L4 root
         'HOST': os.getenv('DB_HOST', 'localhost'),
