@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://civitas:${DB_PASSWORD}@db:5432/civitas_db
+      - REDIS_URL=redis://redis:6379/1
+      - ENVIRONMENT=production
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - SENTRY_DSN=${SENTRY_DSN}
+    volumes:
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=civitas_db
+      - POSTGRES_USER=civitas
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  celery:
+    build: .
+    command: celery -A civitas worker -l info
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://civitas:${DB_PASSWORD}@db:5432/civitas_db
+      - REDIS_URL=redis://redis:6379/1
+      - ENVIRONMENT=production
+    volumes:
+      - media_volume:/app/media
+    restart: unless-stopped
+
+  celery-beat:
+    build: .
+    command: celery -A civitas beat -l info
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://civitas:${DB_PASSWORD}@db:5432/civitas_db
+      - REDIS_URL=redis://redis:6379/1
+      - ENVIRONMENT=production
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_volume:
+  static_volume:
