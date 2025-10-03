@@ -9,7 +9,11 @@ from portaldu.desUr.models import Files
 
 
 class CustomUser(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, email, password=None, creator_user=None, is_staff=False, is_superuser=False, **extra_fields):
+        if creator_user is not None:
+            if not creator_user.can_create_user_type(is_staff, is_superuser):
+                user_type = 'superusuario' if is_superuser else 'staff' if is_staff else 'invitado'
+                raise PermissionError(f"No tienes permiso para crear un usuario de tipo {user_type}")
 
         if not email:
             raise ValueError("Ingrese email")
@@ -20,13 +24,16 @@ class CustomUser(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, creator_user, email, password=None, is_staff=False, is_superuser=False,**extra_fields):
-        if not creator_user.can_create_user_type(is_staff, is_superuser):
-            user_type = "superusuario" if is_superuser else "staff" if is_staff else "otra cosa"
-            raise PermissionError(f"No tienes permisos para crear un {user_type}")
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
 
-        extra_fields['is_staff'] = is_staff
-        extra_fields['is_superuser'] = is_superuser
+        if not extra_fields.get('is_staff'):
+            raise ValueError('El superusuario debe tener is_staff=True')
+        if not extra_fields.get('is_superuser'):
+            raise ValueError("El superusuario debe tener is_superuser=True")
+
         return self.create_user(email, password, **extra_fields)
 
     def get_superusers(self):
@@ -41,7 +48,7 @@ class CustomUser(BaseUserManager):
 class Users(AbstractUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     bday = models.DateField()
-    foto = models.ImageField(upload_to='fotos')
+    foto = models.ImageField(upload_to='fotos', null=True, blank=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['first_name']

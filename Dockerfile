@@ -17,8 +17,12 @@ RUN apt-get update && apt-get install -y \
     libpango-1.0-0 \
     libharfbuzz0b \
     libpangoft2-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
     libffi-dev \
     shared-mime-info \
+    libcairo2 \
+    libcairo-gobject2 \
+    fonts-dejavu-core \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

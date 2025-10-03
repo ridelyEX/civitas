@@ -55,7 +55,7 @@ wait_for_service redis 6379
 
 # Verificar conexión a la base de datos
 echo "Verificando conexión a la base de datos..."
-python -c "
+DB_INITIALIZED=$(python -c "
 import os
 import django
 from django.conf import settings
@@ -63,37 +63,61 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'civitas.settings')
 django.setup()
 from django.db import connection
 try:
-    connection.ensure_connection()
-    print('Conexión a la base de datos exitosa')
+    with connection.cursor() as cursor:
+      cursor.execute(\"SHOW TABLES\")
+      tables = cursor.fetchall()
+      print('yes' if tables else 'no')
 except Exception as e:
     print(f'Error de conexión a la base de datos: {e}')
-    exit(1)
-"
+    print('no')
+" 2>/dev/null)
 
-# Ejecutar migraciones
-echo "Ejecutando migraciones..."
-python manage.py migrate --noinput
+if [ "$DB_INITIALIZED" = "no" ]; then
+  echo "Primera inicialización de base de datos"
 
-# Colectar archivos estáticos
-echo "Recolectando archivos estáticos..."
-python manage.py collectstatic --noinput
+  find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+  find . -path "*/migrations/*.pyc" -delete
 
-# Crear superusuario si no existe
-echo "Creando superusuario..."
-python manage.py shell -c "
+  echo "Creando migraciones"
+  python manage.py makemigrations
+
+  # Ejecutar migraciones
+  echo "Ejecutando migraciones..."
+  python manage.py migrate --noinput
+
+
+  # Crear superusuario si no existe
+  echo "Creando superusuario..."
+  python manage.py shell -c "
 from django.contrib.auth import get_user_model
 import os
+from datetime import date
 User = get_user_model()
 if not User.objects.filter(is_superuser=True).exists():
     User.objects.create_superuser(
         username=os.getenv('DJANGO_SUPERUSER_USERNAME', 'admin'),
         email=os.getenv('DJANGO_SUPERUSER_EMAIL', 'admin@example.com'),
-        password=os.getenv('DJANGO_SUPERUSER_PASSWORD', 'admin123')
+        password=os.getenv('DJANGO_SUPERUSER_PASSWORD', 'admin123'),
+        first_name='Admin',
+        last_name='Sistema',
+        bday=date(1990, ,1),
     )
     print('Superusuario creado')
 else:
-    print('Superusuario ya existe')
+  print('usuario existente')
 "
+else
+    echo "Base de datos existente"
+
+    echo "Aplicando migraciones pendientes"
+    python manage.py migrate --noinput || {
+      echo "Error con las migraciones, corriendo fake-initial"
+      python manage.py migrate --fake-initial
+    }
+fi
+# Colectar archivos estáticos
+echo "Recolectando archivos estáticos..."
+python manage.py collectstatic --noinput
 
 echo "Iniciando aplicación..."
 # Ejecutar el comando pasado como argumento
