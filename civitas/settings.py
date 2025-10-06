@@ -22,7 +22,6 @@ from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_
     FILE_UPLOAD_HANDLERS
 from dotenv import load_dotenv
 
-from civitas.settings_production import FILE_UPLOAD_MAX_MEMORY_SIZE
 
 load_dotenv()
 
@@ -72,8 +71,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Apps del proyecto
-    'portaldu.desUr.apps.DesurConfig',
-    'portaldu.cmin.apps.CminConfig',
+    'portaldu.cmin',
+    'portaldu.desUr',
 
     # Third party apps
     'django_bootstrap5',
@@ -295,7 +294,7 @@ AUTHENTICATION_BACKENDS = [
     'portaldu.desUr.auth.DesUrAuthBackend',
 ]
 
-AUTH_USER_MODEL = 'cmin.users'
+AUTH_USER_MODEL = 'cmin.Users'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -394,8 +393,6 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10*1024*1024
-DATA_UPLOAD_MAX_MEMORY_SIZE = 50*1024*1024
 
 if os.name == 'nt':  # Windows
     try:

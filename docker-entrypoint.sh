@@ -57,20 +57,26 @@ wait_for_service redis 6379
 echo "Verificando conexión a la base de datos..."
 DB_INITIALIZED=$(python -c "
 import os
-import django
-from django.conf import settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'civitas.settings')
-django.setup()
-from django.db import connection
+import pymysql
+
 try:
-    with connection.cursor() as cursor:
-      cursor.execute(\"SHOW TABLES\")
-      tables = cursor.fetchall()
-      print('yes' if tables else 'no')
+    connection = pymysql.connect(
+      host='db',
+      user=os.getenv('DB_USER'),
+      password=os.getenv('DB_PASSWORD'),
+      database=os.getenv('DB_NAME'),
+      port=3306
+    )
+
+    cursor = connection.cursor()
+    cursor.execute('SHOW TABLES LIKE \"cmin_users\"')
+    result = cursor.fetchone()
+    connection.close()
+    print('yes' if result else 'no')
 except Exception as e:
     print(f'Error de conexión a la base de datos: {e}')
     print('no')
-" 2>/dev/null)
+" 2>/dev/null || echo 'no')
 
 if [ "$DB_INITIALIZED" = "no" ]; then
   echo "Primera inicialización de base de datos"
@@ -79,6 +85,10 @@ if [ "$DB_INITIALIZED" = "no" ]; then
   find . -path "*/migrations/*.pyc" -delete
 
   echo "Creando migraciones"
+  python manage.py makemigrations cmin --empty
+  python manage.py makemigrations cmin
+  python manage.py makemigrations desUr --empty
+  python manage.py makemigrations desUr
   python manage.py makemigrations
 
   # Ejecutar migraciones
@@ -100,7 +110,7 @@ if not User.objects.filter(is_superuser=True).exists():
         password=os.getenv('DJANGO_SUPERUSER_PASSWORD', 'admin123'),
         first_name='Admin',
         last_name='Sistema',
-        bday=date(1990, ,1),
+        bday=date(1990, 1, 1),
     )
     print('Superusuario creado')
 else:

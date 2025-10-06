@@ -24,13 +24,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # APIs del proyecto
-    path('api/desur/', include('portaldu.desUr.api_urls')),
+    path('api/ageo/', include('portaldu.desUr.api_urls')),
     path('api/cmin/', include('portaldu.cmin.api_urls')),
 
     # Apps principales
-    path('desur/', include('portaldu.desUr.urls')),
+    path('ageo/', include('portaldu.desUr.urls')),
     path('cmin/', include('portaldu.cmin.urls')),
-    path('', include('portaldu.desUr.urls')),  # Página principal
 
     # Documentación de la API
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),

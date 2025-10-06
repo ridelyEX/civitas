@@ -71,7 +71,7 @@ class Uuid(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
 
     class Meta:
-        db_table: 'uuid'
+        db_table = 'uuid'
         ordering = ["uuid"]
 
     def __str__(self):
