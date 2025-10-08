@@ -81,41 +81,66 @@ except Exception as e:
 if [ "$DB_INITIALIZED" = "no" ]; then
   echo "Primera inicialización de base de datos"
 
-  find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-  find . -path "*/migrations/*.pyc" -delete
+  # Solo eliminar migraciones de nuestras aplicaciones, no de Django ni librerías
+  find ./portaldu -path "*/migrations/*.py" -not -name "__init__.py" -delete
+  find ./portaldu -path "*/migrations/*.pyc" -delete
 
-  echo "Creando migraciones"
-  python manage.py makemigrations cmin --empty
-  python manage.py makemigrations cmin
-  python manage.py makemigrations desUr --empty
+  echo "Creando migraciones en orden específico para resolver dependencias"
+
+  # Primero crear desUr que no tiene dependencias externas
+  echo "Creando migraciones para desUr (modelos base)..."
   python manage.py makemigrations desUr
+
+  # Luego crear cmin que depende de desUr
+  echo "Creando migraciones para cmin (con referencias a desUr)..."
+  python manage.py makemigrations cmin
+
+  # Finalmente verificar si hay migraciones adicionales
+  echo "Verificando migraciones adicionales..."
   python manage.py makemigrations
 
-  # Ejecutar migraciones
+  # Ejecutar migraciones en orden correcto
   echo "Ejecutando migraciones..."
+  echo "Aplicando migraciones de Django core..."
+  python manage.py migrate contenttypes --noinput
+  python manage.py migrate auth --noinput
+
+  echo "Aplicando migraciones de desUr..."
+  python manage.py migrate desUr --noinput
+
+  echo "Aplicando migraciones de cmin..."
+  python manage.py migrate cmin --noinput
+
+  echo "Aplicando migraciones restantes..."
   python manage.py migrate --noinput
 
-
-  # Crear superusuario si no existe
-  echo "Creando superusuario..."
-  python manage.py shell -c "
+  # Solo crear superusuario si este es el contenedor web
+  if [ "$1" = "python" ] && [ "$2" = "manage.py" ] && [ "$3" = "runserver" ]; then
+    echo "Creando superusuario (solo desde contenedor web)..."
+    python manage.py shell -c "
 from django.contrib.auth import get_user_model
 import os
 from datetime import date
-User = get_user_model()
-if not User.objects.filter(is_superuser=True).exists():
-    User.objects.create_superuser(
-        username=os.getenv('DJANGO_SUPERUSER_USERNAME', 'admin'),
-        email=os.getenv('DJANGO_SUPERUSER_EMAIL', 'admin@example.com'),
-        password=os.getenv('DJANGO_SUPERUSER_PASSWORD', 'admin123'),
-        first_name='Admin',
-        last_name='Sistema',
-        bday=date(1990, 1, 1),
-    )
-    print('Superusuario creado')
-else:
-  print('usuario existente')
+try:
+    User = get_user_model()
+    if not User.objects.filter(is_superuser=True).exists():
+        User.objects.create_superuser(
+            username=os.getenv('DJANGO_SUPERUSER_USERNAME', 'admin'),
+            email=os.getenv('DJANGO_SUPERUSER_EMAIL', 'admin@example.com'),
+            password=os.getenv('DJANGO_SUPERUSER_PASSWORD', 'admin123'),
+            first_name='Admin',
+            last_name='Sistema',
+            bday=date(1990, 1, 1),
+        )
+        print('Superusuario creado')
+    else:
+        print('Superusuario ya existe')
+except Exception as e:
+    print(f'Error al crear superusuario: {e}')
 "
+  else
+    echo "Contenedor worker/beat - saltando creación de superusuario"
+  fi
 else
     echo "Base de datos existente"
 

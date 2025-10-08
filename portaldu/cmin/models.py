@@ -2,10 +2,9 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import AutoField
-from django.forms import FileField
-from django.urls import reverse
 
-from portaldu.desUr.models import Files
+# Eliminar la importación directa que causa dependencia circular
+# from portaldu.desUr.models import Files
 
 
 class CustomUser(BaseUserManager):
@@ -121,12 +120,11 @@ class LoginDate(models.Model):
             user_FK=user
         )
 
-
 class SolicitudesPendientes(models.Model):
     solicitud_ID = models.AutoField(primary_key=True)
     nomSolicitud = models.CharField(max_length=150)
     fechaSolicitud = models.DateField()
-    doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
+    doc_FK = models.ForeignKey('desUr.Files', on_delete=models.CASCADE, verbose_name='documentos')
     destinatario = models.CharField(max_length=150, null=True, blank=True)
 
     class Meta:
@@ -149,7 +147,7 @@ class SolicitudesEnviadas(models.Model):
     nomSolicitud = models.CharField(max_length=150)
     fechaEnvio = models.DateField(auto_now=True)
     user_FK = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='usuarios')
-    doc_FK = models.ForeignKey(Files, on_delete=models.CASCADE, verbose_name='documentos')
+    doc_FK = models.ForeignKey('desUr.Files', on_delete=models.CASCADE, verbose_name='documentos')
     solicitud_FK = models.ForeignKey(SolicitudesPendientes, on_delete=models.CASCADE, verbose_name='solicitudes')
     folio = models.CharField(max_length=50, null=True, blank=True)
     categoria = models.CharField(max_length=100, null=True, blank=True)
