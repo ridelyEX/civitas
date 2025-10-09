@@ -1091,7 +1091,7 @@ def gen_folio(uid, puo):
                 folio = f'GOP-CPC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Coordinación de Participación Ciudadana'
             case _:
-                folio = f'GOP-GEN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'GOP-VIN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'General'
 
         logger.info(f"Folio generado correctamente: {folio}")
