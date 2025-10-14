@@ -5,12 +5,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const vbtn = document.getElementById("ver-btn");
         const fbtn = document.getElementById("fllw-btn");
         const bback = document.getElementById("bback");
+        const busers = document.getElementById("bbtn");
 
         // Echarle pa atrás en usuarios
         if(bbtn){
             const dirurl = bbtn.dataset.url;
             console.log("le podemos echar pa trás", dirurl);
             bbtn.addEventListener("click", ()=>{
+                window.location.href = dirurl;
+            });
+        }
+
+        // Crear usuarios
+        if (busers) {
+            const dirurl = busers.dataset.url;
+            console.log("hay usuarios cerca", dirurl);
+            bbtn.addEventListener("click", () => {
                 window.location.href = dirurl;
             });
         }

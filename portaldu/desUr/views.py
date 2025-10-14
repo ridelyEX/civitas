@@ -1478,6 +1478,11 @@ def user_errors(request, error):
         }
     })
 
+def validate_file_size(file):
+    limite = 5 * 1024 * 1024
+    if file.size > limite:
+        raise ValidationError('El archivo no puede ser mayor a 5 MB')
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def geocode_view(request):

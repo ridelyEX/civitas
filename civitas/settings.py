@@ -19,7 +19,7 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 
 
 from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS, \
-    FILE_UPLOAD_HANDLERS
+    FILE_UPLOAD_HANDLERS, DATA_UPLOAD_MAX_MEMORY_SIZE, FILE_UPLOAD_MAX_MEMORY_SIZE, DATA_UPLOAD_MAX_NUMBER_FIELDS
 from dotenv import load_dotenv
 
 
@@ -364,6 +364,12 @@ LOGGING = {
         },
     },
 }
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 # 10MB
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 # 10 MB
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
 
 # Configuración de seguridad adicional

@@ -22,15 +22,12 @@ class UsersRender(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.creator_user = creator_user
 
-        if creator_user:
-            if not creator_user.is_superuser:
+        if self.creator_user is None:
+            self.fields.pop('is_staff', None)
+            self.fields.pop('is_superuser', None)
+            self.fields.pop('groups', None)
+            self.fields.pop('user_permissions', None)
 
-                self.fields['is_superuser'].widget.attrs['disabled'] = True
-                self.fields['is_superuser'].initial = False
-
-            if not creator_user.can_manage_users():
-                self.fields['is_staff'].widget.attrs['disabled'] = True
-                self.fields['is_superuser'].widget.attrs['disabled'] = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -43,25 +40,16 @@ class UsersRender(forms.ModelForm):
             is_staff = cleaned_data.get('is_staff', False)
             is_superuser = cleaned_data.get('is_superuser', False)
 
-            if not self.creator_user.can_create_user_type(is_staff, is_superuser):
-                user_type = "superusuario" if is_superuser else "staff" if is_staff else "invitado"
-                raise forms.ValidationError(f"No tienes permisos para crear un {user_type}")
 
         return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data["password"])
 
-        if self.cleaned_data.get('password'):
-            user.set_password(self.cleaned_data['password'])
-
-        if self.creator_user and self.creator_user.is_superuser:
-            user.is_staff = True
-            user.is_superuser = False
-        elif self.creator_user and self.creator_user.is_staff:
+        if self.creator_user is None:
             user.is_staff = False
             user.is_superuser = False
+            user.is_active = True
 
         if commit:
             user.save()

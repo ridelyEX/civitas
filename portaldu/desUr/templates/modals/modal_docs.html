@@ -296,7 +296,7 @@ input[type="file"] {
           <div class="textbox">
             <input type="text" class="desc" id="descp" name="descp" placeholder="Descripción del doc. Ej. INE, foto">
           </div>
-          <input type="file" id="ffile" name="ffile">
+          <input type="file" id="ffile" name="ffile" onchange="validateFileSize(this)">
           <div class="text">
             <p>BUSCAR DOCUMENTOS EN EL DISPOSITIVO</p>
           </div>

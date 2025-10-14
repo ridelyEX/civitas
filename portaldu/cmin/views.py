@@ -35,60 +35,34 @@ logger = logging.getLogger(__name__)
 def master(request):
     return render(request, 'master.html')
 
-@login_required
 def users_render(request):
-    if not request.user.can_manage_users():
-        messages.error(request, "No tienes permisos para crear usuarios.")
-        return redirect('login')
 
     if request.method == 'POST':
         print(request.POST)
-        form = UsersRender(request.POST, request.FILES, creator_user=request.user)
+        form = UsersRender(request.POST, request.FILES)
         if form.is_valid():
             print("estamos dentro")
-            try:
-                is_staff = form.cleaned_data.get('is_staff', False)
-                is_superuser = form.cleaned_data.get('is_superuser', False)
-
-                if not request.user.can_create_user_type(is_staff, is_superuser):
-                    user_type = "superusuario" if is_superuser else "staff" if is_staff else "otra cosa"
-                    messages.error(request, f"NO tienes permisos para crear {user_type}")
-                    return render(request, 'users.html', {'form': form})
-
-                form.save()
-                messages.success(request, "Usuario creado correctamente.")
-                return redirect('menu')
-
-            except Exception as e:
-                messages.error(request, f"Error al crear usuario: {str(e)}")
-                return render(request, 'users.html', {'form': form})
-
+            cleaned_data = form.cleaned_data
+            form.save()
+            return redirect('login')
     else:
         print("no estamos dentro")
-        form = UsersRender(creator_user=request.user)
+        form = UsersRender()
     return render(request, 'users.html', {'form':form})
 
 def login_view(request):
     form = Login(request.POST)
+
     if request.method == 'POST' and form.is_valid():
         usuario = form.cleaned_data['usuario']
         contrasena = form.cleaned_data['contrasena']
         user = authenticate(request, username=usuario, password=contrasena)
         if user is not None:
-            try:
-                users = Users.objects.get(username=user.username)
-                login(request, user)
-                LoginDate.objects.create(user_FK=users)
-
-                if user.is_superuser:
-                    return redirect('menu')
-                elif user.is_staff:
-                    return redirect('bandeja_entrada')
-            except Users.DoesNotExist:
-                logger.error("Usuario no registrado en el sistema.")
-                messages.error(request, "Usuario no registrado en el sistema.")
+            print(user)
+            login(request, user)
+            LoginDate.objects.create(user_FK=user)
+            return redirect('menu')
         else:
-            logger.error("Usuario o contraseña incorrectos")
             messages.error(request, "Usuario o contraseña incorrectos")
     return render(request, 'login.html', {'form': form})
 
@@ -640,7 +614,7 @@ def get_excel(request):
 def is_staff_user(user):
     return user.is_authenticated and user.is_staff
 
-@user_passes_test(is_staff_user, login_url='login')
+@login_required
 def bandeja_entrada(request):
     solicitudes_asignadas = SolicitudesEnviadas.objects.filter(
         usuario_asignado=request.user
@@ -689,7 +663,7 @@ def bandeja_entrada(request):
 
     return render(request, 'bandeja_entrada.html', context)
 
-@user_passes_test(is_staff_user, login_url='login')
+@login_required
 def actualizar_estado_solicitud(request):
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')

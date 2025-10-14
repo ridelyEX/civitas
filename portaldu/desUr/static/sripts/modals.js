@@ -63,6 +63,20 @@ function closem(){
     }
 }
 
+function validateFileSize(input) {
+    if (input.files && input.files[0]) {
+        const archivo = input.files[0];
+        const limitSize = 5 * 1024 * 1024; //5mb
+
+        if (archivo.size > limitSize) {
+            alert('archivo demasiado grande. Máximo 5 MB);
+            input.value = '';
+            return false;
+        }
+    }
+    return true;
+}
+
 
 /*
 document.getElementById('modalDoc2').addEventListener('click', function(e){
