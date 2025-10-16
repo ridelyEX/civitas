@@ -3,106 +3,114 @@ import uuid
 from io import BytesIO
 import re
 import json
-
-from django.core.files import File
-from django.core.files.base import ContentFile
-from django.core.exceptions import ValidationError
-from django.core.files.temp import NamedTemporaryFile
-from django.db import transaction
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect, render, get_object_or_404
-from django.contrib import messages
-from django.db import models  # Agregar esta importación para # Q
-from django.utils import timezone
-from django.utils.timezone import now
-from django_user_agents.templatetags.user_agents import is_mobile
-from .models import SubirDocs, soli, data, Uuid, Pagos, Files, PpGeneral, PpParque, PpInfraestructura, PpEscuela, PpCS, PpPluvial, PpFiles, DesUrLoginDate
-from .forms import (DesUrUsersRender, DesUrLogin, DesUrUsersConfig, GeneralRender,
-                    ParqueRender, EscuelaRender, CsRender, InfraestructuraRender, PluvialRender)
-from django.template.loader import render_to_string
-from weasyprint import HTML
-from datetime import date
-from .auth import DesUrAuthBackend, desur_login_required
-from portaldu.cmin.models import Licitaciones
-from django.views.decorators.http import require_http_methods
 import logging
-from django.views.decorators.csrf import csrf_exempt
-from .services import LocalGISService
+import os
+from datetime import date
+
 from django.conf import settings
-# Configurar logging
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.mail import EmailMessage
+from django.db import transaction, IntegrityError
+from django.db.models import Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+# Imports para PDF (weasyprint)
+try:
+    from weasyprint import HTML
+except ImportError:
+    # Si weasyprint no está disponible, crear un mock
+    class HTML:
+        def __init__(self, **kwargs):
+            pass
+        def write_pdf(self, target=None):
+            return b"PDF content not available"
+
+# Usar el modelo unificado de usuarios de CMIN
+from portaldu.cmin.models import Users, LoginDate, Licitaciones
+
+# Imports de modelos locales de DesUr
+from .models import (data, soli, Files, Uuid,
+                     PpCS, PpEscuela, PpGeneral, PpPluvial, PpParque, PpInfraestructura,
+                     SubirDocs, Pagos, PpFiles)
+from .forms import (GeneralRender, CsRender, EscuelaRender, PluvialRender, ParqueRender,
+                    DesUrLogin)
+
 logger = logging.getLogger(__name__)
 
+# Decorador para validar acceso a DesUr
+def desur_access_required(view_func):
+    """Decorador que verifica que el usuario tenga acceso a DesUr"""
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')  # Redirigir al login unificado
 
-# Vistas de autenticación
-def desur_users_render(request):
-    # NO login_required - necesario para que administradores creen cuentas de empleados
-    if request.method == 'POST':
-        form = DesUrUsersRender(request.POST, request.FILES)
-        if form.is_valid():
-            cleaned_data = form.cleaned_data
-            form.save()
-            logger.info(f"Nuevo usuario DesUr creado: {cleaned_data.get('username', 'N/A')}")
-            return redirect('desur_login')
-        else:
-            logger.warning("Error en formulario de registro DesUr")
-    else:
-        form = DesUrUsersRender()
-    return render(request, 'auth/desur_users.html', {'form':form})
+        if not request.user.has_desur_access():
+            messages.error(request, "No tienes permisos para acceder a esta sección")
+            if request.user.has_cmin_access():
+                return redirect('menu')
+            else:
+                return redirect('login')
 
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 def desur_login_view(request):
-    # NO login_required - necesario para que empleados inicien sesión
-    form = DesUrLogin(request.POST)
-
-    if request.method == 'POST' and form.is_valid():
-        usuario = form.cleaned_data['usuario']
-        contrasena = form.cleaned_data['contrasena']
-
-        backend = DesUrAuthBackend()
-        user = backend.authenticate(request, username=usuario, password=contrasena)
-
-        if user is not None:
-            logger.info(f"Usuario autenticado exitosamente: {usuario}")
-            request.session['desur_user_id'] = user.id
-            request.session['desur_user_username'] = user.username
-            DesUrLoginDate.create(user)
-            return redirect('desur_menu')  # Ir al menú del empleado
-        else:
-            logger.warning(f"Intento de login fallido para usuario: {usuario}")
-            messages.error(request, "Usuario o contraseña incorrectos")
-
-    return render(request, 'auth/desur_login.html', {'form':form})
-
+    """Vista de login de DesUr - ahora redirige al login unificado"""
+    messages.info(request, "Usa el sistema de login principal para acceder")
+    return redirect('login')
 
 def desur_logout_view(request):
-    # NO login_required - aunque podrías argumentar que sí
-    request.session.pop('desur_user_id', None)
-    request.session.pop('desur_user_username', None)
-    return redirect('desur_login')
+    """Vista de logout de DesUr - ahora usa el logout unificado"""
+    return redirect('logout')
 
-
-@desur_login_required
+@login_required
+@desur_access_required
 def desur_user_conf(request):
-    # SÍ login_required - solo usuarios autenticados pueden configurar perfil
+    """Configuración de usuario usando el modelo unificado"""
     usuario = request.user
     if request.method == 'POST':
-        form = DesUrUsersConfig(request.POST, request.FILES, instance=usuario)
+        # Usar el formulario de configuración de CMIN
+        from portaldu.cmin.forms import UsersConfig
+        form = UsersConfig(request.POST, request.FILES, instance=usuario)
         if form.is_valid():
             form.save()
             messages.success(request, "Perfil actualizado correctamente.")
-            return redirect('desur_menu')  # Cambiar a menu en lugar de login
+            return redirect('desur_menu')
     else:
-        form = DesUrUsersConfig(instance=usuario)
+        from portaldu.cmin.forms import UsersConfig
+        form = UsersConfig(instance=usuario)
     return render(request, 'auth/desur_user_conf.html', {'form': form})
 
-
-@desur_login_required
+@login_required
+@desur_access_required
 def desur_menu(request):
-    # SÍ login_required - menú personal
-    return render(request, 'auth/desur_menu.html')
+    """Menú principal de DesUr - accesible para usuarios con permisos DesUr"""
+    # Registrar acceso a DesUr usando el modelo unificado
+    try:
+        LoginDate.create(request.user)
+    except Exception as e:
+        logger.warning(f"Error al registrar login de DesUr para {request.user.username}: {str(e)}")
+
+    context = {
+        'user_role': request.user.rol,
+        'user': request.user,
+    }
+    return render(request, 'main.html', context)
 
 
-@desur_login_required
+@login_required
+@desur_access_required
 def desur_historial(request):
     """Vista para mostrar el historial de trámites procesados por el empleado actual"""
     # Obtener todos los trámites procesados por el usuario actual
@@ -118,7 +126,7 @@ def desur_historial(request):
 
     # Estadísticas básicas
     total_tramites = tramites.count()
-    tramites_hoy = tramites.filter(fecha__date=now().date()).count()
+    tramites_hoy = tramites.filter(fecha__date=timezone.now().date()).count()
 
     # Estadísticas por tipo de trámite (PUO)
     from django.db.models import Count
@@ -137,7 +145,8 @@ def desur_historial(request):
     return render(request, 'auth/desur_historial.html', context)
 
 
-@desur_login_required
+@login_required
+@desur_access_required
 def desur_buscar_tramite(request):
     """Vista para buscar trámites específicos"""
     tramites = None
@@ -151,12 +160,12 @@ def desur_buscar_tramite(request):
                 processed_by=request.user
             ).filter(
                 # Buscar por folio, nombre del ciudadano, CURP, etc.
-                models.Q(folio__icontains=query) |
-                models.Q(data_ID__nombre__icontains=query) |
-                models.Q(data_ID__pApe__icontains=query) |
-                models.Q(data_ID__mApe__icontains=query) |
-                models.Q(data_ID__curp__icontains=query) |
-                models.Q(puo__icontains=query)
+                Q(folio__icontains=query) |
+                Q(data_ID__nombre__icontains=query) |
+                Q(data_ID__pApe__icontains=query) |
+                Q(data_ID__mApe__icontains=query) |
+                Q(data_ID__curp__icontains=query) |
+                Q(puo__icontains=query)
             ).select_related('data_ID', 'processed_by').order_by('-fecha')
 
     context = {
@@ -170,16 +179,18 @@ def desur_buscar_tramite(request):
 # Vistas del sistema de trámites requieren autenticación
 # Solo empleados/funcionarios autorizados pueden operar el sistema
 
-@desur_login_required
+@login_required
+@desur_access_required
 def base(request):
     # SÍ login_required - solo empleados pueden acceder al sistema
     uuid = request.COOKIES.get('uuid')
 
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')  # Corregir redirección
     return render(request, 'documet/save.html',{'uuid':uuid})
 
-@desur_login_required
+@login_required
+@desur_access_required
 def home(request):
     # SÍ login_required - punto de entrada solo para empleados autenticados
     if request.method == 'POST':
@@ -201,18 +212,19 @@ def home(request):
         elif action == 'pp':
             response = redirect('general')
         else:
-            response = redirect('home')
+            response = redirect('desur_menu')  # Corregir redirección
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
     return render(request, 'main.html')
 
-@desur_login_required
+@login_required
+@desur_access_required
 def intData(request):
     # SÍ login_required - empleados capturan datos de ciudadanos
     direccion = request.GET.get('dir', '')
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
 
     logger.debug("Procesando datos de ciudadano")
 
@@ -220,7 +232,7 @@ def intData(request):
         uid = get_object_or_404(Uuid, uuid=uuid)
     except Uuid.DoesNotExist:
         logger.warning(f"UUID no encontrado: {uuid}")
-        return redirect('home')
+        return redirect('desur_menu')
 
     asunto = ''
 
@@ -266,31 +278,30 @@ def intData(request):
                         return redirect('pago')
                     case _:
                         return redirect('soli')
-                        logger.error("no jala esto")
 
         except Exception as e:
             logger.error(f"Error al procesar datos: {str(e)}")
             return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
 
-    service_status = LocalGISService.get_service_status()
-
+    # Comentar las referencias a LocalGISService hasta que esté definido
     context = {
         'dir': direccion,
         'asunto': asunto,
-        'uuid':uuid,
-        'local_gis_enabled': True,
-        'gis_services': LocalGISService.SERVICES,
-        'service_status': service_status,
+        'uuid': uuid,
+        'local_gis_enabled': False,  # Desactivar temporalmente
+        # 'gis_services': LocalGISService.SERVICES,
+        # 'service_status': service_status,
     }
     return render(request, 'di.html', context)
 
 
-@desur_login_required
+@login_required
+@desur_access_required
 def soliData(request):
     # SÍ login_required - empleados procesan solicitudes de ciudadanos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
 
     try:
         uid = get_object_or_404(Uuid, uuid=uuid)
@@ -342,14 +353,15 @@ def soliData(request):
 
         dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
         if not dp:
-            return redirect('home')
+            return redirect('desur_menu')
 
         if request.method == 'POST':
             return soli_processed(request, uid, dp)
 
         solicitud = soli.objects.filter(data_ID=dp).select_related('data_ID')
 
-        service_status = LocalGISService.get_service_status()
+        # Comentar el uso de LocalGISService hasta que esté definido
+        service_status = None #LocalGISService.get_service_status()
 
         context = {
             'dir': dir,
@@ -362,9 +374,9 @@ def soliData(request):
             'is_tablet': is_tablet,
             'is_pc': is_pc,
             'soli': solicitud,
-            'local_gis_enabled': True,
-            'gis_services': LocalGISService.SERVICES,
-            'service_status': service_status,
+            'local_gis_enabled': False,  # Desactivar temporalmente
+            # 'gis_services': LocalGISService.SERVICES,
+            # 'service_status': service_status,
             'fecha': fecha,
         }
 
@@ -372,12 +384,13 @@ def soliData(request):
     except Exception as e:
         return user_errors(request, e)
 
-@desur_login_required
+@login_required
+@desur_access_required
 def doc(request):
     # SÍ login_required - empleados gestionan documentación
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
 
     datos = data.objects.filter(fuuid__uuid=uuid).first()
     if not datos:
@@ -406,12 +419,13 @@ def doc(request):
                'uuid':uuid}
     return render(request, 'dg.html', context)
 
-@desur_login_required
+@login_required
+@desur_access_required
 def dell(request, id):
     # SÍ login_required - empleados eliminan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
     if request.method == 'POST':
         try:
             docc = get_object_or_404(SubirDocs, pk=id, fuuid__uuid=uuid)
@@ -423,12 +437,13 @@ def dell(request, id):
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Método inválido'}, status=405)
 
-@desur_login_required
+@login_required
+@desur_access_required
 def docs(request):
     # SÍ login_required - empleados suben documentos del ciudadano
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
     documentos = SubirDocs.objects.filter(fuuid=datos).order_by('-nomDoc')
@@ -442,12 +457,13 @@ def docs(request):
         'uuid':uuid,})
 
 
-@desur_login_required
+@login_required
+@desur_access_required
 def docs2(request):
     # SÍ login_required - empleados gestionan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
     if request.method == 'POST' and request.FILES['ffile']:
@@ -509,12 +525,13 @@ def get_licitaciones(request):
         return JsonResponse({'error': 'Licitación no encontrada'}, status=400)
 
 
-@desur_login_required
+@login_required
+@desur_access_required
 def document(request):
     # SÍ login_required - empleados generan documentos oficiales
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
@@ -608,12 +625,13 @@ def document(request):
     #return render(request, "documet/document.html", context)
 
 
-@desur_login_required
+@login_required
+@desur_access_required
 def save_document(request):
     # SÍ login_required - empleados guardan documentos oficiales
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     uid = get_object_or_404(Uuid, uuid=uuid)
@@ -706,11 +724,12 @@ def save_document(request):
 
     return render(request, 'documet/save.html', {'doc':doc})
 
-@desur_login_required
+@login_required
+@desur_access_required
 def pp_document(request):
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('home')
+        return redirect('desur_menu')
 
     uuid_object = get_object_or_404(Uuid, uuid=uuid)
     gen_data = get_object_or_404(PpGeneral, fuuid__uuid=uuid)
@@ -939,9 +958,8 @@ def pp_document(request):
 
     return render(request, 'documet/save.html', {"doc":doc})
 
-
-
-@desur_login_required
+@login_required
+@desur_access_required
 def document2(request):
     # SÍ login_required - empleados generan documentos de pago
     uuid = request.COOKIES.get('uuid')
@@ -979,7 +997,8 @@ def document2(request):
     return response
     #return render(request, "documet/document2.html")
 
-@desur_login_required
+@login_required
+@desur_access_required
 def clear(request):
     # SÍ login_required - solo empleados limpian sesiones
     response = redirect('desur_menu')  # Cambiar redirect a login de empleados
@@ -1650,7 +1669,8 @@ def reverse_geocode_view(request):
 
 # Presupuesto participativo
 
-@desur_login_required
+@login_required
+@desur_access_required
 def gen_render(request):
     """Vista principal para datos generales de presupuesto participativo"""
     # Obtener o crear UUID
@@ -1718,7 +1738,8 @@ def gen_render(request):
     response.set_cookie('uuid', uuid_str, max_age=3600)
     return response
 
-@desur_login_required
+@login_required
+@desur_access_required
 def escuela_render(request):
     """Vista para propuestas de presupuesto participativo en escuelas"""
     # Obtener UUID de la propuesta general
@@ -1752,7 +1773,8 @@ def escuela_render(request):
 
     return render(request, 'pp/escuela.html', {'form': form, 'pp_general': pp_general})
 
-@desur_login_required
+@login_required
+@desur_access_required
 def parque_render(request):
     """Vista para propuestas de presupuesto participativo en parques"""
     # Obtener UUID de la propuesta general
@@ -1786,7 +1808,8 @@ def parque_render(request):
 
     return render(request, 'pp/parque.html', {'form': form, 'pp_general': pp_general})
 
-@desur_login_required
+@login_required
+@desur_access_required
 def cs_render(request):
     """Vista para propuestas de centros comunitarios y salones de usos múltiples"""
     # Obtener UUID de la propuesta general
@@ -1820,7 +1843,8 @@ def cs_render(request):
 
     return render(request, 'pp/centro_salon.html', {'form': form, 'pp_general': pp_general})
 
-@desur_login_required
+@login_required
+@desur_access_required
 def infraestructura_render(request):
     """Vista para propuestas de infraestructura"""
     # Obtener UUID de la propuesta general
@@ -1854,7 +1878,8 @@ def infraestructura_render(request):
 
     return render(request, 'pp/infraestructura.html', {'form': form, 'pp_general': pp_general})
 
-@desur_login_required
+@login_required
+@desur_access_required
 def pluvial_render(request):
     """Vista para propuestas de soluciones pluviales"""
     # Obtener UUID de la propuesta general

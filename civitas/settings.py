@@ -45,6 +45,9 @@ if SENTRY_DSN and SENTRY_DSN.startswith('https://'):
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Configuración del modelo de usuario personalizado
+AUTH_USER_MODEL = 'cmin.Users'
+
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
 os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -217,21 +220,30 @@ REDOC_SETTINGS = {
 # Configuración Redis y Cache
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/1')
 
+#CACHES = {
+#    'default': {
+#        'BACKEND': 'django_redis.cache.RedisCache',
+#        'LOCATION': REDIS_URL,
+#        'OPTIONS': {
+#            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#        },
+#        'KEY_PREFIX': 'civitas',
+#        'TIMEOUT': 300,  # 5 minutos por defecto
+#    }
+#}
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        },
-        'KEY_PREFIX': 'civitas',
-        'TIMEOUT': 300,  # 5 minutos por defecto
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 
 # Session engine con Redis
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+
+#SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+#SESSION_CACHE_ALIAS = 'default'
+
 
 # Configuración Celery
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
@@ -385,7 +397,7 @@ if not DEBUG:
     # Solo activar en HTTPS
     if os.getenv('USE_HTTPS', 'false').lower() == 'true':
         SECURE_SSL_REDIRECT = True
-        SESSION_COOKIE_SECURE = True
+        SESSION_COOKIE_SECURE = False
         CSRF_COOKIE_SECURE = True
 
 # Configuración de sesiones seguras

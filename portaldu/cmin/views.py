@@ -32,38 +32,91 @@ from .utils.ExcelManager import ExcelManager
 
 logger = logging.getLogger(__name__)
 
+# Decoradores para validación de roles
+def role_required(allowed_roles):
+    """Decorador para verificar que el usuario tenga uno de los roles permitidos"""
+    def decorator(view_func):
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+
+            if request.user.rol not in allowed_roles:
+                messages.error(request, "No tienes permisos para acceder a esta página")
+                if request.user.rol == 'campo':
+                    return redirect('/desur/')  # Redirigir a DesUr si es usuario de campo
+                else:
+                    return redirect('menu')
+
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
 def master(request):
     return render(request, 'master.html')
 
 def users_render(request):
+    # Solo administradores pueden crear usuarios
+    if request.user.is_authenticated and request.user.rol != 'administrador':
+        messages.error(request, "No tienes permisos para crear usuarios")
+        return redirect('menu')
 
     if request.method == 'POST':
         print(request.POST)
-        form = UsersRender(request.POST, request.FILES)
+        creator_user = request.user if request.user.is_authenticated else None
+        form = UsersRender(request.POST, request.FILES, creator_user=creator_user)
         if form.is_valid():
             print("estamos dentro")
             cleaned_data = form.cleaned_data
             form.save()
+            messages.success(request, "Usuario creado exitosamente")
             return redirect('login')
     else:
         print("no estamos dentro")
-        form = UsersRender()
+        creator_user = request.user if request.user.is_authenticated else None
+        form = UsersRender(creator_user=creator_user)
     return render(request, 'users.html', {'form':form})
 
 def login_view(request):
-    form = Login(request.POST)
+    """Vista de login unificada que maneja tanto usuarios de CMIN como DesUr"""
+    if request.method == 'POST':
+        form = Login(request.POST)
+        if form.is_valid():
+            usuario = form.cleaned_data['usuario']
+            contrasena = form.cleaned_data['contrasena']
+            
+            # Usar el sistema de autenticación unificado que incluye migración automática
+            user = authenticate(request, username=usuario, password=contrasena)
+            
+            if user is not None:
+                if not user.is_active:
+                    messages.error(request, "Tu cuenta está desactivada. Contacta al administrador.")
+                    return render(request, 'login.html', {'form': form})
+                
+                login(request, user)
+                
+                # Registrar el login
+                try:
+                    LoginDate.objects.create(user_FK=user)
+                except Exception as e:
+                    logger.warning(f"Error al registrar login para {user.username}: {str(e)}")
 
-    if request.method == 'POST' and form.is_valid():
-        usuario = form.cleaned_data['usuario']
-        contrasena = form.cleaned_data['contrasena']
-        user = authenticate(request, username=usuario, password=contrasena)
-        if user is not None:
-            print(user)
-            login(request, user)
-            LoginDate.objects.create(user_FK=user)
-            return redirect('menu')
-        else:
-            messages.error(request, "Usuario o contraseña incorrectos")
+                # Redirigir según el rol del usuario y permisos
+                if user.has_desur_access() and not user.has_cmin_access():
+                    # Usuario solo de DesUr (campo)
+                    return redirect('/desur/')
+                elif user.has_cmin_access():
+                    # Usuario con acceso a CMIN (administrador, delegador)
+                    return redirect('menu')
+                else:
+                    # Usuario sin permisos específicos
+                    messages.warning(request, "Tu cuenta no tiene permisos asignados. Contacta al administrador.")
+                    logout(request)
+                    return render(request, 'login.html', {'form': form})
+            else:
+                messages.error(request, "Usuario o contraseña incorrectos")
+    else:
+        form = Login()
+
     return render(request, 'login.html', {'form': form})
 
 def logout_view(request):
@@ -78,7 +131,7 @@ def user_conf(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Perfil actualizado correctamente.")
-            return redirect('login')
+            return redirect('menu')  # CORREGIR: Redirigir al menú, no al login
     else:
         form = UsersConfig(instance=usuario)
     return render(request, 'user_conf.html', {'form': form})
@@ -87,8 +140,9 @@ def usertest(request):
     return render(request, 'user_conf.html')
 
 @login_required
+@role_required(['administrador', 'delegador'])
 def tables(request):
-
+    # Solo administradores y delegadores pueden ver tablas
     solicitudesG = SolicitudesPendientes.objects.values_list('doc_FK_id', flat=True)
     solicitudesP = Files.objects.exclude(fDoc_ID__in=solicitudesG).order_by('-fDoc_ID')
 
@@ -110,11 +164,12 @@ def tables(request):
     return render(request, 'tables.html', context)
 
 @login_required
+@role_required(['administrador', 'delegador'])
 def save_request(request): #saveSoli
+    # Solo administradores y delegadores pueden guardar solicitudes
     if request.method == 'POST':
         doc_id = request.POST.get('doc_id')
         try:
-
             documento = Files.objects.get(fDoc_ID=doc_id)
 
             new_req = SolicitudesPendientes(
@@ -135,7 +190,9 @@ def save_request(request): #saveSoli
     return redirect('tablas')
 
 @login_required
+@role_required(['administrador', 'delegador'])
 def seguimiento(request):
+    # Solo administradores y delegadores pueden hacer seguimiento
     solicitudesE = SolicitudesEnviadas.objects.all().select_related(
         'doc_FK', 'user_FK', 'solicitud_FK', 'usuario_asignado'
     ).prefetch_related('close_set', 'seguimiento_set').order_by('-fechaEnvio')
@@ -262,11 +319,19 @@ def seguimiento(request):
 
 
 @login_required
+@role_required(['administrador', 'delegador'])
 def menu(request):
-    return render(request, 'menu.html')
+    """Vista del menú principal con acceso restringido por roles"""
+    context = {
+        'user_role': request.user.rol,
+        'can_access_tables': request.user.can_access_tables(),
+        'can_access_seguimiento': request.user.can_access_seguimiento(),
+        'can_access_admin': request.user.can_access_admin(),
+    }
+    return render(request, 'menu.html', context)
 
+# ...existing code...
 
-@login_required
 def sendMail(request):
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')

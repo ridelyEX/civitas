@@ -153,14 +153,15 @@ class soli(models.Model):
         verbose_name = "Solicitud"
 
     def __str__(self):
-        return str(self.soli_ID)
+        return f"Solicitud {self.soli_ID} - {self.data_ID.nombre}"
+
 
 class Files(models.Model):
     fDoc_ID = models.AutoField(primary_key=True)
-    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
-    finalDoc = models.FileField(upload_to='solicitudes/')
-    nomDoc = models.CharField(max_length=255, null=True, blank=True)
-    soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE)
+    nomDoc = models.CharField(max_length=200, verbose_name="Nombre del documento")
+    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="UUID")
+    soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Solicitud")
+    finalDoc = models.FileField(upload_to='documents/', verbose_name="Documento final")
 
     class Meta:
         db_table = 'solicitudes'
@@ -180,7 +181,7 @@ class PpGeneral(models.Model):
         ('malo', 'Malo'),
         ('no existe', 'No existe'),
     ]
-    
+
     INSTALATION_CHOICES = [
         ('cfe', 'CFE'),
         ('agua', 'Agua'),
@@ -414,16 +415,16 @@ class PpPluvial(models.Model):
         return str(self.pp_pluvial_ID) or None
 
 class PpFiles(models.Model):
-    fDoc_ID = models.AutoField(primary_key=True)
-    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
-    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Propuesta General", null=True, blank=True)
-    finalDoc = models.FileField(upload_to='pp_solicitudes/')
-    nomDoc = models.CharField(max_length=255, null=True, blank=True)
+    pp_file_ID = models.AutoField(primary_key=True)
+    nomDoc = models.CharField(max_length=200, verbose_name="Nombre del documento")
+    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="UUID")
+    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Proyecto PP")
+    finalDoc = models.FileField(upload_to='pp_documents/', verbose_name="Documento final")
 
     class Meta:
-        db_table = 'pp_solicitudes'
-        ordering = ['fDoc_ID']
-        verbose_name = "solicitudes presupuesto participativo"
+        db_table = 'pp_files'
+        ordering = ['pp_file_ID']
+        verbose_name = "Archivo PP"
 
     def __str__(self):
         return str(self.nomDoc)

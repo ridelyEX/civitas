@@ -17,12 +17,13 @@ from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
 from .models import data, Uuid, soli, SubirDocs
 from .serializers import (
     CiudadanoSerializer,
-    CiudadanoCreateSerializer,
     SolicitudSerializer,
     DocumentoSerializer,
     UuidSerializer
 )
-from .auth import desur_login_required
+# Usar el sistema unificado de autenticación
+from django.contrib.auth.decorators import login_required
+from .views import desur_access_required
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +258,3 @@ class CiudadanosViewSet(viewsets.ModelViewSet):
                 'status': 'error',
                 'message': f"Error al procesar documento: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-

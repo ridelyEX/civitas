@@ -12,12 +12,11 @@ urlpatterns = [
     # URLs de la API REST
     path('api_sol/', include('portaldu.desUr.api_urls')),
 
-    # URLs de autenticación
+    # URLs de autenticación - ahora redirigen al sistema unificado
     path('auth/login/', views.desur_login_view, name='desur_login'),
-    path('auth/signin/', views.desur_users_render, name='desur_users'),
     path('auth/logout/', views.desur_logout_view, name='desur_logout'),
     path('auth/user_conf/', views.desur_user_conf, name='desur_user_conf'),
-    path('auth/menu/', views.desur_menu, name='desur_menu'),
+    path('', views.desur_menu, name='desur_menu'),  # Página principal de DesUr
 
     # URLs para historial de trámites
     path('auth/historial/', views.desur_historial, name='desur_historial'),
@@ -48,6 +47,7 @@ urlpatterns = [
     path('save/', views.save_document, name="saveD1"),
     path('geocode/', views.geocode_view, name="geocode"),
     path('reverse-geocode/', views.reverse_geocode_view, name='reverse_geocode'),
+    path('get_licitaciones/', views.get_licitaciones, name='get_licitaciones'),
     # path('', include(router.urls)),  # Comentar hasta implementar FilesViewSet
     path('licitaciones/', views.get_licitaciones, name='licitaciones')
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

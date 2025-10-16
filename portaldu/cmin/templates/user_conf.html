@@ -29,7 +29,11 @@
             {% csrf_token %}
 
             <div class="foto">
+                {% if user.foto and user.foto.name %}
                 <img src="{{ user.foto.url }}" alt="Avatar Logo" class="rounded" style="width: 200px; height: 200px;">
+                {% else %}
+                <img src="{% static 'stock/stock.png' %}" alt="Avatar logo" class="rounded-pill">
+                {% endif %}
             </div>
 
             <div class="mini">

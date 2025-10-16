@@ -27,6 +27,7 @@ class CustomUser(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault('rol', 'administrador')
 
         if not extra_fields.get('is_staff'):
             raise ValueError('El superusuario debe tener is_staff=True')
@@ -45,12 +46,19 @@ class CustomUser(BaseUserManager):
         return self.filter(is_staff=False, is_superuser=False)
 
 class Users(AbstractUser, PermissionsMixin):
+    ROLE_CHOICES = [
+        ('administrador', 'Administrador'),
+        ('delegador', 'Delegador'),
+        ('campo', 'Campo'),
+    ]
+    
     email = models.EmailField(unique=True)
-    bday = models.DateField()
+    bday = models.DateField(null=True, blank=True)
     foto = models.ImageField(upload_to='fotos', null=True, blank=True)
+    rol = models.CharField(max_length=20, choices=ROLE_CHOICES, default='campo')
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['first_name']
+    REQUIRED_FIELDS = ['first_name', 'email']
 
     objects = CustomUser()
 
@@ -69,6 +77,10 @@ class Users(AbstractUser, PermissionsMixin):
             return 'Staff'
         else:
             return 'Regular'
+
+    @property
+    def get_role_display_name(self):
+        return dict(self.ROLE_CHOICES).get(self.rol, 'Sin rol')
 
     def can_create_user_type(self, target_is_staff, target_is_superuser):
         if self.is_superuser:
@@ -100,6 +112,54 @@ class Users(AbstractUser, PermissionsMixin):
             return Users.objects.filter(is_staff=False, is_superuser=False)
         else:
             return Users.objects.none()
+
+    # Métodos de permisos por rol
+    def has_cmin_access(self):
+        """Administradores y delegadores tienen acceso completo a CMIN"""
+        return self.rol in ['administrador', 'delegador']
+
+    def has_desur_access(self):
+        """Usuarios de campo y administradores tienen acceso a DesUr"""
+        return self.rol in ['campo', 'administrador']
+
+    def can_access_tables(self):
+        """Solo administradores y delegadores pueden ver tablas"""
+        return self.rol in ['administrador', 'delegador']
+
+    def can_access_seguimiento(self):
+        """Solo administradores y delegadores pueden hacer seguimiento"""
+        return self.rol in ['administrador', 'delegador']
+
+    def can_access_admin(self):
+        """Solo administradores pueden acceder a funciones administrativas"""
+        return self.rol == 'administrador'
+
+    def can_create_users(self):
+        """Solo administradores pueden crear usuarios"""
+        return self.rol == 'administrador'
+
+    def can_manage_licitaciones(self):
+        """Solo administradores pueden manejar licitaciones"""
+        return self.rol == 'administrador'
+
+    # Métodos para compatibilidad con DesUr
+    def get_full_name(self):
+        """Método para compatibilidad con DesUrUsers"""
+        return super().get_full_name()
+
+    def get_short_name(self):
+        """Método para compatibilidad con DesUrUsers"""
+        return super().get_short_name()
+
+    @property
+    def is_authenticated(self):
+        """Método para compatibilidad con DesUrUsers"""
+        return not self.is_anonymous
+
+    @property
+    def is_anonymous(self):
+        """Método para compatibilidad con DesUrUsers"""
+        return False
 
 
 class LoginDate(models.Model):
