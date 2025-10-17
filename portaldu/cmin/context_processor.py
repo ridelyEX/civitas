@@ -6,7 +6,7 @@ def notifications_processor(request):
 
         return {
             'unread_notifications': unread_notifications,
-            'unread_count': unread_notifications.count
+            'unread_count': unread_notifications.count()  # Corregido: agregar () para ejecutar el método
         }
 
     return {'unread_notifications': [], 'unread_count': 0}

@@ -1,102 +1,59 @@
 """
 Sistema de autenticación unificado para DesUr
-Permite el uso del modelo Users de CMIN para autenticación en DesUr
+Backend de autenticación que funciona exclusivamente con el modelo Users de CMIN
 """
 import logging
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import BaseBackend
-from django.contrib.auth.hashers import check_password
-from django.core.exceptions import ObjectDoesNotExist
-from .models import DesUrUsers
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 class DesUrAuthBackend(BaseBackend):
     """
-    Backend de autenticación personalizado para migrar usuarios de DesUr
-    al sistema unificado usando el modelo Users de CMIN
+    Backend de autenticación unificado que usa exclusivamente el modelo Users de CMIN
+    Incluye validaciones específicas para acceso a DesUr basadas en roles
     """
 
     def authenticate(self, request, username=None, password=None, **kwargs):
         """
-        Autentica usuarios verificando primero en el modelo unificado Users,
-        y si no existe, migra desde DesUrUsers
+        Autentica usuarios usando únicamente el modelo unificado Users
+        Valida permisos específicos para DesUr basados en roles
         """
         if not username or not password:
             return None
 
         try:
-            # Intentar autenticar con el modelo unificado Users
+            # Autenticar con el modelo unificado Users
             user = User.objects.get(username=username)
-            if user.check_password(password):
-                logger.info(f"Usuario {username} autenticado exitosamente desde modelo unificado")
-                return user
+            if user.check_password(password) and user.is_active:
+                # Validar que el usuario tenga acceso a DesUr según su rol
+                if hasattr(user, 'has_desur_access') and user.has_desur_access():
+                    logger.info(f"Usuario {username} autenticado exitosamente en DesUr")
+                    return user
+                else:
+                    logger.warning(f"Usuario {username} sin permisos de DesUr (rol: {user.rol})")
+                    return None
         except User.DoesNotExist:
-            # Si no existe en Users, intentar migrar desde DesUrUsers
-            try:
-                desur_user = DesUrUsers.objects.get(username=username)
-                if desur_user.check_password(password):
-                    # Migrar usuario de DesUr a Users
-                    migrated_user = self._migrate_desur_user(desur_user)
-                    if migrated_user:
-                        logger.info(f"Usuario {username} migrado exitosamente desde DesUr")
-                        return migrated_user
-            except DesUrUsers.DoesNotExist:
-                logger.warning(f"Usuario {username} no encontrado en ningún modelo")
-                pass
+            logger.warning(f"Usuario {username} no encontrado en el sistema")
 
         return None
 
     def get_user(self, user_id):
         """Obtiene un usuario por ID del modelo unificado"""
         try:
-            return User.objects.get(pk=user_id)
-        except User.DoesNotExist:
+            user = User.objects.get(pk=user_id)
+            # Validar que el usuario siga teniendo acceso a DesUr
+            if hasattr(user, 'has_desur_access') and user.has_desur_access():
+                return user
             return None
-
-    def _migrate_desur_user(self, desur_user):
-        """
-        Migra un usuario de DesUrUsers al modelo unificado Users
-        """
-        try:
-            # Verificar si ya existe un usuario con ese email
-            existing_user = User.objects.filter(email=desur_user.email).first()
-            if existing_user:
-                logger.warning(f"Ya existe un usuario con email {desur_user.email}")
-                return None
-
-            # Crear usuario en el modelo unificado
-            migrated_user = User.objects.create(
-                username=desur_user.username,
-                email=desur_user.email,
-                first_name=desur_user.first_name,
-                last_name=desur_user.last_name,
-                bday=desur_user.bday,
-                foto=desur_user.foto,
-                is_active=desur_user.is_active,
-                date_joined=desur_user.date_joined,
-                last_login=desur_user.last_login,
-                rol='campo'  # Los usuarios de DesUr son por defecto de campo
-            )
-
-            # Copiar la contraseña hasheada
-            migrated_user.password = desur_user.password
-            migrated_user.save()
-
-            # Marcar el usuario de DesUr como migrado (opcional)
-            # Podrías agregar un campo 'migrated' a DesUrUsers si lo deseas
-
-            logger.info(f"Usuario {desur_user.username} migrado exitosamente")
-            return migrated_user
-
-        except Exception as e:
-            logger.error(f"Error al migrar usuario {desur_user.username}: {str(e)}")
+        except User.DoesNotExist:
             return None
 
 class DesUrUserMiddleware:
     """
-    Middleware para manejar la transición del sistema de usuarios de DesUr
+    Middleware para manejar usuarios en el sistema DesUr
+    Agrega métodos de compatibilidad y validaciones específicas
     """
 
     def __init__(self, get_response):
@@ -104,49 +61,87 @@ class DesUrUserMiddleware:
 
     def __call__(self, request):
         # Procesar la solicitud antes de la vista
+        if hasattr(request, 'user') and request.user.is_authenticated:
+            self._ensure_desur_compatibility(request.user)
+        
         response = self.get_response(request)
-
-        # Procesar la respuesta después de la vista
         return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         """
-        Procesa la vista y verifica compatibilidad de usuarios
+        Procesa la vista y verifica compatibilidad de usuarios para DesUr
         """
         if hasattr(request, 'user') and request.user.is_authenticated:
-            # Asegurar que el usuario tenga todos los métodos necesarios
-            if not hasattr(request.user, 'has_desur_access'):
-                logger.warning(f"Usuario {request.user.username} no tiene métodos de DesUr")
+            # Asegurar que el usuario tenga todos los métodos necesarios para DesUr
+            if not self._has_desur_methods(request.user):
+                logger.warning(f"Usuario {request.user.username} sin métodos completos de DesUr")
+                # Agregar métodos faltantes dinámicamente si es necesario
+                self._add_missing_methods(request.user)
 
         return None
 
-def migrate_all_desur_users():
+    def _ensure_desur_compatibility(self, user):
+        """
+        Asegura que el usuario tenga compatibilidad completa con DesUr
+        """
+        if not hasattr(user, 'get_full_name'):
+            # Agregar método get_full_name si no existe
+            user.get_full_name = lambda: f"{user.first_name} {user.last_name}".strip()
+        
+        if not hasattr(user, 'get_short_name'):
+            # Agregar método get_short_name si no existe
+            user.get_short_name = lambda: user.first_name
+
+    def _has_desur_methods(self, user):
+        """
+        Verifica que el usuario tenga todos los métodos necesarios para DesUr
+        """
+        required_methods = ['has_desur_access', 'get_full_name', 'get_short_name']
+        return all(hasattr(user, method) for method in required_methods)
+
+    def _add_missing_methods(self, user):
+        """
+        Agrega métodos faltantes dinámicamente al usuario
+        """
+        if not hasattr(user, 'get_full_name'):
+            user.get_full_name = lambda: f"{user.first_name} {user.last_name}".strip()
+        
+        if not hasattr(user, 'get_short_name'):
+            user.get_short_name = lambda: user.first_name or user.username
+
+def validate_desur_access(user):
     """
-    Función utilitaria para migrar todos los usuarios de DesUr al modelo unificado
-    Usar con precaución y preferiblemente en un management command
+    Función utilitaria para validar acceso específico a DesUr
     """
-    migrated_count = 0
-    error_count = 0
+    if not user.is_authenticated:
+        return False, "Usuario no autenticado"
+    
+    if not hasattr(user, 'has_desur_access'):
+        return False, "Usuario sin métodos de DesUr"
+    
+    if not user.has_desur_access():
+        return False, f"Rol '{user.rol}' sin acceso a DesUr"
+    
+    if not user.is_active:
+        return False, "Usuario inactivo"
+    
+    return True, "Acceso válido"
 
-    for desur_user in DesUrUsers.objects.all():
-        try:
-            # Verificar si ya existe
-            if User.objects.filter(username=desur_user.username).exists():
-                logger.info(f"Usuario {desur_user.username} ya existe en modelo unificado")
-                continue
-
-            # Migrar usuario
-            backend = DesUrAuthBackend()
-            migrated_user = backend._migrate_desur_user(desur_user)
-
-            if migrated_user:
-                migrated_count += 1
-            else:
-                error_count += 1
-
-        except Exception as e:
-            logger.error(f"Error migrando usuario {desur_user.username}: {str(e)}")
-            error_count += 1
-
-    logger.info(f"Migración completada: {migrated_count} usuarios migrados, {error_count} errores")
-    return migrated_count, error_count
+def get_user_permissions_summary(user):
+    """
+    Obtiene un resumen de permisos del usuario para debugging
+    """
+    if not user.is_authenticated:
+        return {"authenticated": False}
+    
+    return {
+        "authenticated": True,
+        "username": user.username,
+        "rol": getattr(user, 'rol', 'sin_rol'),
+        "is_staff": user.is_staff,
+        "is_superuser": user.is_superuser,
+        "has_cmin_access": getattr(user, 'has_cmin_access', lambda: False)(),
+        "has_desur_access": getattr(user, 'has_desur_access', lambda: False)(),
+        "can_access_tables": getattr(user, 'can_access_tables', lambda: False)(),
+        "can_create_users": getattr(user, 'can_create_users', lambda: False)(),
+    }

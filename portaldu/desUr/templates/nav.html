@@ -35,6 +35,17 @@
               <img src="{% static 'images/contact_phone.png' %}" alt="Directorio" /> Directorio
             </a>
           </li>
+          {% if user.is_authenticated %}
+             <div class="button">
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        {% if user.is_authenticated %}
+                        <button type="submit" class="logout-btn">Cerrar sesión</button>
+                        {% else %}
+                        {% endif %}
+                    </form>
+             </div>
+          {% endif %}
         </ul>
       
     </div>

@@ -6,9 +6,9 @@ echo "🚀 Iniciando despliegue en producción..."
 # 1. Crear usuario de base de datos
 echo "📊 Configurando base de datos..."
 mysql -u root -p << EOF
-CREATE DATABASE IF NOT EXISTS civitas_prod CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'civitas_user'@'localhost' IDENTIFIED BY 'CAMBIAR_PASSWORD';
-GRANT ALL PRIVILEGES ON civitas_prod.* TO 'civitas_user'@'localhost';
+CREATE DATABASE IF NOT EXISTS ageo_prod CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'ageo_user'@'localhost' IDENTIFIED BY 'CAMBIAR_PASSWORD';
+GRANT ALL PRIVILEGES ON ageo_prod.* TO 'ageo_user'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 

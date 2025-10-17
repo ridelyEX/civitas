@@ -1,3 +1,22 @@
+"""
+Vistas del módulo CMIN (Centro de Monitoreo Integral de Notificaciones)
+Sistema unificado para la gestión administrativa de solicitudes ciudadanas.
+
+Este módulo contiene todas las vistas principales del sistema CIVITAS - CMIN,
+organizadas por funcionalidad y con control de acceso basado en roles.
+
+Roles de usuario:
+- administrador: Acceso completo al sistema
+- delegador: Gestión y seguimiento de solicitudes
+- campo: Acceso limitado a DesUr (redirigido automáticamente)
+
+Dependencias principales:
+- Django ORM para gestión de datos
+- Django REST Framework para APIs
+- Pandas para procesamiento de Excel
+- SMTP para envío de correos
+"""
+
 import logging
 import pandas as pd
 from django.db.models.signals import post_save
@@ -21,29 +40,52 @@ from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Segui
 from django.db.models import Q
 from datetime import datetime
 
-# Autenticación por token
+# Importaciones para autenticación por token (API REST)
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from django.core.exceptions import ObjectDoesNotExist
 
+# Utilidad personalizada para manejo de Excel
 from .utils.ExcelManager import ExcelManager
 
+# Logger para seguimiento de eventos y errores del sistema
 logger = logging.getLogger(__name__)
 
-# Decoradores para validación de roles
+# === DECORADORES DE SEGURIDAD ===
+
 def role_required(allowed_roles):
-    """Decorador para verificar que el usuario tenga uno de los roles permitidos"""
+    """
+    Decorador para verificar que el usuario tenga uno de los roles permitidos.
+
+    Args:
+        allowed_roles (list): Lista de roles permitidos para acceder a la vista
+                             Valores posibles: ['administrador', 'delegador', 'campo']
+
+    Returns:
+        function: Decorador que valida permisos antes de ejecutar la vista
+
+    Funcionalidad:
+        - Verifica autenticación del usuario
+        - Valida rol contra lista de roles permitidos
+        - Redirige según tipo de usuario:
+          * No autenticado -> login
+          * Rol 'campo' -> módulo DesUr
+          * Sin permisos -> menú principal con mensaje de error
+    """
     def decorator(view_func):
         def wrapper(request, *args, **kwargs):
+            # Verificar que el usuario esté autenticado
             if not request.user.is_authenticated:
                 return redirect('login')
 
+            # Validar rol del usuario
             if request.user.rol not in allowed_roles:
                 messages.error(request, "No tienes permisos para acceder a esta página")
+                # Redirigir usuarios de campo al módulo DesUr
                 if request.user.rol == 'campo':
-                    return redirect('/desur/')  # Redirigir a DesUr si es usuario de campo
+                    return redirect('/ageo/')
                 else:
                     return redirect('menu')
 
@@ -51,59 +93,113 @@ def role_required(allowed_roles):
         return wrapper
     return decorator
 
+# === VISTAS PRINCIPALES ===
+
 def master(request):
+    """
+    Vista de página principal/dashboard del sistema.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Renderiza template master.html
+
+    Funcionalidad:
+        - Página de bienvenida del sistema
+        - Dashboard principal post-login
+    """
     return render(request, 'master.html')
 
 def users_render(request):
-    # Solo administradores pueden crear usuarios
+    """
+    Vista para creación de nuevos usuarios del sistema.
+    Acceso restringido solo a administradores.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Formulario de creación o redirección según permisos
+
+    Funcionalidad:
+        - GET: Muestra formulario de registro
+        - POST: Procesa creación de usuario con validaciones
+        - Validación de permisos del usuario creador
+        - Redirección automática post-creación exitosa
+    """
+    # Verificar permisos de administrador
     if request.user.is_authenticated and request.user.rol != 'administrador':
         messages.error(request, "No tienes permisos para crear usuarios")
         return redirect('menu')
 
     if request.method == 'POST':
-        print(request.POST)
+        # Obtener usuario creador para validación de permisos
         creator_user = request.user if request.user.is_authenticated else None
-        form = UsersRender(request.POST, request.FILES, creator_user=creator_user)
+        form = UsersRender(request.POST, request.FILES, creator_user=request.user)
+
         if form.is_valid():
-            print("estamos dentro")
+            print("estamos dentro")  # Debug: validación exitosa
             cleaned_data = form.cleaned_data
-            form.save()
+            user = form.save()  # Guardar nuevo usuario con validaciones
             messages.success(request, "Usuario creado exitosamente")
-            return redirect('login')
+            return redirect('menu')
     else:
-        print("no estamos dentro")
+        print("no estamos dentro")  # Debug: método GET
+        # Preparar formulario vacío con contexto de usuario creador
         creator_user = request.user if request.user.is_authenticated else None
         form = UsersRender(creator_user=creator_user)
-    return render(request, 'users.html', {'form':form})
+
+    return render(request, 'users.html', {'form': form})
 
 def login_view(request):
-    """Vista de login unificada que maneja tanto usuarios de CMIN como DesUr"""
+    """
+    Vista de autenticación unificada para usuarios CMIN y DesUr.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Formulario de login o redirección según autenticación
+
+    Funcionalidad:
+        - Sistema de autenticación unificado
+        - Migración automática de usuarios legacy
+        - Redirección inteligente según rol y permisos:
+          * Solo DesUr (campo) -> /desur/
+          * Con acceso CMIN -> menú principal
+          * Sin permisos -> logout con mensaje
+        - Registro automático de fechas de acceso
+    """
     if request.method == 'POST':
         form = Login(request.POST)
         if form.is_valid():
+            # Extraer credenciales del formulario
             usuario = form.cleaned_data['usuario']
             contrasena = form.cleaned_data['contrasena']
             
-            # Usar el sistema de autenticación unificado que incluye migración automática
+            # Usar sistema de autenticación unificado con migración automática
             user = authenticate(request, username=usuario, password=contrasena)
             
             if user is not None:
+                # Verificar estado activo de la cuenta
                 if not user.is_active:
                     messages.error(request, "Tu cuenta está desactivada. Contacta al administrador.")
                     return render(request, 'login.html', {'form': form})
                 
+                # Iniciar sesión
                 login(request, user)
                 
-                # Registrar el login
+                # Registrar fecha y hora de acceso
                 try:
                     LoginDate.objects.create(user_FK=user)
                 except Exception as e:
                     logger.warning(f"Error al registrar login para {user.username}: {str(e)}")
 
-                # Redirigir según el rol del usuario y permisos
+                # Redirección inteligente según permisos del usuario
                 if user.has_desur_access() and not user.has_cmin_access():
-                    # Usuario solo de DesUr (campo)
-                    return redirect('/desur/')
+                    # Usuario exclusivo de DesUr (rol campo)
+                    return redirect('/ageo/')
                 elif user.has_cmin_access():
                     # Usuario con acceso a CMIN (administrador, delegador)
                     return redirect('menu')
@@ -115,50 +211,119 @@ def login_view(request):
             else:
                 messages.error(request, "Usuario o contraseña incorrectos")
     else:
+        # Mostrar formulario de login vacío
         form = Login()
 
     return render(request, 'login.html', {'form': form})
 
 def logout_view(request):
+    """
+    Vista para cerrar sesión del usuario.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponseRedirect: Redirección a página de login
+
+    Funcionalidad:
+        - Cierre seguro de sesión
+        - Limpieza de datos de sesión
+        - Redirección automática al login
+    """
     logout(request)
     return redirect('login')
 
 @login_required
 def user_conf(request):
+    """
+    Vista para configuración del perfil personal del usuario.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Formulario de configuración de perfil
+
+    Funcionalidad:
+        - GET: Muestra formulario con datos actuales del usuario
+        - POST: Procesa actualización de perfil
+        - Campos modificables: datos personales, foto, contraseña
+        - Validación de cambios y confirmación
+    """
+    # Obtener instancia del usuario actual
     usuario = request.user
+
     if request.method == 'POST':
+        # Procesar actualización de perfil
         form = UsersConfig(request.POST, request.FILES, instance=usuario)
         if form.is_valid():
-            form.save()
+            form.save()  # Guardar cambios en la base de datos
             messages.success(request, "Perfil actualizado correctamente.")
-            return redirect('menu')  # CORREGIR: Redirigir al menú, no al login
+            return redirect('menu')  # Redirigir al menú principal
     else:
+        # Mostrar formulario con datos actuales
         form = UsersConfig(instance=usuario)
+
     return render(request, 'user_conf.html', {'form': form})
 
 def usertest(request):
+    """
+    Vista de prueba para testing de configuración de usuario.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Template de configuración (solo para testing)
+    """
     return render(request, 'user_conf.html')
 
 @login_required
 @role_required(['administrador', 'delegador'])
 def tables(request):
-    # Solo administradores y delegadores pueden ver tablas
+    """
+    Vista principal para gestión de solicitudes.
+    Acceso restringido a administradores y delegadores.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Panel de gestión con solicitudes pendientes y enviadas
+
+    Funcionalidad:
+        - Muestra solicitudes pendientes de procesamiento
+        - Lista solicitudes ya enviadas
+        - Información de usuarios del staff activos
+        - Opciones de prioridad para asignación
+        - Acceso a todas las solicitudes del sistema
+    """
+    # Obtener IDs de solicitudes ya guardadas como pendientes
     solicitudesG = SolicitudesPendientes.objects.values_list('doc_FK_id', flat=True)
+
+    # Filtrar documentos que NO están en solicitudes pendientes
     solicitudesP = Files.objects.exclude(fDoc_ID__in=solicitudesG).order_by('-fDoc_ID')
 
+    # Obtener todas las solicitudes enviadas ordenadas por fecha
     solicitudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
 
+    # Opciones de prioridad disponibles para asignación
     prioridad_choices = SolicitudesEnviadas.PRIORIDAD_CHOICES
+
+    # Usuarios del staff activos para asignación de responsables
     users = Users.objects.filter(is_staff=True, is_active=True).order_by('username')
 
+    # Todas las solicitudes del sistema
     solicitudes = soli.objects.all()
 
+    # Contexto para el template
     context = {
-        'solicitudesP': solicitudesP,
-        'solicitudesE': solicitudesE,
-        'solicitudes': solicitudes,
-        'prioridad_choices': prioridad_choices,
-        'users': users,
+        'solicitudesP': solicitudesP,        # Solicitudes pendientes de procesar
+        'solicitudesE': solicitudesE,        # Solicitudes ya enviadas
+        'solicitudes': solicitudes,          # Todas las solicitudes
+        'prioridad_choices': prioridad_choices,  # Opciones de prioridad
+        'users': users,                      # Usuarios staff para asignación
     }
 
     return render(request, 'tables.html', context)
@@ -166,6 +331,21 @@ def tables(request):
 @login_required
 @role_required(['administrador', 'delegador'])
 def save_request(request): #saveSoli
+    """
+    Vista para guardar nuevas solicitudes en el sistema.
+    Acceso restringido a administradores y delegadores.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponseRedirect: Redirección a la vista de tablas
+
+    Funcionalidad:
+        - Procesa la creación de nuevas solicitudes a partir de documentos
+        - Asigna automáticamente folio y nombre a la solicitud
+        - Manejo de errores y validaciones
+    """
     # Solo administradores y delegadores pueden guardar solicitudes
     if request.method == 'POST':
         doc_id = request.POST.get('doc_id')
@@ -192,6 +372,22 @@ def save_request(request): #saveSoli
 @login_required
 @role_required(['administrador', 'delegador'])
 def seguimiento(request):
+    """
+    Vista para gestión de seguimiento de solicitudes.
+    Acceso restringido a administradores y delegadores.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Panel de seguimiento con filtros y estadísticas
+
+    Funcionalidad:
+        - Muestra todas las solicitudes enviadas con opción de seguimiento
+        - Permite filtrar por estado, usuario, fecha y prioridad
+        - Estadísticas de solicitudes para monitoreo
+        - Opción de cerrar solicitudes con o sin seguimiento
+    """
     # Solo administradores y delegadores pueden hacer seguimiento
     solicitudesE = SolicitudesEnviadas.objects.all().select_related(
         'doc_FK', 'user_FK', 'solicitud_FK', 'usuario_asignado'
@@ -199,6 +395,7 @@ def seguimiento(request):
 
     solicitudes = soli.objects.all()
 
+    # Obtener parámetros de búsqueda y filtros
     search_query = request.GET.get('search', '').strip()
     estado_filter = request.GET.get('estado', '')
     usuario_filter = request.GET.get('usaurio', '')
@@ -206,6 +403,7 @@ def seguimiento(request):
     fecha_hasta = request.GET.get('fecha_hasta', '')
     prioridad_filter = request.GET.get('prioridad', '')
 
+    # Aplicar filtros según parámetros de búsqueda
     if search_query:
         solicitudesE = solicitudesE.filter(
             Q(nomSolicitud__icontains=search_query) |
@@ -321,7 +519,8 @@ def seguimiento(request):
 @login_required
 @role_required(['administrador', 'delegador'])
 def menu(request):
-    """Vista del menú principal con acceso restringido por roles"""
+    """
+    Vista del menú principal con acceso restringido por roles"""
     context = {
         'user_role': request.user.rol,
         'can_access_tables': request.user.can_access_tables(),
@@ -333,6 +532,21 @@ def menu(request):
 # ...existing code...
 
 def sendMail(request):
+    """
+    Vista para envío de correos con solicitudes adjuntas.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponseRedirect: Redirección a la vista de tablas
+
+    Funcionalidad:
+        - Procesa el envío de correos a destinatarios específicos
+        - Adjunta documentos relacionados a la solicitud
+        - Registra el envío en la base de datos
+        - Manejo de errores y validaciones
+    """
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')
         correo_destino = request.POST.get('correo')
@@ -464,6 +678,21 @@ def sendMail(request):
 
 
 def seguimiento_docs(request, solicitud_id):
+    """
+    Vista para subir documentos de seguimiento a solicitudes.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+        solicitud_id (int): ID de la solicitud a la que se le agrega seguimiento
+
+    Returns:
+        HttpResponseRedirect: Redirección a la vista de seguimiento
+
+    Funcionalidad:
+        - Procesa la subida de documentos de seguimiento
+        - Asocia el documento a la solicitud correspondiente
+        - Manejo de errores y validaciones
+    """
     if request.method == 'POST':
         comentario = request.POST.get('comentario', '')
         nomSeg = request.POST.get('nomSeg', '')
@@ -509,6 +738,20 @@ def seguimiento_docs(request, solicitud_id):
     return redirect('seguimiento')
 
 def custom_handler404(request, exception=None):
+    """
+    Manejo personalizado de errores 404 (página no encontrada).
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+        exception (Exception): Excepción capturada (opcional)
+
+    Returns:
+        HttpResponse: Página de error 404 personalizada
+
+    Funcionalidad:
+        - Renderiza una página de error 404 personalizada
+        - Contexto puede ser extendido con información adicional
+    """
     context = {}
     return render(request, 'error404.html', context, status=404)
 
@@ -516,8 +759,24 @@ def custom_handler404(request, exception=None):
 #Excel
 
 def subir_excel(request):
+    """
+    Vista para subir archivos Excel con información de licitaciones.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Formulario de subida de Excel y estado de licitaciones activas
+
+    Funcionalidad:
+        - Permite la subida de archivos Excel con datos de licitaciones
+        - Valida estructura y columnas requeridas en el archivo
+        - Procesa y guarda datos en la base de datos
+        - Manejo de errores y mensajes de estado
+    """
     licitaciones = Licitaciones.objects.all()
 
+    # Cerrar automáticamente licitaciones pasadas
     licitaciones.filter(
         fecha_limite__lt=timezone.now().date(),
         activa=True
@@ -532,6 +791,7 @@ def subir_excel(request):
                 excel_file = request.FILES['file']
                 df = pd.read_excel(excel_file, header=0)
 
+                # Validar columnas requeridas
                 required_columns = ['Fecha límite', 'No. licitación', 'Descripción']
                 for col in required_columns:
                     if col not in df.columns:
@@ -540,6 +800,7 @@ def subir_excel(request):
                         return render(request, 'excel/upload_excel.html', {"form":form,
                                                                                                     "licitaciones": licitaciones_activas})
 
+                # Procesar cada fila del Excel
                 for _, row in df.iterrows():
                     Licitaciones.objects.create(
                         fecha_limite=row['Fecha límite'],
@@ -562,6 +823,20 @@ def subir_excel(request):
 
 #Generar excel
 def get_excel(request):
+    """
+    Vista para generar y descargar un archivo Excel con reportes completos.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Archivo Excel generado como respuesta de descarga
+
+    Funcionalidad:
+        - Genera un archivo Excel con múltiples hojas y datos de diferentes modelos
+        - Personaliza formatos y estructuras de acuerdo a requerimientos
+        - Manejo de errores y logging de eventos
+    """
     if request.method == 'POST':
         try:
             response = HttpResponse(
@@ -642,6 +917,7 @@ def get_excel(request):
                     }
                 ]
 
+                # Procesar cada modelo y generar hojas en el Excel
                 for config in modelos:
                     try:
                         if config['campos']:
@@ -677,10 +953,34 @@ def get_excel(request):
 #End excel
 
 def is_staff_user(user):
+    """
+    Verifica si el usuario tiene permisos de staff (administrador o delegador).
+
+    Args:
+        user (User): Objeto de usuario a verificar
+
+    Returns:
+        bool: True si el usuario es staff, False en caso contrario
+    """
     return user.is_authenticated and user.is_staff
 
 @login_required
 def bandeja_entrada(request):
+    """
+    Vista de bandeja de entrada para usuarios con solicitudes asignadas.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Panel de bandeja de entrada con solicitudes y evidencias
+
+    Funcionalidad:
+        - Muestra solicitudes asignadas al usuario logueado
+        - Permite filtrar por estado y prioridad
+        - Muestra evidencias asociadas a cada solicitud
+        - Estadísticas de solicitudes para el usuario
+    """
     solicitudes_asignadas = SolicitudesEnviadas.objects.filter(
         usuario_asignado=request.user
     ).select_related('doc_FK', 'user_FK', 'solicitud_FK').order_by('-fechaEnvio')
@@ -689,6 +989,7 @@ def bandeja_entrada(request):
     ).select_related('solicitud_FK', 'user_FK').order_by('-seguimiento_ID', '-fechaSeguimiento')
     evidencia_solicitud = {}
 
+    # Estadísticas de solicitudes
     stats = {
         'total': solicitudes_asignadas.count(),
         'pendientes': solicitudes_asignadas.filter(estado='pendiente').count(),
@@ -696,6 +997,7 @@ def bandeja_entrada(request):
         'completadas': solicitudes_asignadas.filter(estado='completado').count(),
     }
 
+    # Filtros aplicados desde la interfaz
     estado_filtro = request.GET.get('estado', '')
     prioridad_filtro = request.GET.get('prioridad', '')
 
@@ -706,6 +1008,7 @@ def bandeja_entrada(request):
         solicitudes_asignadas = solicitudes_asignadas.filter(prioridad=prioridad_filtro)
 
 
+    # Agrupar evidencias por solicitud
     for evidencia in evidencias:
         solicitud_id = evidencia.solicitud_FK.solicitud_ID
         if solicitud_id not in evidencia_solicitud:
@@ -730,6 +1033,20 @@ def bandeja_entrada(request):
 
 @login_required
 def actualizar_estado_solicitud(request):
+    """
+    Vista para actualizar el estado de una solicitud asignada al usuario.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponseRedirect: Redirección a la bandeja de entrada
+
+    Funcionalidad:
+        - Cambia el estado de una solicitud a pendiente, en_proceso o completado
+        - Permite adjuntar evidencia al completar una solicitud
+        - Manejo de errores y validaciones
+    """
     if request.method == 'POST':
         solicitud_id = request.POST.get('solicitud_id')
         nuevo_estado = request.POST.get('estado')
@@ -793,8 +1110,23 @@ Notificaciones Django
 
 @login_required
 def notifications(request):
+    """
+    Vista para mostrar y gestionar notificaciones del usuario.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+
+    Returns:
+        HttpResponse: Panel de notificaciones
+
+    Funcionalidad:
+        - Muestra notificaciones pendientes y leídas del usuario
+        - Marca automáticamente como leídas las notificaciones pendientes
+        - Permite interacción con notificaciones (ej. redirección a solicitudes)
+    """
     notificaciones = Notifications.objects.filter(user_FK=request.user).order_by('-created_at')
 
+    # Marcar como leídas las notificaciones pendientes
     Notifications.objects.filter(user_FK=request.user, is_read=False).update(is_read=True)
 
     context = {
@@ -805,6 +1137,16 @@ def notifications(request):
 
 @login_required
 def marcar_notificacion(request, notificacion_id):
+    """
+    Vista para marcar una notificación como leída.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP
+        notificacion_id (int): ID de la notificación a marcar como leída
+
+    Returns:
+        JsonResponse: Estado de la operación (éxito o error)
+    """
     try:
         notificacion = get_object_or_404(Notifications, pk=notificacion_id, user_FK=request.user)
         notificacion.is_read = True
@@ -815,6 +1157,18 @@ def marcar_notificacion(request, notificacion_id):
 
 @receiver(post_save, sender=SolicitudesEnviadas)
 def solicitud_notificacion(sender, instance, created, **kwargs):
+    """
+    Señal para crear notificación al asignar una nueva solicitud.
+
+    Args:
+        sender (Model): Modelo que envía la señal
+        instance (SolicitudesEnviadas): Instancia de la solicitud enviada
+        created (bool): Indica si es una creación nueva
+
+    Funcionalidad:
+        - Crea una notificación para el usuario asignado a la solicitud
+        - Incluye mensaje y enlace directo a la bandeja de entrada
+    """
     if created and instance.usuario_asignado:
         msg = f"Se ha asignado una nueva solicitud: {instance.nomSolicitud}"
         link = reverse('bandeja_entrada')
@@ -828,6 +1182,18 @@ def solicitud_notificacion(sender, instance, created, **kwargs):
 # Crear notificación al guardar seguimiento
 @receiver(post_save, sender=Seguimiento)
 def seguimiento_notificacion(sender, instance, created, **kwargs):
+    """
+    Señal para crear notificación al agregar un nuevo seguimiento.
+
+    Args:
+        sender (Model): Modelo que envía la señal
+        instance (Seguimiento): Instancia del seguimiento creado
+        created (bool): Indica si es una creación nueva
+
+    Funcionalidad:
+        - Crea una notificación para el usuario de la solicitud asociada
+        - Incluye mensaje y enlace directo al seguimiento
+    """
     if created:
         solicitud_e = instance.solicitud_FK
         if solicitud_e and solicitud_e.user_FK:
@@ -843,6 +1209,20 @@ def seguimiento_notificacion(sender, instance, created, **kwargs):
 # Tokens para api de encuestas
 @api_view(['post'])
 def get_auth_token(request):
+    """
+    API para obtener el token de autenticación del usuario.
+
+    Args:
+        request (Request): Objeto de solicitud REST
+
+    Returns:
+        Response: Token de autenticación o mensaje de error
+
+    Funcionalidad:
+        - Autentica al usuario y genera un token de sesión
+        - Requiere credenciales válidas (usuario y contraseña)
+        - Responde con el token o un mensaje de error
+    """
     username = request.data.get('username')
     password = request.data.get('password')
 

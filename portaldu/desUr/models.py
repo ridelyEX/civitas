@@ -1,4 +1,7 @@
-from django.contrib.auth.hashers import check_password, make_password
+"""
+Modelos de datos para el sistema DesUr (Desarrollo Urbano)
+Sistema de gestión de trámites ciudadanos y presupuesto participativo
+"""
 from django.db import models
 from django.db.models import AutoField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -7,120 +10,114 @@ import uuid
 
 from rest_framework.exceptions import ValidationError
 
-class DesUrUsers(models.Model):
-    username = models.CharField(max_length=150, unique=True)
-    email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=75, blank=True)
-    password = models.CharField(max_length=128)
-    bday = models.DateField(null=True, blank=True)
-    foto = models.ImageField(upload_to='user_photos', null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        db_table = 'desur_users'
-        ordering = ['username']
-
-    def __str__(self):
-        return self.username
-
-    def set_password(self, raw_password):
-        self.password = make_password(raw_password)
-
-    def check_password(self, raw_password):
-        return check_password(raw_password, self.password)
-
-    def get_full_name(self):
-        return f"{self.first_name} {self.last_name}".strip()
-
-    def get_short_name(self):
-        return self.first_name
-
-    @property
-    def is_authenticated(self):
-        return True
-
-    @property
-    def is_anonymous(self):
-        return False
-
-
-class DesUrLoginDate(models.Model):
-    login_ID = models.AutoField(primary_key=True)
-    user_FK = models.ForeignKey(DesUrUsers, on_delete=models.CASCADE, verbose_name='usuarios')
-    date = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'DesUrLoginDate'
-        ordering = ['user_FK']
-
-    def __str__(self):
-        return str(self.date)
-
-    @classmethod
-    def create(cls, user):
-        return cls.objects.create(
-            user_FK=user
-        )
-
-
 class Uuid(models.Model):
-    prime =  models.AutoField(primary_key=True)
+    """
+    Modelo de identificadores únicos para sesiones y trámites
+    Genera UUIDs únicos para cada proceso de trámite ciudadano
+    """
+    # Clave primaria autoincremental para referencia interna
+    prime = models.AutoField(primary_key=True)
+
+    # UUID único generado automáticamente para cada sesión/trámite
+    # Se usa para rastrear el progreso de trámites ciudadanos
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, null=True)
 
     class Meta:
-        db_table = 'uuid'
-        ordering = ["uuid"]
+        db_table = 'uuid'  # Tabla: uuid
+        ordering = ["uuid"]  # Ordenar por UUID
 
     def __str__(self):
         return str(self.uuid)
 
 
 class data(models.Model):
+    """
+    Modelo principal de datos del ciudadano solicitante
+    Almacena información personal y demográfica del ciudadano
+    """
+    # Clave primaria autoincremental del registro de ciudadano
     data_ID = models.AutoField(primary_key=True)
+
+    # Relación con UUID de sesión - vincula ciudadano con su trámite
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="ides")
-    nombre  = models.CharField(max_length=30, verbose_name="Nombre")
-    pApe    = models.CharField(max_length=30, verbose_name="Apellido Paterno")
-    mApe    = models.CharField(max_length=30, verbose_name="Apellido Materno")
-    bDay    = models.DateField()
-    asunto  = models.CharField(max_length=30)
-    tel     = PhoneNumberField(region="MX")
-    curp    = models.CharField(max_length=18)
-    sexo    = models.CharField(max_length=10)
-    dirr    = models.TextField()
-    disc    = models.CharField(max_length=100, verbose_name="discapacidad")
-    etnia   = models.CharField(max_length=100, verbose_name="etnia")
-    vul     = models.CharField(max_length=100, verbose_name="vulnerabilidad")
+
+    # === DATOS PERSONALES BÁSICOS ===
+    # Nombre(s) del ciudadano - máximo 30 caracteres
+    nombre = models.CharField(max_length=30, verbose_name="Nombre")
+
+    # Apellido paterno del ciudadano - máximo 30 caracteres
+    pApe = models.CharField(max_length=30, verbose_name="Apellido Paterno")
+
+    # Apellido materno del ciudadano - máximo 30 caracteres
+    mApe = models.CharField(max_length=30, verbose_name="Apellido Materno")
+
+    # Fecha de nacimiento del ciudadano - formato YYYY-MM-DD
+    bDay = models.DateField()
+
+    # === DATOS DE CONTACTO ===
+    # Número telefónico con validación para región México
+    tel = PhoneNumberField(region="MX")
+
+    # === DATOS OFICIALES ===
+    # CURP (Clave Única de Registro de Población) - 18 caracteres
+    curp = models.CharField(max_length=18)
+
+    # Sexo del ciudadano (M/F/Otro) - máximo 10 caracteres
+    sexo = models.CharField(max_length=10)
+
+    # === DATOS DEL TRÁMITE ===
+    # Código del asunto/trámite solicitado (ej: DOP00001)
+    asunto = models.CharField(max_length=30)
+
+    # Dirección completa del ciudadano o del problema a atender
+    dirr = models.TextField()
+
+    # === DATOS DEMOGRÁFICOS Y SOCIALES ===
+    # Tipo de discapacidad del ciudadano (si aplica)
+    disc = models.CharField(max_length=100, verbose_name="discapacidad")
+
+    # Grupo étnico al que pertenece el ciudadano
+    etnia = models.CharField(max_length=100, verbose_name="etnia")
+
+    # Grupo vulnerable al que pertenece (adulto mayor, menor de edad, etc.)
+    vul = models.CharField(max_length=100, verbose_name="vulnerabilidad")
 
     class Meta:
-        db_table = 'dataT'
-        get_latest_by = 'data_ID'
-        ordering = ["data_ID"]
+        db_table = 'dataT'  # Tabla: dataT
+        get_latest_by = 'data_ID'  # Obtener el más reciente por ID
+        ordering = ["data_ID"]  # Ordenar por ID ascendente
         verbose_name = "Datos"
 
     def __str__(self):
         return self.nombre
 
-    #def save(self, *args, **kwargs):
-     #   if not self.fuuid and Uuid.objects.exists():
-      #      self.fuuid = Uuid.objects.latest('uuid')
-       # super().save(*args, **kwargs)
-
 
 class SubirDocs(models.Model):
+    """
+    Modelo de documentos adjuntos subidos por ciudadanos
+    Almacena archivos PDF, imágenes y otros documentos de respaldo
+    """
+    # Clave primaria autoincremental del documento
     doc_ID = AutoField(primary_key=True)
+
+    # Relación con UUID de sesión - vincula documento con trámite específico
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE)
+
+    # Nombre original del archivo subido - máximo 50 caracteres
     nomDoc = models.CharField(max_length=50, null=True, blank=True)
 
+    # Descripción del contenido del documento - máximo 100 caracteres
     descDoc = models.CharField(max_length=100)
+
+    # Archivo físico almacenado en carpeta 'documents/'
     doc = models.FileField(upload_to='documents/')
+
+    # Fecha y hora de subida del documento - se asigna automáticamente
     fechaDoc = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
-        db_table = 'files'
-        ordering = ['fechaDoc']
+        db_table = 'files'  # Tabla: files
+        ordering = ['fechaDoc']  # Ordenar por fecha de subida
         verbose_name = "Documentos"
 
     def __str__(self):
@@ -128,28 +125,60 @@ class SubirDocs(models.Model):
 
 
 class soli(models.Model):
+    """
+    Modelo principal de solicitudes/trámites procesados
+    Almacena los detalles específicos del trámite y su procesamiento
+    """
+    # Clave primaria autoincremental de la solicitud
     soli_ID = models.AutoField(primary_key=True)
-    data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
-                                verbose_name="Datos")
+
+    # Relación con datos del ciudadano - vincula solicitud con ciudadano
+    data_ID = models.ForeignKey(data, on_delete=models.CASCADE, verbose_name="Datos")
+
+    # Relación con documentos adjuntos (opcional)
     doc_ID = models.ForeignKey(SubirDocs, on_delete=models.CASCADE, verbose_name="Documentos",
-                                blank=True, null=True)
-    # Agregar referencia al empleado que procesó el trámite
-    processed_by = models.ForeignKey(DesUrUsers, on_delete=models.CASCADE,
+                              blank=True, null=True)
+
+    # Usuario empleado que procesó el trámite - referencia al modelo unificado Users
+    processed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                                    verbose_name="Procesado por", null=True, blank=True)
-    dirr   = models.TextField()
+
+    # === DATOS DE UBICACIÓN DEL PROBLEMA ===
+    # Dirección completa donde se ubica el problema a resolver
+    dirr = models.TextField()
+
+    # Calle específica extraída de la dirección
     calle = models.CharField(max_length=100, null=True, blank=True)
+
+    # Colonia específica extraída de la dirección
     colonia = models.CharField(max_length=100, null=True, blank=True)
+
+    # Código postal de la ubicación - 5 dígitos
     cp = models.CharField(max_length=5, null=True, blank=True)
-    descc   = models.TextField(blank=True, null=True)
-    fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    info   = models.TextField(blank=True, null=True)
+
+    # === DETALLES DEL TRÁMITE ===
+    # Descripción detallada del problema o solicitud
+    descc = models.TextField(blank=True, null=True)
+
+    # Información adicional proporcionada por el ciudadano
+    info = models.TextField(blank=True, null=True)
+
+    # PUO (Proceso Unidad Operativa) - tipo de proceso (OFI, CRC, MEC, etc.)
     puo = models.CharField(max_length=50, null=True, blank=True)
-    foto = models.ImageField(upload_to = 'fotos', null=True, blank=True)
+
+    # Fotografía del problema reportado - almacenada en 'fotos/'
+    foto = models.ImageField(upload_to='fotos', null=True, blank=True)
+
+    # === CONTROL ADMINISTRATIVO ===
+    # Folio único generado para el trámite (ej: GOP-OFI-00001-1234/25)
     folio = models.CharField(max_length=50, null=True, blank=True)
 
+    # Fecha y hora de creación de la solicitud - se asigna automáticamente
+    fecha = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
     class Meta:
-        db_table = 'soli'
-        ordering = ["data_ID"]
+        db_table = 'soli'  # Tabla: soli
+        ordering = ["data_ID"]  # Ordenar por ID de ciudadano
         verbose_name = "Solicitud"
 
     def __str__(self):
@@ -157,74 +186,119 @@ class soli(models.Model):
 
 
 class Files(models.Model):
+    """
+    Modelo de archivos finales generados por el sistema
+    Almacena PDFs oficiales y documentos generados automáticamente
+    """
+    # Clave primaria autoincremental del archivo final
     fDoc_ID = models.AutoField(primary_key=True)
+
+    # Nombre del documento final generado
     nomDoc = models.CharField(max_length=200, verbose_name="Nombre del documento")
+
+    # Relación con UUID de sesión - vincula archivo con trámite
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="UUID")
+
+    # Relación con solicitud específica (opcional)
     soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Solicitud")
+
+    # Archivo PDF final generado - almacenado en 'documents/'
     finalDoc = models.FileField(upload_to='documents/', verbose_name="Documento final")
 
     class Meta:
-        db_table = 'solicitudes'
-        ordering = ['fDoc_ID']
+        db_table = 'solicitudes'  # Tabla: solicitudes
+        ordering = ['fDoc_ID']  # Ordenar por ID de archivo
         verbose_name = "solicitudes"
 
     def __str__(self):
         return str(self.nomDoc)
 
 
+# === MODELOS DE PRESUPUESTO PARTICIPATIVO ===
 
 class PpGeneral(models.Model):
-
+    """
+    Modelo general de propuestas de presupuesto participativo
+    Almacena datos básicos de proyectos propuestos por ciudadanos
+    """
+    # Opciones de estado para instalaciones existentes
     CHOICES_STATE = [
-        ('bueno', 'Bueno'),
-        ('regular', 'Regular'),
-        ('malo', 'Malo'),
-        ('no existe', 'No existe'),
+        ('bueno', 'Bueno'),           # Instalación en buen estado
+        ('regular', 'Regular'),        # Instalación requiere mantenimiento menor
+        ('malo', 'Malo'),             # Instalación requiere reparación mayor
+        ('no existe', 'No existe'),   # Instalación no existe, requiere construcción
     ]
 
+    # Tipos de instalaciones que se pueden evaluar
     INSTALATION_CHOICES = [
-        ('cfe', 'CFE'),
-        ('agua', 'Agua'),
-        ('drenaje', 'Drenaje'),
-        ('impermeabilizacion', 'Impermeabilización'),
-        ('climas', 'Climas'),
-        ('alumbrado', 'Alumbrado'),
+        ('cfe', 'CFE'),                              # Instalación eléctrica
+        ('agua', 'Agua'),                            # Sistema de agua potable
+        ('drenaje', 'Drenaje'),                      # Sistema de drenaje
+        ('impermeabilizacion', 'Impermeabilización'), # Impermeabilización
+        ('climas', 'Climas'),                        # Aires acondicionados
+        ('alumbrado', 'Alumbrado'),                  # Alumbrado público
     ]
 
+    # Clave primaria autoincremental de la propuesta
     pp_ID = models.AutoField(primary_key=True)
+
+    # Relación con UUID de sesión - vincula propuesta con sesión
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="ides")
 
+    # === DATOS DEL PROMOVENTE ===
+    # Nombre completo de quien propone el proyecto
     nombre_promovente = models.CharField(max_length=100, verbose_name="Nombre del Promovente", null=True, blank=True)
+
+    # Teléfono de contacto del promovente - validado para México
     telefono = PhoneNumberField(region="MX", verbose_name="Teléfono", null=True, blank=True)
+
+    # === DATOS DEL PROYECTO ===
+    # Categoría del proyecto (parque, escuela, infraestructura, etc.)
     categoria = models.CharField(max_length=100, verbose_name="Categoria del Proyecto", null=True, blank=True)
+
+    # Dirección completa donde se realizará el proyecto
     direccion_proyecto = models.TextField(verbose_name="Dirección del Proyecto", null=True, blank=True)
+
+    # === DESGLOSE DE DIRECCIÓN ===
+    # Calle específica del proyecto
     calle_p = models.CharField(max_length=50, null=True, blank=True)
+
+    # Colonia específica del proyecto
     colonia_p = models.CharField(max_length=50, null=True, blank=True)
+
+    # Código postal del proyecto - 5 dígitos
     cp_p = models.CharField(max_length=5, null=True, blank=True)
+
+    # Descripción detallada del proyecto propuesto
     desc_p = models.TextField(verbose_name="Descripción del Proyecto", null=True, blank=True)
+
+    # Fecha y hora de creación de la propuesta - se asigna automáticamente
     fecha_pp = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
-    #choices menu
-
+    # === EVALUACIÓN DE INSTALACIONES ===
+    # Campo JSON que almacena el estado de diferentes instalaciones
+    # Estructura: {"cfe": "bueno", "agua": "malo", "drenaje": "regular"}
     instalation_choices = models.JSONField(
         verbose_name="instalaciones",
-        default=dict,
+        default=dict,  # Diccionario vacío por defecto
         null=True,
         blank=True,
         help_text="Seleccione las instalaciones necesarias para la propuesta.",
     )
 
+    # Notas adicionales importantes sobre el proyecto
     notas_importantes = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
 
     class Meta:
-        db_table = 'pp_general'
-        ordering = ['pp_ID']
+        db_table = 'pp_general'  # Tabla: pp_general
+        ordering = ['pp_ID']  # Ordenar por ID de propuesta
         verbose_name = "Propuesta General"
 
     def __str__(self):
         return self.nombre_promovente or "Propuesta sin nombre"
 
     def clean(self):
+        """Validación personalizada del campo JSON de instalaciones"""
         super().clean()
         valid_choices = [choice[0] for choice in self.INSTALATION_CHOICES]
         valid_states = [choice[0] for choice in self.CHOICES_STATE]
@@ -241,6 +315,11 @@ class PpGeneral(models.Model):
                     })
 
 class PpParque(models.Model):
+    """
+    Modelo para propuestas de parques en el presupuesto participativo
+    Almacena detalles sobre canchas, alumbrado, juegos y equipamiento
+    """
+
     # Campos para Cancha
 
     p_parque_ID = models.AutoField(primary_key=True)
@@ -274,6 +353,7 @@ class PpParque(models.Model):
     equipamiento_andadores = models.BooleanField(verbose_name="Andadores", default=False)
     equipamiento_rampas = models.BooleanField(verbose_name="Rampas", default=False)
 
+    # Notas adicionales sobre la propuesta de parque
     notas_parque = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
 
     class Meta:
@@ -287,6 +367,11 @@ class PpParque(models.Model):
 
 
 class PpEscuela(models.Model):
+    """
+    Modelo para propuestas de rehabilitación o construcción de escuelas
+    Almacena detalles sobre salones, baños, electricidad y construcción nueva
+    """
+
     # Campos para Rehabilitación
 
     p_escuela_ID = models.AutoField(primary_key=True)
@@ -309,6 +394,7 @@ class PpEscuela(models.Model):
     cancha_futbol_7x7 = models.BooleanField(verbose_name="Fútbol 7x7", default=False)
     cancha_usos_multiples = models.BooleanField(verbose_name="Usos Múltiples", default=False)
 
+    # Notas adicionales sobre la propuesta de escuela
     notas_escuela = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
 
     class Meta:
@@ -320,6 +406,11 @@ class PpEscuela(models.Model):
         return self.nom_escuela or None
 
 class PpCS(models.Model):
+    """
+    Modelo para propuestas de rehabilitación o construcción de centros comunitarios
+    Almacena detalles sobre salones, baños, electricidad y construcción nueva
+    """
+
     # Campos para Rehabilitación
 
     p_cs_ID = models.AutoField(primary_key=True)
@@ -335,6 +426,7 @@ class PpCS(models.Model):
     construccion_domo = models.BooleanField(verbose_name="Domo", default=False)
     construccion_otro = models.BooleanField(verbose_name="Otro tipo de construcción", default=False)
 
+    # Notas adicionales sobre la propuesta de centro comunitario
     notas_propuesta = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
 
     class Meta:
@@ -346,6 +438,11 @@ class PpCS(models.Model):
         return str(self.p_cs_ID) or None
 
 class PpInfraestructura(models.Model):
+    """
+    Modelo para propuestas de infraestructura urbana
+    Almacena detalles sobre bardas, muros, pavimentación y señalamiento vial
+    """
+
     # Campos para Infraestructura
 
     pp_infraestructura_ID = models.AutoField(primary_key=True)
@@ -373,6 +470,7 @@ class PpInfraestructura(models.Model):
     señalamiento_pintura = models.BooleanField(verbose_name="Pintura", default=False)
     señalamiento_señales = models.BooleanField(verbose_name="Señales verticales", default=False)
 
+    # Notas adicionales sobre la propuesta de infraestructura
     notas_propuesta = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
 
 
@@ -385,6 +483,11 @@ class PpInfraestructura(models.Model):
         return str(self.pp_infraestructura_ID) or None
 
 class PpPluvial(models.Model):
+    """
+    Modelo para propuestas de soluciones pluviales
+    Almacena detalles sobre muros de contención, canalización y puentes peatonales
+    """
+
     # Campos para Soluciones Pluviales
 
     pp_pluvial_ID = models.AutoField(primary_key=True)
@@ -403,6 +506,7 @@ class PpPluvial(models.Model):
     pluvial_proteccion_inundaciones = models.BooleanField(verbose_name="Protección contra inundaciones", default=False)
     pluvial_otro = models.BooleanField(verbose_name="Otro", default=False)
 
+    # Notas adicionales sobre la propuesta de soluciones pluviales
     notas_propuesta = models.TextField(verbose_name="Notas Importantes", null=True, blank=True)
 
 
@@ -415,6 +519,10 @@ class PpPluvial(models.Model):
         return str(self.pp_pluvial_ID) or None
 
 class PpFiles(models.Model):
+    """
+    Modelo para archivos específicos de propuestas de presupuesto participativo
+    Almacena documentos adicionales requeridos para la evaluación de propuestas
+    """
     pp_file_ID = models.AutoField(primary_key=True)
     nomDoc = models.CharField(max_length=200, verbose_name="Nombre del documento")
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="UUID")
@@ -431,11 +539,18 @@ class PpFiles(models.Model):
 
 
 class Pagos(models.Model):
+    """
+    Modelo para el registro de pagos realizados por los ciudadanos
+    Almacena información sobre el monto, fecha y método de pago
+    """
     pago_ID = models.AutoField(primary_key=True)
     data_ID = models.ForeignKey(data, on_delete=models.CASCADE,
                                 verbose_name="datos")
 
+    # Fecha y hora del pago - puede ser nulo
     fecha = models.DateTimeField(null = True, blank = True)
+
+    # Método de pago (PFM) - descripción del método utilizado
     pfm = models.CharField(max_length=80, null = True, blank = True)
 
     class Meta:
@@ -446,7 +561,7 @@ class Pagos(models.Model):
         return self.pfm or ""
 
     def save(self, *args, **kwargs):
+        """Asignar automáticamente el último dato si no se proporciona"""
         if not self.data_ID_id and data.objects.exists():
-            self.data_ID_id = data.objects.latest('data_ID').data_ID
+            self.data_ID = data.objects.latest('data_ID')
         super().save(*args, **kwargs)
-

@@ -69,9 +69,13 @@
                 <label for="id_confirmP">Confirmar contraseña</label>
                 {{form.confirmP}}
                 </div>
+                <div class="mini">
+                    <label for="id_rol">Rol del usuario</label>
+                    {{form.rol}}
+                </div>
             </div>
         </div>
-        <button type="button" class="back bbtn" id="back" data-url="{% url 'login' %}">Volver a login</button>
+        <button type="button" class="back bbtn" id="back" data-url="{% url 'menu' %}">Volver</button>
         <button type="submit" class="next nbtn">Registrar usuario</button>
 
         {{form.foto}}

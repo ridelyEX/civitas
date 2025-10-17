@@ -1,3 +1,7 @@
+"""
+Vista principal de DesUr - Sistema de trámites de Desarrollo Urbano
+Maneja todas las operaciones relacionadas con solicitudes ciudadanas, documentos y presupuesto participativo
+"""
 import base64
 import uuid
 from io import BytesIO
@@ -25,6 +29,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .services import LocalGISService
+
 # Imports para PDF (weasyprint)
 try:
     from weasyprint import HTML
@@ -44,19 +50,36 @@ from .models import (data, soli, Files, Uuid,
                      PpCS, PpEscuela, PpGeneral, PpPluvial, PpParque, PpInfraestructura,
                      SubirDocs, Pagos, PpFiles)
 from .forms import (GeneralRender, CsRender, EscuelaRender, PluvialRender, ParqueRender,
-                    DesUrLogin)
+                    DesUrLogin, InfraestructuraRender)
 
+# Logger para registro de eventos y errores del módulo
 logger = logging.getLogger(__name__)
 
-# Decorador para validar acceso a DesUr
+# Decorador personalizado para validar acceso a DesUr
 def desur_access_required(view_func):
-    """Decorador que verifica que el usuario tenga acceso a DesUr"""
+    """
+    Decorador que verifica que el usuario tenga acceso a DesUr basado en su rol
+
+    Args:
+        view_func: Función de vista a proteger
+
+    Returns:
+        Función wrapper que valida permisos antes de ejecutar la vista
+
+    Behavior:
+        - Redirige a login si el usuario no está autenticado
+        - Redirige a menú CMIN si el usuario tiene acceso CMIN pero no DesUr
+        - Muestra mensaje de error si el usuario no tiene permisos
+    """
     def wrapper(request, *args, **kwargs):
+        # Validar autenticación del usuario
         if not request.user.is_authenticated:
             return redirect('login')  # Redirigir al login unificado
 
+        # Validar permisos específicos de DesUr según rol del usuario
         if not request.user.has_desur_access():
             messages.error(request, "No tienes permisos para acceder a esta sección")
+            # Si tiene acceso a CMIN, redirigir ahí, sino al login
             if request.user.has_cmin_access():
                 return redirect('menu')
             else:
@@ -66,18 +89,39 @@ def desur_access_required(view_func):
     return wrapper
 
 def desur_login_view(request):
-    """Vista de login de DesUr - ahora redirige al login unificado"""
+    """
+    Vista de login de DesUr - ahora redirige al login unificado
+
+    Note:
+        Esta vista existe por compatibilidad pero redirige al sistema unificado de autenticación
+    """
     messages.info(request, "Usa el sistema de login principal para acceder")
     return redirect('login')
 
 def desur_logout_view(request):
-    """Vista de logout de DesUr - ahora usa el logout unificado"""
+    """
+    Vista de logout de DesUr - ahora usa el logout unificado
+
+    Note:
+        Mantiene compatibilidad con URLs antiguas pero usa el sistema central
+    """
     return redirect('logout')
 
 @login_required
 @desur_access_required
 def desur_user_conf(request):
-    """Configuración de usuario usando el modelo unificado"""
+    """
+    Configuración de perfil de usuario usando el modelo unificado Users
+
+    Args:
+        request: HttpRequest con datos del formulario (POST) o petición inicial (GET)
+
+    Returns:
+        HttpResponse con formulario de configuración o redirección tras guardado exitoso
+
+    Template:
+        auth/desur_user_conf.html
+    """
     usuario = request.user
     if request.method == 'POST':
         # Usar el formulario de configuración de CMIN
@@ -95,7 +139,25 @@ def desur_user_conf(request):
 @login_required
 @desur_access_required
 def desur_menu(request):
-    """Menú principal de DesUr - accesible para usuarios con permisos DesUr"""
+    """
+    Menú principal de DesUr - Dashboard para empleados con acceso al sistema
+
+    Args:
+        request: HttpRequest con usuario autenticado y parámetros de paginación
+
+    Returns:
+        HttpResponse con el menú principal y contexto del usuario
+
+    Context:
+        - user_role: Rol del usuario en el sistema
+        - user: Objeto User con información completa
+
+    Side Effects:
+        - Registra el acceso del usuario en la tabla LoginDate para auditoría
+
+    Template:
+        main.html
+    """
     # Registrar acceso a DesUr usando el modelo unificado
     try:
         LoginDate.create(request.user)
@@ -112,7 +174,28 @@ def desur_menu(request):
 @login_required
 @desur_access_required
 def desur_historial(request):
-    """Vista para mostrar el historial de trámites procesados por el empleado actual"""
+    """
+    Vista para mostrar el historial completo de trámites procesados por el empleado actual
+
+    Args:
+        request: HttpRequest con usuario autenticado y parámetros de paginación
+
+    Returns:
+        HttpResponse con historial paginado de trámites
+
+    Context:
+        - page_obj: Objeto Page con trámites paginados (10 por página)
+        - total_tramites: Conteo total de trámites procesados por el empleado
+        - tramites_hoy: Conteo de trámites procesados el día actual
+        - stats_by_puo: Estadísticas agrupadas por tipo de trámite (PUO)
+        - empleado: Usuario actual (empleado)
+
+    Query Parameters:
+        - page: Número de página para paginación
+
+    Template:
+        auth/desur_historial.html
+    """
     # Obtener todos los trámites procesados por el usuario actual
     tramites = soli.objects.filter(processed_by=request.user).select_related(
         'data_ID', 'processed_by'
@@ -148,7 +231,33 @@ def desur_historial(request):
 @login_required
 @desur_access_required
 def desur_buscar_tramite(request):
-    """Vista para buscar trámites específicos"""
+    """
+    Vista de búsqueda avanzada de trámites procesados por el empleado
+
+    Args:
+        request: HttpRequest con término de búsqueda en query string
+
+    Returns:
+        HttpResponse con resultados de búsqueda
+
+    Context:
+        - tramites: QuerySet de trámites que coinciden con la búsqueda (None si no hay búsqueda)
+        - query: Término de búsqueda utilizado
+
+    Query Parameters:
+        - q: Término de búsqueda (busca en folio, nombre, apellidos, CURP, PUO)
+
+    Search Fields:
+        - folio: Folio del trámite
+        - data_ID__nombre: Nombre del ciudadano
+        - data_ID__pApe: Apellido paterno del ciudadano
+        - data_ID__mApe: Apellido materno del ciudadano
+        - data_ID__curp: CURP del ciudadano
+        - puo: Tipo de proceso (PUO)
+
+    Template:
+        auth/desur_buscar.html
+    """
     tramites = None
     query = None
 
@@ -182,9 +291,25 @@ def desur_buscar_tramite(request):
 @login_required
 @desur_access_required
 def base(request):
-    # SÍ login_required - solo empleados pueden acceder al sistema
+    """
+    Vista base para confirmar guardado de documentos
+
+    Args:
+        request: HttpRequest con cookie de UUID de sesión
+
+    Returns:
+        HttpResponse con confirmación o redirección si no hay UUID
+
+    Note:
+        Requiere UUID válido en cookies para mostrar confirmación
+
+    Template:
+        documet/save.html
+    """
+    # Obtener UUID de sesión de trabajo desde cookies
     uuid = request.COOKIES.get('uuid')
 
+    # Si no hay UUID, redirigir al menú (sesión inválida)
     if not uuid:
         return redirect('desur_menu')  # Corregir redirección
     return render(request, 'documet/save.html',{'uuid':uuid})
@@ -192,27 +317,56 @@ def base(request):
 @login_required
 @desur_access_required
 def home(request):
-    # SÍ login_required - punto de entrada solo para empleados autenticados
+    """
+    Punto de entrada para iniciar un nuevo trámite - Selección de tipo de trámite
+
+    Args:
+        request: HttpRequest con selección de tipo de trámite (POST)
+
+    Returns:
+        HttpResponse con opciones o redirección según selección
+
+    Actions:
+        - op: Obra pública (redirige a captura de datos del ciudadano)
+        - pp: Presupuesto participativo (redirige a formulario general PP)
+
+    Side Effects:
+        - Crea o valida UUID de sesión
+        - Establece cookie 'uuid' con duración de 1 hora
+
+    Cookie Management:
+        - uuid: Identificador único de sesión de trabajo (1 hora de duración)
+
+    Template:
+        main.html
+    """
     if request.method == 'POST':
+        # Obtener UUID de sesión existente
         uuidM = request.COOKIES.get('uuid')
         action = request.POST.get('action')
 
+        # Generar nuevo UUID si no existe
         if not uuidM:
             uuidM = str(uuid.uuid4())
             new = Uuid(uuid=uuidM)
             new.save()
             logger.info("Nuevo UUID creado para sesión")
         else:
+            # Validar que el UUID exista en la base de datos
             if not Uuid.objects.filter(uuid=uuidM).exists():
                 new = Uuid(uuid=uuidM)
                 new.save()
                 logger.info("UUID recreado para sesión existente")
+
+        # Redirigir según el tipo de acción seleccionado
         if action == 'op':
             response = redirect('data')
         elif action == 'pp':
             response = redirect('general')
         else:
             response = redirect('desur_menu')  # Corregir redirección
+
+        # Establecer cookie con UUID de sesión
         response.set_cookie('uuid', uuidM, max_age=3600)
         return response
     return render(request, 'main.html')
@@ -220,8 +374,52 @@ def home(request):
 @login_required
 @desur_access_required
 def intData(request):
-    # SÍ login_required - empleados capturan datos de ciudadanos
+    """
+    Captura de datos personales del ciudadano que solicita el trámite
+
+    Args:
+        request: HttpRequest con datos del formulario ciudadano (POST) o petición inicial (GET)
+
+    Returns:
+        HttpResponse con formulario o redirección según proceso
+
+    Context (GET):
+        - dir: Dirección precargada (opcional)
+        - asunto: Tipo de asunto/trámite
+        - uuid: UUID de sesión
+        - local_gis_enabled: Estado del servicio GIS local (desactivado temporalmente)
+
+    Form Fields (POST):
+        - nombre: Nombre del ciudadano (obligatorio, uppercase)
+        - pApe: Apellido paterno (obligatorio, uppercase)
+        - mApe: Apellido materno (obligatorio, uppercase)
+        - bDay: Fecha de nacimiento (obligatorio, formato YYYY-MM-DD)
+        - tel: Teléfono de contacto (obligatorio, 10-15 dígitos)
+        - curp: CURP (obligatorio, validación de formato)
+        - sexo: Género (obligatorio, valores: mujer/hombre)
+        - dir: Dirección completa (obligatorio, min 10 caracteres)
+        - asunto: Código del trámite (DOP00001-DOP00013)
+        - etnia: Pertenencia a grupo étnico (opcional)
+        - discapacidad: Tipo de discapacidad si aplica (opcional)
+        - vulnerables: Pertenencia a grupo vulnerable (opcional)
+
+    Validation:
+        Usa validar_datos() para validación robusta de todos los campos
+
+    Redirects:
+        - DOP00005: Redirige a captura de pago de licitación
+        - Otros: Redirige a captura de solicitud
+
+    Side Effects:
+        - Crea o actualiza registro en modelo 'data'
+        - Guarda 'asunto' en session para uso posterior
+
+    Template:
+        di.html
+    """
+    # Obtener dirección precargada desde query string
     direccion = request.GET.get('dir', '')
+    # Obtener UUID de sesión de trabajo
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('desur_menu')
@@ -298,6 +496,177 @@ def intData(request):
 @login_required
 @desur_access_required
 def soliData(request):
+    """
+    Captura de solicitud de trámite con detalles específicos y documentación
+
+    Args:
+        request: HttpRequest con datos de la solicitud (POST) o petición inicial (GET)
+
+    Returns:
+        HttpResponse con formulario de solicitud o procesamiento de datos
+
+    Context:
+        - dir: Dirección del problema/solicitud
+        - asunto: Código del tipo de trámite
+        - asunto_desc: Descripción legible del trámite
+        - puo: Tipo de proceso (origen de la solicitud)
+        - datos: Datos personales del ciudadano (objeto data)
+        - uuid: UUID de sesión
+        - is_mobile/is_tablet/is_pc: Detección de tipo de dispositivo para UI responsiva
+        - soli: Solicitudes previas del mismo ciudadano
+        - local_gis_enabled: Estado del servicio GIS
+        - fecha: Fecha actual del sistema
+
+    Asuntos (Códigos DOP):
+        - DOP00001: Arreglo de terracería
+        - DOP00002: Bacheo de calles
+        - DOP00003: Limpieza de arroyos al sur
+        - DOP00004: Mantenimiento de rejillas pluviales
+        - DOP00005: Pago de licitaciones
+        - DOP00006: Rehabilitación de calles
+        - DOP00007: Retiro de escombro
+        - DOP00008: Solicitud de material caliche/fresado
+        - DOP00009: Pavimentación de calles
+        - DOP00010: Reductores de velocidad
+        - DOP00011: Pintura para señalamientos
+        - DOP00012: Arreglo de derrumbes de bardas
+        - DOP00013: Tapiado
+
+    Device Detection:
+        Detecta tipo de dispositivo para adaptar interfaz (móvil/tablet/PC)
+
+    Side Effects:
+        - Si POST: Procesa solicitud completa con soli_processed()
+        - Guarda PUO en session
+
+    Template:
+        ds.html
+    """
+    # SÍ login_required - empleados capturan datos de ciudadanos
+    # Obtener dirección precargada desde query string
+    direccion = request.GET.get('dir', '')
+    # Obtener UUID de sesión de trabajo
+    uuid = request.COOKIES.get('uuid')
+    if not uuid:
+        return redirect('desur_menu')
+
+    logger.debug("Procesando datos de ciudadano")
+
+    try:
+        uid = get_object_or_404(Uuid, uuid=uuid)
+    except Uuid.DoesNotExist:
+        logger.warning(f"UUID no encontrado: {uuid}")
+        return redirect('desur_menu')
+
+    asunto = ''
+
+    if request.method == 'POST':
+        errors = validar_datos(request.POST)
+        if errors:
+            return render(request, 'di.html', {
+                'errors': errors,
+                'datos': request.POST,
+                'dir': direccion,
+                'uuid': uuid,
+            })
+
+        try:
+            with transaction.atomic():
+                asunto = request.POST.get('asunto')
+                request.session['asunto'] = asunto
+
+                datos_persona = {
+                    'nombre': request.POST.get('nombre').upper(),
+                    'pApe': request.POST.get('pApe').upper(),
+                    'mApe': request.POST.get('mApe').upper(),
+                    'bDay': request.POST.get('bDay'),
+                    'tel': request.POST.get('tel'),
+                    'curp': request.POST.get('curp').upper(),
+                    'sexo': request.POST.get('sexo'),
+                    'dirr': request.POST.get('dir'),
+                    'asunto': asunto,
+                    'etnia': request.POST.get('etnia', 'No pertenece a una etnia'),
+                    'disc': request.POST.get('discapacidad', 'sin discapacidad'),
+                    'vul': request.POST.get('vulnerables', 'No pertenece a un grupo vulnerable'),
+                }
+
+                logger.info("Datos de ciudadano procesados correctamente")
+
+                data.objects.update_or_create(
+                    fuuid=uid,
+                    defaults=datos_persona
+                )
+
+                match asunto:
+                    case "DOP00005":
+                        return redirect('pago')
+                    case _:
+                        return redirect('soli')
+
+        except Exception as e:
+            logger.error(f"Error al procesar datos: {str(e)}")
+            return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
+
+    # Comentar las referencias a LocalGISService hasta que esté definido
+    context = {
+        'dir': direccion,
+        'asunto': asunto,
+        'uuid': uuid,
+        'local_gis_enabled': False,  # Desactivar temporalmente
+        # 'gis_services': LocalGISService.SERVICES,
+        # 'service_status': service_status,
+    }
+    return render(request, 'di.html', context)
+
+@login_required
+@desur_access_required
+def soliData(request):
+    """
+    Captura de solicitud de trámite con detalles específicos y documentación
+
+    Args:
+        request: HttpRequest con datos de la solicitud (POST) o petición inicial (GET)
+
+    Returns:
+        HttpResponse con formulario de solicitud o procesamiento de datos
+
+    Context:
+        - dir: Dirección del problema/solicitud
+        - asunto: Código del tipo de trámite
+        - asunto_desc: Descripción legible del trámite
+        - puo: Tipo de proceso (origen de la solicitud)
+        - datos: Datos personales del ciudadano (objeto data)
+        - uuid: UUID de sesión
+        - is_mobile/is_tablet/is_pc: Detección de tipo de dispositivo para UI responsiva
+        - soli: Solicitudes previas del mismo ciudadano
+        - local_gis_enabled: Estado del servicio GIS
+        - fecha: Fecha actual del sistema
+
+    Asuntos (Códigos DOP):
+        - DOP00001: Arreglo de terracería
+        - DOP00002: Bacheo de calles
+        - DOP00003: Limpieza de arroyos al sur
+        - DOP00004: Mantenimiento de rejillas pluviales
+        - DOP00005: Pago de licitaciones
+        - DOP00006: Rehabilitación de calles
+        - DOP00007: Retiro de escombro
+        - DOP00008: Solicitud de material caliche/fresado
+        - DOP00009: Pavimentación de calles
+        - DOP00010: Reductores de velocidad
+        - DOP00011: Pintura para señalamientos
+        - DOP00012: Arreglo de derrumbes de bardas
+        - DOP00013: Tapiado
+
+    Device Detection:
+        Detecta tipo de dispositivo para adaptar interfaz (móvil/tablet/PC)
+
+    Side Effects:
+        - Si POST: Procesa solicitud completa con soli_processed()
+        - Guarda PUO en session
+
+    Template:
+        ds.html
+    """
     # SÍ login_required - empleados procesan solicitudes de ciudadanos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
@@ -387,6 +756,33 @@ def soliData(request):
 @login_required
 @desur_access_required
 def doc(request):
+    """
+    Vista de confirmación antes de generar o guardar documento final del trámite
+
+    Args:
+        request: HttpRequest con acción seleccionada (POST) o vista inicial (GET)
+
+    Returns:
+        HttpResponse con opciones o redirección según acción
+
+    Actions (POST):
+        - guardar: Guarda documento en base de datos
+        - descargar: Genera PDF para descarga inmediata
+
+    Context:
+        - asunto: Código del tipo de trámite
+        - datos: Datos personales del ciudadano
+        - uuid: UUID de sesión
+
+    Redirects:
+        - DOP00005 + guardar: clear (limpiar sesión)
+        - DOP00005 + descargar: document2 (documento de pago)
+        - Otros + guardar: saveD1 (guardar documento general)
+        - Otros + descargar: document (generar PDF general)
+
+    Template:
+        dg.html
+    """
     # SÍ login_required - empleados gestionan documentación
     uuid = request.COOKIES.get('uuid')
     if not uuid:
@@ -422,6 +818,34 @@ def doc(request):
 @login_required
 @desur_access_required
 def dell(request, id):
+    """
+    Eliminar documento adjunto por ID de forma segura con validación de sesión
+
+    Args:
+        request: HttpRequest con método POST
+        id: ID del documento SubirDocs a eliminar
+
+    Returns:
+        JsonResponse con resultado de la operación
+
+    Response Format:
+        Success: {'success': True}
+        Error: {'error': 'mensaje de error'}
+
+    Security:
+        - Solo permite eliminación si el documento pertenece a la sesión UUID actual
+        - Requiere método POST para prevenir eliminación accidental
+        - Usuario debe estar autenticado y con permisos DesUr
+
+    HTTP Methods:
+        - POST: Elimina el documento
+        - Other: Retorna error 405
+
+    Status Codes:
+        - 200: Eliminación exitosa
+        - 405: Método no permitido
+        - 500: Error en servidor
+    """
     # SÍ login_required - empleados eliminan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
@@ -440,6 +864,27 @@ def dell(request, id):
 @login_required
 @desur_access_required
 def docs(request):
+    """
+    Lista de documentos adjuntos del ciudadano en la sesión actual
+
+    Args:
+        request: HttpRequest con UUID en cookies
+
+    Returns:
+        HttpResponse con lista de documentos o redirección a captura de solicitud
+
+    Context:
+        - documentos: QuerySet de SubirDocs ordenados por nombre descendente
+        - count: Cantidad total de documentos adjuntos
+        - uuid: UUID de sesión actual
+
+    Behavior:
+        - GET: Muestra lista de documentos
+        - POST: Redirige a captura de solicitud (continuar proceso)
+
+    Template:
+        docs.html
+    """
     # SÍ login_required - empleados suben documentos del ciudadano
     uuid = request.COOKIES.get('uuid')
     if not uuid:
@@ -460,6 +905,33 @@ def docs(request):
 @login_required
 @desur_access_required
 def docs2(request):
+    """
+    Subir documento adjunto individual al trámite en proceso
+
+    Args:
+        request: HttpRequest con archivo y descripción (POST) o formulario (GET)
+
+    Returns:
+        JsonResponse si es AJAX, HttpResponse o redirect si es form normal
+
+    Form Fields:
+        - ffile: Archivo a subir (FILE, obligatorio)
+        - descp: Descripción del documento (TEXT, obligatorio)
+
+    Response (AJAX):
+        {'success': True} si se guardó correctamente
+
+    Side Effects:
+        - Crea nuevo registro en SubirDocs
+        - Guarda archivo físico en media/documents/
+
+    Security:
+        - Valida UUID de sesión
+        - Requiere autenticación y permisos DesUr
+
+    Template:
+        docs2.html
+    """
     # SÍ login_required - empleados gestionan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
@@ -483,7 +955,34 @@ def docs2(request):
 
 #@desur_login_required
 def pago(request):
-    # SÍ, login_required - empleados procesan pagos
+    """
+    Captura de información de pago para licitaciones de obra pública (DOP00005)
+
+    Args:
+        request: HttpRequest con datos del pago (POST) o formulario (GET)
+
+    Returns:
+        HttpResponse con formulario de licitaciones activas
+
+    Context:
+        - licitaciones: QuerySet de licitaciones activas (fecha_limite >= hoy)
+
+    Form Fields (POST):
+        - fecha: Fecha del pago realizado
+        - pfm: Método de pago o forma de pago
+
+    Side Effects:
+        - Actualiza licitaciones vencidas (activa=False si fecha_limite < hoy)
+        - Crea registro en modelo Pagos
+        - Redirige a generación de documento
+
+    Business Logic:
+        Las licitaciones se marcan automáticamente como inactivas cuando su fecha límite pasa
+
+    Template:
+        pago.html
+    """
+    # SÍ login_required - empleados procesan pagos
    # uuid = request.COOKIES.get('uuid')
    # if not uuid:
    #    return redirect('home')
@@ -511,6 +1010,35 @@ def pago(request):
 
 @require_http_methods(["POST"])
 def get_licitaciones(request):
+    """
+    Endpoint AJAX para obtener detalles de una licitación específica por ID
+
+    Args:
+        request: HttpRequest con JSON body conteniendo licitacion_ID
+
+    Request Body:
+        {'licitacion_ID': int}
+
+    Returns:
+        JsonResponse con datos de la licitación o error
+
+    Response Format (Success):
+        {
+            'codigo': str,           # Número de licitación
+            'descripcion': str,      # Descripción del proyecto
+            'fecha': str            # Fecha límite formateada
+        }
+
+    Response Format (Error):
+        {'error': 'Licitación no encontrada'}
+
+    Status Codes:
+        - 200: Licitación encontrada
+        - 400: Licitación no existe
+
+    HTTP Methods:
+        Solo POST permitido (enforced por decorador)
+    """
     data = json.loads(request.body)
     licitaciones_id = data.get('licitacion_ID')
 
@@ -528,7 +1056,38 @@ def get_licitaciones(request):
 @login_required
 @desur_access_required
 def document(request):
-    # SÍ login_required - empleados generan documentos oficiales
+    """
+    Generar documento PDF del trámite para descarga inmediata (inline en navegador)
+
+    Args:
+        request: HttpRequest con UUID en cookies
+
+    Returns:
+        HttpResponse con PDF generado (Content-Type: application/pdf)
+
+    PDF Content:
+        - Datos personales del ciudadano
+        - Detalles de la solicitud
+        - Fotografía del problema
+        - Documentos adjuntos
+        - Folio generado automáticamente
+        - Descripción del asunto/trámite
+
+    Context para Template:
+        - asunto: Descripción completa del trámite con código
+        - datos: Diccionario con información personal del ciudadano
+        - soli: Diccionario con detalles de la solicitud
+        - puo: Texto descriptivo del proceso (origen)
+        - documentos: Lista de documentos adjuntos
+        - folio: Folio único generado para el trámite
+
+    PDF Library:
+        Usa WeasyPrint para renderizar HTML a PDF con estilos CSS
+
+    Template:
+        documet/document.html
+    """
+    # SÍ login_required - empleados generan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('desur_menu')
@@ -628,6 +1187,44 @@ def document(request):
 @login_required
 @desur_access_required
 def save_document(request):
+    """
+    Guardar documento PDF del trámite en base de datos para archivo permanente
+
+    Args:
+        request: HttpRequest con UUID en cookies
+
+    Returns:
+        HttpResponse con confirmación de documento guardado
+
+    Process:
+        1. Obtiene datos del ciudadano y solicitud
+        2. Procesa documentos temporales en base64 desde formulario
+        3. Genera folio si no existe
+        4. Renderiza template HTML con contexto completo
+        5. Convierte HTML a PDF usando WeasyPrint
+        6. Guarda PDF en modelo Files asociado a la solicitud
+        7. Muestra confirmación con link al documento
+
+    Document Processing:
+        - Lee documentos temporales en formato base64 del POST
+        - Decodifica y guarda cada documento en SubirDocs
+        - Valida formato JSON de cada documento temporal
+
+    Naming Convention:
+        Archivo: 'VS_{asunto}_{nombre}_{apellido}.pdf'
+
+    Side Effects:
+        - Crea registros en SubirDocs para documentos temporales
+        - Crea registro en Files con PDF final
+        - Guarda archivo físico en media/documents/
+
+    Context:
+        Similar a document() pero guarda en BD en lugar de descargar
+
+    Template:
+        documet/save.html (confirmación)
+        documet/document.html (para renderizar PDF)
+    """
     # SÍ login_required - empleados guardan documentos oficiales
     uuid = request.COOKIES.get('uuid')
     if not uuid:
@@ -727,6 +1324,44 @@ def save_document(request):
 @login_required
 @desur_access_required
 def pp_document(request):
+    """
+    Generar y guardar documento PDF de propuesta de Presupuesto Participativo
+
+    Args:
+        request: HttpRequest con UUID en cookies
+
+    Returns:
+        HttpResponse con confirmación de documento guardado
+
+    Categories (Presupuesto Participativo):
+        - parque: Mejoras en parques (canchas, alumbrado, juegos, etc.)
+        - escuela: Mejoras en escuelas (rehabilitación, construcción, canchas)
+        - cs: Centro comunitario o salón de usos múltiples
+        - infraestructura: Obra vial (bardas, banquetas, pavimentación, señalamiento)
+        - pluviales: Soluciones para manejo de agua pluvial
+
+    Context por Categoría:
+        Cada categoría tiene campos específicos según su propuesta:
+        - cat: Nombre de la categoría
+        - datos: Información del promovente y proyecto
+        - propuesta: Diccionario con campos específicos de la categoría
+        - notas: Notas adicionales específicas
+        - folio: Folio generado con formato GOP-CPP
+        - instalaciones_dict: Catálogo de tipos de instalaciones
+        - estados_dict: Catálogo de estados del proyecto
+
+    Folio Format:
+        GOP-CPP-{id:05d}-{uuid[:4]}/{año}
+
+    Side Effects:
+        - Genera PDF y lo guarda en PpFiles
+        - Asocia documento con PpGeneral y UUID de sesión
+
+    Template:
+        documet/pp_document.html (para renderizar PDF)
+        documet/save.html (confirmación)
+    """
+    # SÍ login_required - empleados gestionan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('desur_menu')
@@ -961,6 +1596,26 @@ def pp_document(request):
 @login_required
 @desur_access_required
 def document2(request):
+    """
+    Generar documento PDF específico para pagos de licitaciones (DOP00005)
+
+    Args:
+        request: HttpRequest con UUID en cookies
+
+    Returns:
+        HttpResponse con PDF generado (inline)
+
+    Context:
+        - asunto: Descripción del trámite de pago
+        - datos: Información personal del ciudadano
+        - pago: Información del pago (fecha, forma de pago)
+
+    PDF Format:
+        Comprobante de pago para participación en licitación
+
+    Template:
+        documet/document2.html
+    """
     # SÍ login_required - empleados generan documentos de pago
     uuid = request.COOKIES.get('uuid')
     datos = get_object_or_404(data, fuuid__uuid=uuid)
@@ -1000,59 +1655,69 @@ def document2(request):
 @login_required
 @desur_access_required
 def clear(request):
-    # SÍ login_required - solo empleados limpian sesiones
+    """
+    Limpiar sesión de trabajo eliminando cookie UUID y redirigiendo al menú
+
+    Args:
+        request: HttpRequest
+
+    Returns:
+        HttpResponse redirect con cookie UUID eliminada
+
+    Side Effects:
+        - Elimina cookie 'uuid' del navegador
+        - No elimina datos de BD, solo termina la sesión de trabajo
+
+    Use Case:
+        Se llama al finalizar un trámite para limpiar estado temporal
+    """
     response = redirect('desur_menu')  # Cambiar redirect a login de empleados
     response.delete_cookie('uuid')
     return response
 
 
-# Functions.
-"""
-def wasap_msg(uid, num):
-
-    import pyautogui
-    win = Tk()
-
-    print(num)
-
-    dp = data.objects.filter(fuuid=uid).last()
-    if dp:
-    {uuid_id = dp.pk
-        print{uuid_id)
-
-    screen_w = win.winfo_screenwidth()
-    screen_h = win.winfo_screenheight()
-
-    pdfile = Files.objects.filter(fuuid=uid).last()
-
-    if pdfile and pdfile.finalDoc:
-        file_path = pdfile.finalDoc.path
-        mensaje = "este es el tremendisimo mensaje"
-
-        try:
-            pywhatkit.sendwhats_image(
-                phone_no=num,
-                img_path=file_path,
-                caption=mensaje,
-                wait_time=15
-            )
-
-            pyautogui.moveTo(screen_w/2, screen_h/2)
-            pyautogui.click()
-            pyautogui.press('enter')
-            print("Se mandó el mensaje con todo y todo")
-            return redirect('doc')
-        except Exception as e:
-            print(f"No se pudo enviar nadota: {e}")
-            return redirect('doc')
-    else:
-        print("Sin documentos")
-        return redirect('doc')
-"""
-
+# ============================================================================
+# FUNCIONES AUXILIARES Y UTILIDADES
+# ============================================================================
 
 def gen_folio(uid, puo):
-    """Genera folio único para trámites con validaciones mejoradas"""
+    """
+    Genera folio único para trámites con formato estandarizado y validaciones
+
+    Args:
+        uid: UUID object o string con el UUID de sesión
+        puo: Código del tipo de proceso (OFI, CRC, MEC, DLO, etc.)
+
+    Returns:
+        tuple: (puo_txt, folio)
+            - puo_txt: Descripción legible del tipo de proceso
+            - folio: Folio generado con formato GOP-{PUO}-{id:05d}-{uuid[:4]}/{año}
+
+    Folio Format:
+        GOP-{PUO}-{id:05d}-{uuid_prefix}/{year}
+        - GOP: Gobierno de Obra Pública
+        - PUO: Código del proceso (3 letras)
+        - id: ID numérico con padding de 5 dígitos
+        - uuid_prefix: Primeros 4 caracteres del UUID
+        - year: Últimos 2 dígitos del año actual
+
+    Procesos Válidos (PUO):
+        - OFI: Oficio
+        - CRC: CRC (Comité de Recursos Ciudadanos)
+        - MEC: Marca el cambio
+        - DLO: Diputado Local
+        - DFE: Diputado Federal
+        - REG: Regidores
+        - DEA: Despacho del Alcalde
+        - EVA: Evento con el Alcalde
+        - PED: Presencial en Dirección
+        - VIN: Vinculación (default si PUO no reconocido)
+        - PPA: Presupuesto participativo
+        - CPC: Coordinación de Participación Ciudadana
+
+    Error Handling:
+        Si ocurre error, retorna ('Error', 'ERROR-{uuid[:8]}')
+    """
     logger.debug("Generando folio para trámite")
     uid_str = ""
 
@@ -1121,7 +1786,25 @@ def gen_folio(uid, puo):
         return 'Error', f'ERROR-{uid_str[:8]}'
 
 def gen_pp_folio(fuuid):
-    """Folio para presupuesto participativo con validaciones mejoradas"""
+    """
+    Genera folio específico para propuestas de Presupuesto Participativo
+
+    Args:
+        fuuid: Objeto Uuid de la sesión
+
+    Returns:
+        str: Folio con formato GOP-CPP-{id:05d}-{uuid[:4]}/{año}
+
+    Folio Format:
+        GOP-CPP-{id:05d}-{uuid_prefix}/{year}
+        - CPP: Código fijo para Presupuesto Participativo
+        - id: ID del registro PpGeneral con padding de 5 dígitos
+        - uuid_prefix: Primeros 4 caracteres del UUID
+        - year: Últimos 2 dígitos del año actual
+
+    Error Handling:
+        Si ocurre error, retorna 'ERROR-PP-{uuid[:8]}'
+    """
     try:
         pp_info = PpGeneral.objects.filter(fuuid=fuuid).last()
         uid_str = str(fuuid.uuid)
@@ -1141,6 +1824,29 @@ def gen_pp_folio(fuuid):
         return f'ERROR-PP-{str(fuuid.uuid)[:8]}'
 
 def validar_curp(curp):
+    """
+    Valida formato de CURP según estándar mexicano oficial
+
+    Args:
+        curp: String con CURP a validar (debe ser uppercase)
+
+    Returns:
+        bool: True si el formato es válido
+
+    Raises:
+        ValidationError: Si el formato no cumple con el patrón
+
+    CURP Format:
+        - 4 letras (primer apellido, segundo apellido, nombre)
+        - 6 dígitos (fecha: AAMMDD)
+        - 1 letra (sexo: H/M)
+        - 5 letras (lugar de nacimiento + consonantes internas)
+        - 1 caracter (verificador numérico o letra A)
+        - 1 dígito (verificador final)
+
+    Pattern:
+        ^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$
+    """
     pattern = r'^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-1A-Z][0-9]$'
     if not re.match(pattern, curp):
         logger.warning("CURP con formato incorrecto detectado")
@@ -1149,7 +1855,55 @@ def validar_curp(curp):
 
 def validar_datos(post_data):
     """
-    Valida los datos de entrada del formulario de ciudadanos con validaciones robustas
+    Valida exhaustivamente todos los campos del formulario de datos del ciudadano
+
+    Args:
+        post_data: Diccionario con datos del formulario (request.POST)
+
+    Returns:
+        list: Lista de errores encontrados (vacía si todo es válido)
+
+    Validaciones por Campo:
+
+        nombre:
+            - Obligatorio, min 2 caracteres
+            - Solo letras, espacios y acentos
+
+        pApe (apellido paterno):
+            - Obligatorio, min 2 caracteres
+            - Solo letras, espacios y acentos
+
+        mApe (apellido materno):
+            - Obligatorio, min 2 caracteres
+            - Solo letras, espacios y acentos
+
+        bDay (fecha de nacimiento):
+            - Obligatorio, formato YYYY-MM-DD
+            - No puede ser fecha futura
+            - Edad válida (0-120 años)
+
+        tel (teléfono):
+            - Obligatorio
+            - Solo dígitos (se permiten espacios, guiones y paréntesis que se eliminan)
+            - 10-15 dígitos
+
+        curp:
+            - Obligatorio
+            - Formato válido según validar_curp()
+
+        sexo:
+            - Obligatorio
+            - Valores permitidos: mujer, hombre, M, H, Masculino, Femenino
+
+        dir (dirección):
+            - Obligatorio, min 10 caracteres
+            - Se valida contra catastro si LocalGISService está disponible
+
+        asunto:
+            - Obligatorio
+
+    Side Effects:
+        - Registra warnings en log si dirección no se encuentra en catastro
     """
     errors = []
 
@@ -1254,7 +2008,59 @@ def validar_datos(post_data):
 
 def soli_processed(request, uid, dp):
     """
-    Procesa solicitudes de trámites con validaciones mejoradas y manejo de errores robusto
+    Procesa y guarda solicitud completa de trámite con documentos adjuntos
+
+    Args:
+        request: HttpRequest con datos de solicitud (POST)
+        uid: Objeto Uuid de la sesión actual
+        dp: Objeto data con información del ciudadano
+
+    Returns:
+        JsonResponse o HttpResponse redirect según resultado
+
+    Process Flow:
+        1. Valida método POST y datos obligatorios
+        2. Procesa dirección del problema
+        3. Valida y limpia descripción e información adicional
+        4. Valida PUO (tipo de proceso)
+        5. Procesa documentos temporales en base64
+        6. Procesa imagen principal de la solicitud
+        7. Genera folio único
+        8. Crea registro en modelo soli
+        9. Redirige a generación de documento
+
+    Form Fields:
+        - dir: Dirección del problema (obligatorio)
+        - descc: Descripción detallada (opcional, default: "Sin descripción proporcionada")
+        - info: Información adicional (opcional, default: "Sin información adicional")
+        - puo: Tipo de proceso/origen (obligatorio, debe ser válido)
+        - src: Imagen del problema (File o base64)
+        - temp_docs_count: Cantidad de documentos temporales
+        - temp_doc_{i}: Datos JSON en base64 de cada documento temporal
+
+    Valid PUOs:
+        OFI, CRC, MEC, DLO, DFE, REG, DEA, EVA, PED, VIN, PPA, CPC
+
+    Document Processing:
+        - Decodifica documentos en base64 del POST
+        - Elimina prefijo 'data:tipo;base64,' si existe
+        - Guarda cada documento en SubirDocs
+
+    Side Effects:
+        - Guarda PUO en session
+        - Crea registro en soli con folio generado
+        - Crea registros en SubirDocs para documentos temporales
+        - Asocia solicitud con usuario que la procesó (processed_by)
+
+    Error Handling:
+        - Retorna JsonResponse con error 400/405/500 según caso
+        - Registra todos los errores en logger
+        - Usa transaction.atomic() para rollback en caso de error
+
+    Security:
+        - Valida UUID de sesión
+        - Requiere autenticación y permisos DesUr
+        - Valida formato de datos recibidos
     """
     try:
         with transaction.atomic():
@@ -1400,7 +2206,39 @@ def soli_processed(request, uid, dp):
 
 
 def img_processed(request):
-    """Procesa imágenes de solicitudes con validaciones mejoradas"""
+    """
+    Procesa imagen de solicitud desde archivo o base64 con validaciones
+
+    Args:
+        request: HttpRequest con imagen en FILES['src'] o POST['src']
+
+    Returns:
+        ContentFile: Objeto File de Django con imagen procesada
+        None: Si no hay imagen o hay error en procesamiento
+
+    Input Formats:
+        1. File Upload: request.FILES['src']
+        2. Base64: request.POST['src'] con formato 'data:image/...;base64,{data}'
+
+    Process (Base64):
+        1. Separa header y datos codificados
+        2. Decodifica base64 a bytes
+        3. Guarda temporalmente en archivo
+        4. Lee archivo y crea ContentFile
+        5. Elimina archivo temporal
+
+    File Naming:
+        - Extrae nombre original del archivo
+        - Asegura extensión .jpg
+        - Format: {nombre}.jpg
+
+    Error Handling:
+        - Retorna None si hay error
+        - Registra error en logger
+
+    Side Effects:
+        - Crea y elimina archivo temporal si procesa base64
+    """
     img = None
     imgpath = request.POST.get('src')
 
@@ -1441,7 +2279,41 @@ def img_processed(request):
     return img
 
 def files_processed(request, uid):
-    """Procesa archivos adjuntos con validaciones"""
+    """
+    Procesa múltiples archivos adjuntos subidos en formulario
+
+    Args:
+        request: HttpRequest con archivos en FILES
+        uid: Objeto Uuid de la sesión
+
+    Returns:
+        None (procesa archivos como side effect)
+
+    File Fields:
+        Busca campos con patrón: 'tempfile_{index}'
+
+    Description Fields:
+        Busca descripción en múltiples formatos:
+        - tempdesc_{index}
+        - desc {index}
+        - descripcion_{index}
+        - desc
+        - description
+
+    Fallback Description:
+        Si no hay descripción, usa nombre del archivo sin extensión
+
+    Duplicate Handling:
+        No guarda archivos duplicados (mismo nombre y UUID)
+
+    Side Effects:
+        - Crea registros en SubirDocs para cada archivo
+        - Guarda archivos físicos en media/documents/
+
+    Error Handling:
+        - Registra errores en logger pero continúa con siguientes archivos
+        - No interrumpe el proceso si un archivo falla
+    """
     file_keys = [k for k in request.FILES.keys() if k.startswith('tempfile_')]
 
     if file_keys:
@@ -1485,7 +2357,29 @@ def files_processed(request, uid):
                 logger.error(f"Error procesando archivo {key}: {str(e)}")
 
 def user_errors(request, error):
-    """Maneja errores del sistema de forma segura"""
+    """
+    Maneja y muestra errores del sistema de forma amigable para el usuario
+
+    Args:
+        request: HttpRequest actual
+        error: Exception o mensaje de error
+
+    Returns:
+        HttpResponse con página de error personalizada
+
+    Context:
+        - error: Diccionario con información del error
+            - titulo: Título del error
+            - mensaje: Mensaje amigable para el usuario
+            - codigo: Código del error (SYS_ERROR)
+            - accion: Acción sugerida para el usuario
+
+    Side Effects:
+        - Registra el error completo con stack trace en logger
+
+    Template:
+        error.html
+    """
     logger.error(f"Error en vista: {error}", exc_info=True)
 
     return render(request, 'error.html', {
@@ -1498,6 +2392,15 @@ def user_errors(request, error):
     })
 
 def validate_file_size(file):
+    """
+    Valida que el tamaño del archivo no supere el límite permitido (5 MB)
+
+    Args:
+        file: Archivo a validar (objeto File de Django)
+
+    Raises:
+        ValidationError: Si el archivo es mayor a 5 MB
+    """
     limite = 5 * 1024 * 1024
     if file.size > limite:
         raise ValidationError('El archivo no puede ser mayor a 5 MB')
