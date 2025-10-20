@@ -1,9 +1,13 @@
+console.log("Hola desde los modales jiji");
+
  //enviar mapa
   function enviar(){
     const text = document.getElementById('dirr').value;
     document.getElementById('dir').value = text;
     modals('close', 'modal');
   }
+
+
 
 //función global de modals
 function modals(action, modalId) {
@@ -29,7 +33,7 @@ function modals(action, modalId) {
     }
 }
 
-  //mostrar mapa
+  //mostrar donde se guardan los documentos
  function openm(){
     document.getElementById('modal').classList.remove('hidden');
     document.getElementById('modal').style.display = 'block';
@@ -69,7 +73,7 @@ function validateFileSize(input) {
         const limitSize = 5 * 1024 * 1024; //5mb
 
         if (archivo.size > limitSize) {
-            alert('archivo demasiado grande. Máximo 5 MB);
+            alert('archivo demasiado grande. Máximo 5 MB');
             input.value = '';
             return false;
         }

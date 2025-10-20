@@ -292,7 +292,7 @@ DATE_FORMAT = r'j \d\e F \d\e Y'
 
 STATIC_URL = '/static/' 
 
-STATIC_ROOT = os.path.join(BASE_DIR / 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_DIRS = [
     BASE_DIR / "static",
     BASE_DIR / "portaldu" / "static",

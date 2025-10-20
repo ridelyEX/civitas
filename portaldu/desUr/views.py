@@ -88,6 +88,9 @@ def desur_access_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
+def test_views(request):
+    return render(request, 'ds.html')
+
 def desur_login_view(request):
     """
     Vista de login de DesUr - ahora redirige al login unificado
@@ -493,10 +496,10 @@ def intData(request):
     return render(request, 'di.html', context)
 
 
-@login_required
-@desur_access_required
+"""
+#@login_required
+#@desur_access_required
 def soliData(request):
-    """
     Captura de solicitud de trámite con detalles específicos y documentación
 
     Args:
@@ -541,22 +544,23 @@ def soliData(request):
 
     Template:
         ds.html
-    """
     # SÍ login_required - empleados capturan datos de ciudadanos
     # Obtener dirección precargada desde query string
     direccion = request.GET.get('dir', '')
     # Obtener UUID de sesión de trabajo
-    uuid = request.COOKIES.get('uuid')
-    if not uuid:
-        return redirect('desur_menu')
+    #uuid = request.COOKIES.get('uuid')
+    #if not uuid:
+    #    return redirect('desur_menu')
 
     logger.debug("Procesando datos de ciudadano")
 
+    '''
     try:
         uid = get_object_or_404(Uuid, uuid=uuid)
     except Uuid.DoesNotExist:
         logger.warning(f"UUID no encontrado: {uuid}")
         return redirect('desur_menu')
+    '''
 
     asunto = ''
 
@@ -617,6 +621,8 @@ def soliData(request):
         # 'service_status': service_status,
     }
     return render(request, 'di.html', context)
+    """
+
 
 @login_required
 @desur_access_required

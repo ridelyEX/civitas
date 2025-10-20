@@ -278,7 +278,11 @@ urlpatterns = [
 
     # Alias duplicado de get_licitaciones (considerar eliminar)
     # POST - Misma funcionalidad que get_licitaciones/
-    path('licitaciones/', views.get_licitaciones, name='licitaciones')
+    path('licitaciones/', views.get_licitaciones, name='licitaciones'),
+
+
+    # VIsta para testear vistas nuevas o modificadas
+    path('test/', views.test_views, name='test'),
 
     # Router de APIs REST (comentado hasta implementar FilesViewSet)
     # path('', include(router.urls)),
