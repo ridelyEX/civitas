@@ -46,4 +46,4 @@ RUN chmod +x /docker-entrypoint.sh
 EXPOSE 8000
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "-c", "civitas/gunicorn.conf.py", "civitas.wsgi:application"]

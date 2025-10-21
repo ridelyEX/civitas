@@ -69,7 +69,7 @@ try:
     )
 
     cursor = connection.cursor()
-    cursor.execute('SHOW TABLES LIKE \"cmin_users\"')
+    cursor.execute('SELECT 1')
     result = cursor.fetchone()
     connection.close()
     print('yes' if result else 'no')

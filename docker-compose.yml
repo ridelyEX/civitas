@@ -114,6 +114,21 @@ services:
       - civitas-network
     restart: unless-stopped
 
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    networks:
+      - civitas-network
+    restart: unless-stopped
+
 volumes:
   mysql_data:
   redis_data:

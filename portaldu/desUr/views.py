@@ -406,6 +406,33 @@ def intData(request):
         - discapacidad: Tipo de discapacidad si aplica (opcional)
         - vulnerables: Pertenencia a grupo vulnerable (opcional)
 
+    Context:
+        - dir: Dirección del problema/solicitud
+        - asunto: Código del tipo de trámite
+        - asunto_desc: Descripción legible del trámite
+        - puo: Tipo de proceso (origen de la solicitud)
+        - datos: Datos personales del ciudadano (objeto data)
+        - uuid: UUID de sesión
+        - is_mobile/is_tablet/is_pc: Detección de tipo de dispositivo para UI responsiva
+        - soli: Solicitudes previas del mismo ciudadano
+        - local_gis_enabled: Estado del servicio GIS
+        - fecha: Fecha actual del sistema
+
+    Asuntos (Códigos DOP):
+        - DOP00001: Arreglo de terracería
+        - DOP00002: Bacheo de calles
+        - DOP00003: Limpieza de arroyos al sur
+        - DOP00004: Mantenimiento de rejillas pluviales
+        - DOP00005: Pago de licitaciones
+        - DOP00006: Rehabilitación de calles
+        - DOP00007: Retiro de escombro
+        - DOP00008: Solicitud de material caliche/fresado
+        - DOP00009: Pavimentación de calles
+        - DOP00010: Reductores de velocidad
+        - DOP00011: Pintura para señalamientos
+        - DOP00012: Arreglo de derrumbes de bardas
+        - DOP00013: Tapiado
+
     Validation:
         Usa validar_datos() para validación robusta de todos los campos
 
@@ -494,134 +521,6 @@ def intData(request):
         # 'service_status': service_status,
     }
     return render(request, 'di.html', context)
-
-
-"""
-#@login_required
-#@desur_access_required
-def soliData(request):
-    Captura de solicitud de trámite con detalles específicos y documentación
-
-    Args:
-        request: HttpRequest con datos de la solicitud (POST) o petición inicial (GET)
-
-    Returns:
-        HttpResponse con formulario de solicitud o procesamiento de datos
-
-    Context:
-        - dir: Dirección del problema/solicitud
-        - asunto: Código del tipo de trámite
-        - asunto_desc: Descripción legible del trámite
-        - puo: Tipo de proceso (origen de la solicitud)
-        - datos: Datos personales del ciudadano (objeto data)
-        - uuid: UUID de sesión
-        - is_mobile/is_tablet/is_pc: Detección de tipo de dispositivo para UI responsiva
-        - soli: Solicitudes previas del mismo ciudadano
-        - local_gis_enabled: Estado del servicio GIS
-        - fecha: Fecha actual del sistema
-
-    Asuntos (Códigos DOP):
-        - DOP00001: Arreglo de terracería
-        - DOP00002: Bacheo de calles
-        - DOP00003: Limpieza de arroyos al sur
-        - DOP00004: Mantenimiento de rejillas pluviales
-        - DOP00005: Pago de licitaciones
-        - DOP00006: Rehabilitación de calles
-        - DOP00007: Retiro de escombro
-        - DOP00008: Solicitud de material caliche/fresado
-        - DOP00009: Pavimentación de calles
-        - DOP00010: Reductores de velocidad
-        - DOP00011: Pintura para señalamientos
-        - DOP00012: Arreglo de derrumbes de bardas
-        - DOP00013: Tapiado
-
-    Device Detection:
-        Detecta tipo de dispositivo para adaptar interfaz (móvil/tablet/PC)
-
-    Side Effects:
-        - Si POST: Procesa solicitud completa con soli_processed()
-        - Guarda PUO en session
-
-    Template:
-        ds.html
-    # SÍ login_required - empleados capturan datos de ciudadanos
-    # Obtener dirección precargada desde query string
-    direccion = request.GET.get('dir', '')
-    # Obtener UUID de sesión de trabajo
-    #uuid = request.COOKIES.get('uuid')
-    #if not uuid:
-    #    return redirect('desur_menu')
-
-    logger.debug("Procesando datos de ciudadano")
-
-    '''
-    try:
-        uid = get_object_or_404(Uuid, uuid=uuid)
-    except Uuid.DoesNotExist:
-        logger.warning(f"UUID no encontrado: {uuid}")
-        return redirect('desur_menu')
-    '''
-
-    asunto = ''
-
-    if request.method == 'POST':
-        errors = validar_datos(request.POST)
-        if errors:
-            return render(request, 'di.html', {
-                'errors': errors,
-                'datos': request.POST,
-                'dir': direccion,
-                'uuid': uuid,
-            })
-
-        try:
-            with transaction.atomic():
-                asunto = request.POST.get('asunto')
-                request.session['asunto'] = asunto
-
-                datos_persona = {
-                    'nombre': request.POST.get('nombre').upper(),
-                    'pApe': request.POST.get('pApe').upper(),
-                    'mApe': request.POST.get('mApe').upper(),
-                    'bDay': request.POST.get('bDay'),
-                    'tel': request.POST.get('tel'),
-                    'curp': request.POST.get('curp').upper(),
-                    'sexo': request.POST.get('sexo'),
-                    'dirr': request.POST.get('dir'),
-                    'asunto': asunto,
-                    'etnia': request.POST.get('etnia', 'No pertenece a una etnia'),
-                    'disc': request.POST.get('discapacidad', 'sin discapacidad'),
-                    'vul': request.POST.get('vulnerables', 'No pertenece a un grupo vulnerable'),
-                }
-
-                logger.info("Datos de ciudadano procesados correctamente")
-
-                data.objects.update_or_create(
-                    fuuid=uid,
-                    defaults=datos_persona
-                )
-
-                match asunto:
-                    case "DOP00005":
-                        return redirect('pago')
-                    case _:
-                        return redirect('soli')
-
-        except Exception as e:
-            logger.error(f"Error al procesar datos: {str(e)}")
-            return HttpResponse('Error al procesar los datos. Vuelva a intentarlo.')
-
-    # Comentar las referencias a LocalGISService hasta que esté definido
-    context = {
-        'dir': direccion,
-        'asunto': asunto,
-        'uuid': uuid,
-        'local_gis_enabled': False,  # Desactivar temporalmente
-        # 'gis_services': LocalGISService.SERVICES,
-        # 'service_status': service_status,
-    }
-    return render(request, 'di.html', context)
-    """
 
 
 @login_required
