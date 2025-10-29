@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 # Variables de entorno
 ENV PYTHONDONTWRITEBYTECODE=1
