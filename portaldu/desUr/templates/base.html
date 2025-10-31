@@ -27,7 +27,52 @@
     {% block footer %}
     <footer>
         <!-- Pie de página -->
+        <script>
+            // Advertir antes de que expire la sesión
+            const SESSION_TIMEOUT = {{ SESSION_COOKIE_AGE|default:3600 }} * 1000; // ms
+            const WARNING_TIME = {{ SESSION_WARNING_TIME|default:300 }} * 1000; // ms
+
+            let warningTimer;
+            let logoutTimer;
+
+            function resetTimers() {
+                clearTimeout(warningTimer);
+                clearTimeout(logoutTimer);
+
+                // Advertencia 5 minutos antes
+                warningTimer = setTimeout(() => {
+                    const shouldStay = confirm(
+                        '⚠️ Tu sesión está por expirar.\n\n' +
+                        '¿Deseas continuar trabajando?'
+                    );
+
+                    if (shouldStay) {
+                        // Renovar sesión con request al servidor
+                        fetch(window.location.href, { method: 'HEAD' })
+                            .then(() => resetTimers())
+                            .catch(() => console.error('Error renovando sesión'));
+                    }
+                }, SESSION_TIMEOUT - WARNING_TIME);
+
+                // Logout automático
+                logoutTimer = setTimeout(() => {
+                    alert('Tu sesión ha expirado. Serás redirigido al login.');
+                    window.location.href = "{% url 'login' %}";
+                }, SESSION_TIMEOUT);
+            }
+
+            // Reiniciar timers con actividad del usuario
+            ['click', 'keypress', 'scroll', 'mousemove'].forEach(event => {
+                document.addEventListener(event, () => {
+                    resetTimers();
+                }, { passive: true, once: false });
+            });
+
+            // Iniciar timers al cargar
+            resetTimers();
+        </script>
     </footer>
+    {{ block.super }}
     {% endblock %}
 
     <!-- Bootstrap JS -->

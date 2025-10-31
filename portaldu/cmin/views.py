@@ -199,7 +199,7 @@ def login_view(request):
                 # Redirección inteligente según permisos del usuario
                 if user.has_desur_access() and not user.has_cmin_access():
                     # Usuario exclusivo de DesUr (rol campo)
-                    return redirect('/ageo/')
+                    return redirect('/ageo/home/')
                 elif user.has_cmin_access():
                     # Usuario con acceso a CMIN (administrador, delegador)
                     return redirect('menu')

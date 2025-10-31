@@ -28,6 +28,15 @@
             <button type="button" class="back bbtn" id="back" data-url="{% url 'users' %}">Crear usuario</button>
         </div>
     </form>
+    {% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>
 
 

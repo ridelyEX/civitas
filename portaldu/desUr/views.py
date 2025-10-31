@@ -343,23 +343,31 @@ def home(request):
     Template:
         main.html
     """
+
+    logger.debug(f"Método: {request.method}")
+    logger.debug(f"POST data: {request.POST}")
+    logger.debug(f"Cookie UUID: {request.COOKIES.get('uuid')}")
+
     if request.method == 'POST':
         # Obtener UUID de sesión existente
         uuidM = request.COOKIES.get('uuid')
         action = request.POST.get('action')
+        logger.debug(f"Acción seleccionada: {action}")
+
+        if not action or action not in ['op', 'pp']:
+            messages.error(request, "selecciona un tipo de trámite")
+            return render(request, 'main.html')
 
         # Generar nuevo UUID si no existe
-        if not uuidM:
-            uuidM = str(uuid.uuid4())
-            new = Uuid(uuid=uuidM)
-            new.save()
-            logger.info("Nuevo UUID creado para sesión")
+        if uuidM:
+            uuid_obj = Uuid.objects.filter(uuid=uuidM).first()
+            if not uuid_obj:
+                uuid_obj = Uuid.objects.create(uuid=uuidM)
+                logger.info(f"uuid recreado en BD")
         else:
-            # Validar que el UUID exista en la base de datos
-            if not Uuid.objects.filter(uuid=uuidM).exists():
-                new = Uuid(uuid=uuidM)
-                new.save()
-                logger.info("UUID recreado para sesión existente")
+            uuidM = str(uuid.uuid4())
+            uuid_obj = Uuid.objects.create(uuid=uuidM)
+            logger.info(f"uuid recreado en BD")
 
         # Redirigir según el tipo de acción seleccionado
         if action == 'op':

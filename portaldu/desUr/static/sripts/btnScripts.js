@@ -50,6 +50,15 @@ document.addEventListener("DOMContentLoaded", ()=>{
         });
     }
 
+    const popup = document.querySelector('.popup');
+    const popupOverlay = document.querySelector('.popup-overlay');
+
+    if (popup && popupOverlay) {
+        popupOverlay.addEventListener('click', function() {
+            popup.classList.remove('active');
+        });
+    }
+
 //Botón para agregar archivos
 /*
    const pbtn = document.getElementById("plus");

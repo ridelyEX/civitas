@@ -2,21 +2,23 @@
 
 <div class="adv-main" id="adv">
     <p><b><strong>¿DESEA CANCELAR LA SOLICITUD?</strong></b></p>
-    
+
     <div class="adv-Ibottom">
         <div class="adv-lBtn">
             <button
-                    type="button"
-                    class="adv-next adv-nbtn"
-                    id="sibtn"
-                    data-url="{% url 'clear' %}">Sí</button>
+                type="button"
+                class="adv-next adv-nbtn"
+                id="sibtn"
+                data-url="{% url 'clear' %}">
+                Sí
+            </button>
         </div>
         <div class="adv-rBtn">
             <button
-                    type="button"
-                    class="back bbtn"
-                    id="back"
-                    onclick="document.querySelector('.popup').classList.remove('active')">
+                type="button"
+                class="back bbtn"
+                id="nobtn"
+                onclick="document.querySelector('.popup').classList.remove('active')">
                 No
             </button>
         </div>

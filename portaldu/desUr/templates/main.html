@@ -11,7 +11,7 @@
 {% block body %}
 {% include 'nav.html' %}
 <div class="cont" id="cont">
-    <form method="post">
+    <form method="POST" action="{% url 'home' %}">
             {% csrf_token %}
         <input type="hidden" name="uuid" value="{{ uuid }}">
         <div class="boton" id="btn">
