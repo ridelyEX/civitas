@@ -48,7 +48,7 @@ from portaldu.cmin.models import Users, LoginDate, Licitaciones
 # Imports de modelos locales de DesUr
 from .models import (data, soli, Files, Uuid,
                      PpCS, PpEscuela, PpGeneral, PpPluvial, PpParque, PpInfraestructura,
-                     SubirDocs, Pagos, PpFiles)
+                     SubirDocs, Pagos)
 from .forms import (GeneralRender, CsRender, EscuelaRender, PluvialRender, ParqueRender,
                     DesUrLogin, InfraestructuraRender)
 
@@ -91,16 +91,6 @@ def desur_access_required(view_func):
 def test_views(request):
     return render(request, 'ds.html')
 
-def desur_login_view(request):
-    """
-    Vista de login de DesUr - ahora redirige al login unificado
-
-    Note:
-        Esta vista existe por compatibilidad pero redirige al sistema unificado de autenticación
-    """
-    messages.info(request, "Usa el sistema de login principal para acceder")
-    return redirect('login')
-
 def desur_logout_view(request):
     """
     Vista de logout de DesUr - ahora usa el logout unificado
@@ -110,183 +100,49 @@ def desur_logout_view(request):
     """
     return redirect('logout')
 
-@login_required
-@desur_access_required
-def desur_user_conf(request):
+def custom_handler_404(request, exception):
     """
-    Configuración de perfil de usuario usando el modelo unificado Users
+    Manejo de error 404 personalizado para AGEO.
 
     Args:
-        request: HttpRequest con datos del formulario (POST) o petición inicial (GET)
+        request (HttpRequest): Objeto de la solicitud HTTP.
+        exception (Exception): Excepción capturada
 
-    Returns:
-        HttpResponse con formulario de configuración o redirección tras guardado exitoso
-
-    Template:
-        auth/desur_user_conf.html
+    Return:
+        HttpResponse: Página personalizada de error 404
     """
-    usuario = request.user
-    if request.method == 'POST':
-        # Usar el formulario de configuración de CMIN
-        from portaldu.cmin.forms import UsersConfig
-        form = UsersConfig(request.POST, request.FILES, instance=usuario)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Perfil actualizado correctamente.")
-            return redirect('desur_menu')
+
+    logger.warning(f"404 Error: {request.path} - User: {request.user}")
+
+    context = {
+        'is_authenticated': request.user.is_authenticated,
+        'error_path': request.path,
+        'home_url': None,
+        'module': None,
+        'user_role': None,
+        'exception': str(exception) if exception else 'Página no encontrada',
+    }
+
+    if request.user.is_authenticated:
+        if request.path.startswith('/ageo/'):
+            context['module'] = 'ageo'
+            context['home_url'] = 'home'
+            context['user_role'] = getattr(request.user, 'rol', 'usuario')
+        elif request.path.startswith('/cmin/'):
+            context['module'] = 'cmin'
+            context['home_url'] = 'menu'
+            context['user_role'] = getattr(request.user, 'rol', 'usuario')
+        else:
+            context['home_url'] = 'menu' if hasattr(request.user, 'has_cmin_access') and request.user.has_cmin_access() else 'home'
     else:
-        from portaldu.cmin.forms import UsersConfig
-        form = UsersConfig(instance=usuario)
-    return render(request, 'auth/desur_user_conf.html', {'form': form})
+        context['home_url'] = 'login_view'
+        context['module'] = 'cmin'
 
-@login_required
-@desur_access_required
-def desur_menu(request):
-    """
-    Menú principal de DesUr - Dashboard para empleados con acceso al sistema
+    return render(request, '404_template/404_template.html', context, status=404)
 
-    Args:
-        request: HttpRequest con usuario autenticado y parámetros de paginación
-
-    Returns:
-        HttpResponse con el menú principal y contexto del usuario
-
-    Context:
-        - user_role: Rol del usuario en el sistema
-        - user: Objeto User con información completa
-
-    Side Effects:
-        - Registra el acceso del usuario en la tabla LoginDate para auditoría
-
-    Template:
-        main.html
-    """
-    # Registrar acceso a DesUr usando el modelo unificado
-    try:
-        LoginDate.create(request.user)
-    except Exception as e:
-        logger.warning(f"Error al registrar login de DesUr para {request.user.username}: {str(e)}")
-
-    context = {
-        'user_role': request.user.rol,
-        'user': request.user,
-    }
-    return render(request, 'main.html', context)
-
-
-@login_required
-@desur_access_required
-def desur_historial(request):
-    """
-    Vista para mostrar el historial completo de trámites procesados por el empleado actual
-
-    Args:
-        request: HttpRequest con usuario autenticado y parámetros de paginación
-
-    Returns:
-        HttpResponse con historial paginado de trámites
-
-    Context:
-        - page_obj: Objeto Page con trámites paginados (10 por página)
-        - total_tramites: Conteo total de trámites procesados por el empleado
-        - tramites_hoy: Conteo de trámites procesados el día actual
-        - stats_by_puo: Estadísticas agrupadas por tipo de trámite (PUO)
-        - empleado: Usuario actual (empleado)
-
-    Query Parameters:
-        - page: Número de página para paginación
-
-    Template:
-        auth/desur_historial.html
-    """
-    # Obtener todos los trámites procesados por el usuario actual
-    tramites = soli.objects.filter(processed_by=request.user).select_related(
-        'data_ID', 'processed_by'
-    ).order_by('-fecha')
-
-    # Paginación para manejar muchos resultados
-    from django.core.paginator import Paginator
-    paginator = Paginator(tramites, 10)  # 10 trámites por página
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    # Estadísticas básicas
-    total_tramites = tramites.count()
-    tramites_hoy = tramites.filter(fecha__date=timezone.now().date()).count()
-
-    # Estadísticas por tipo de trámite (PUO)
-    from django.db.models import Count
-    stats_by_puo = tramites.values('puo').annotate(
-        count=Count('soli_ID')
-    ).order_by('-count')
-
-    context = {
-        'page_obj': page_obj,
-        'total_tramites': total_tramites,
-        'tramites_hoy': tramites_hoy,
-        'stats_by_puo': stats_by_puo,
-        'empleado': request.user,
-    }
-
-    return render(request, 'auth/desur_historial.html', context)
-
-
-@login_required
-@desur_access_required
-def desur_buscar_tramite(request):
-    """
-    Vista de búsqueda avanzada de trámites procesados por el empleado
-
-    Args:
-        request: HttpRequest con término de búsqueda en query string
-
-    Returns:
-        HttpResponse con resultados de búsqueda
-
-    Context:
-        - tramites: QuerySet de trámites que coinciden con la búsqueda (None si no hay búsqueda)
-        - query: Término de búsqueda utilizado
-
-    Query Parameters:
-        - q: Término de búsqueda (busca en folio, nombre, apellidos, CURP, PUO)
-
-    Search Fields:
-        - folio: Folio del trámite
-        - data_ID__nombre: Nombre del ciudadano
-        - data_ID__pApe: Apellido paterno del ciudadano
-        - data_ID__mApe: Apellido materno del ciudadano
-        - data_ID__curp: CURP del ciudadano
-        - puo: Tipo de proceso (PUO)
-
-    Template:
-        auth/desur_buscar.html
-    """
-    tramites = None
-    query = None
-
-    if request.method == 'GET' and 'q' in request.GET:
-        query = request.GET.get('q')
-        if query:
-            # Buscar en múltiples campos
-            tramites = soli.objects.filter(
-                processed_by=request.user
-            ).filter(
-                # Buscar por folio, nombre del ciudadano, CURP, etc.
-                Q(folio__icontains=query) |
-                Q(data_ID__nombre__icontains=query) |
-                Q(data_ID__pApe__icontains=query) |
-                Q(data_ID__mApe__icontains=query) |
-                Q(data_ID__curp__icontains=query) |
-                Q(puo__icontains=query)
-            ).select_related('data_ID', 'processed_by').order_by('-fecha')
-
-    context = {
-        'tramites': tramites,
-        'query': query,
-    }
-
-    return render(request, 'auth/desur_buscar.html', context)
-
+def test_404(request):
+    from django.http import Http404
+    raise Http404('Página de prueba 404 ')
 
 # Vistas del sistema de trámites requieren autenticación
 # Solo empleados/funcionarios autorizados pueden operar el sistema
@@ -314,7 +170,7 @@ def base(request):
 
     # Si no hay UUID, redirigir al menú (sesión inválida)
     if not uuid:
-        return redirect('desur_menu')  # Corregir redirección
+        return redirect('home')  # Corregir redirección
     return render(request, 'documet/save.html',{'uuid':uuid})
 
 @login_required
@@ -375,7 +231,7 @@ def home(request):
         elif action == 'pp':
             response = redirect('general')
         else:
-            response = redirect('desur_menu')  # Corregir redirección
+            response = redirect('home')  # Corregir redirección
 
         # Establecer cookie con UUID de sesión
         response.set_cookie('uuid', uuidM, max_age=3600)
@@ -460,7 +316,7 @@ def intData(request):
     # Obtener UUID de sesión de trabajo
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
 
     logger.debug("Procesando datos de ciudadano")
 
@@ -468,7 +324,7 @@ def intData(request):
         uid = get_object_or_404(Uuid, uuid=uuid)
     except Uuid.DoesNotExist:
         logger.warning(f"UUID no encontrado: {uuid}")
-        return redirect('desur_menu')
+        return redirect('home')
 
     asunto = ''
 
@@ -583,7 +439,7 @@ def soliData(request):
     # SÍ login_required - empleados procesan solicitudes de ciudadanos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
 
     try:
         uid = get_object_or_404(Uuid, uuid=uuid)
@@ -635,7 +491,7 @@ def soliData(request):
 
         dp = data.objects.select_related('fuuid').filter(fuuid=uid).first()
         if not dp:
-            return redirect('desur_menu')
+            return redirect('home')
 
         if request.method == 'POST':
             return soli_processed(request, uid, dp)
@@ -699,7 +555,7 @@ def doc(request):
     # SÍ login_required - empleados gestionan documentación
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
 
     datos = data.objects.filter(fuuid__uuid=uuid).first()
     if not datos:
@@ -762,7 +618,7 @@ def dell(request, id):
     # SÍ login_required - empleados eliminan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
     if request.method == 'POST':
         try:
             docc = get_object_or_404(SubirDocs, pk=id, fuuid__uuid=uuid)
@@ -801,7 +657,7 @@ def docs(request):
     # SÍ login_required - empleados suben documentos del ciudadano
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
     documentos = SubirDocs.objects.filter(fuuid=datos).order_by('-nomDoc')
@@ -848,7 +704,7 @@ def docs2(request):
     # SÍ login_required - empleados gestionan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
     datos = get_object_or_404(Uuid, uuid=uuid)
 
     if request.method == 'POST' and request.FILES['ffile']:
@@ -1003,7 +859,7 @@ def document(request):
     # SÍ login_required - empleados generan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     #solicitud = get_object_or_404(soli, data_ID=datos)
@@ -1141,7 +997,7 @@ def save_document(request):
     # SÍ login_required - empleados guardan documentos oficiales
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
 
     datos = get_object_or_404(data, fuuid__uuid=uuid)
     uid = get_object_or_404(Uuid, uuid=uuid)
@@ -1277,7 +1133,7 @@ def pp_document(request):
     # SÍ login_required - empleados gestionan documentos
     uuid = request.COOKIES.get('uuid')
     if not uuid:
-        return redirect('desur_menu')
+        return redirect('home')
 
     uuid_object = get_object_or_404(Uuid, uuid=uuid)
     gen_data = get_object_or_404(PpGeneral, fuuid__uuid=uuid)
@@ -1501,7 +1357,7 @@ def pp_document(request):
     pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
     pdf_file = ContentFile(buffer.getvalue())
     nomDoc = f'VS_{cat}_{gen_data.nombre_promovente}_Presupuesto_Participativo.pdf'
-    doc = PpFiles(nomDoc=nomDoc, fuuid=uuid_object, fk_pp=gen_data)
+    doc = Files(nomDoc=nomDoc, fuuid=uuid_object, fk_pp=gen_data)
     doc.finalDoc.save(nomDoc, pdf_file)
 
     return render(request, 'documet/save.html', {"doc":doc})
@@ -1584,7 +1440,7 @@ def clear(request):
     Use Case:
         Se llama al finalizar un trámite para limpiar estado temporal
     """
-    response = redirect('desur_menu')  # Cambiar redirect a login de empleados
+    response = redirect('home')  # Cambiar redirect a login de empleados
     response.delete_cookie('uuid')
     return response
 

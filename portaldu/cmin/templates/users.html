@@ -4,104 +4,135 @@
     {% load django_bootstrap5 %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
-    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=6">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 {% endblock %}
-
-{% block title %}
-    hola
-{% endblock %}
-
-
 
 {% block content %}{% include 'navmin.html' %}
-<text>Crear usuario</text>
-<div class="container text-center">
-    <form method="post" enctype="multipart/form-data" action="{% url 'users' %}">
-        {% csrf_token %}
-        <div class="row row-cols-2">
-            <div class="col-md-6">
-                <div class="mini">
-                <label for="{{form.email.id_for_label}}">Correo electrónico</label>
-                {{form.email}}
+
+<main class="user-container">
+    <div class="page-header">
+        <h2 class="page-title">
+            <i class="fas fa-user-plus me-2"></i>
+            Crear Usuario
+        </h2>
+        <p class="page-subtitle">Registra un nuevo usuario en el sistema</p>
+    </div>
+
+    <div class="form-wrapper">
+        <form method="post" enctype="multipart/form-data" action="{% url 'users' %}" class="user-form">
+            {% csrf_token %}
+
+            <div class="row g-4">
+                <!-- Columna Izquierda -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{form.email.id_for_label}}" class="form-label">
+                            <i class="fas fa-envelope me-2"></i>Correo electrónico
+                        </label>
+                        {{form.email}}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_first_name" class="form-label">
+                            <i class="fas fa-user me-2"></i>Nombre(s)
+                        </label>
+                        {{form.first_name}}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_last_name" class="form-label">
+                            <i class="fas fa-user me-2"></i>Apellido(s)
+                        </label>
+                        {{form.last_name}}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-camera me-2"></i>Foto de perfil
+                        </label>
+                        <div class="photo-upload">
+                            <button type="button" class="photo-btn" id="search">
+                                <i class="fas fa-image me-2"></i>
+                                Seleccionar foto
+                            </button>
+                            <small class="text-muted mt-2 d-block">Formatos: JPG, PNG (Máx. 2MB)</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="mini">
-                <label for="id_first_name">Nombre(s)</label>
-                {{form.first_name}}
-                </div>
-                <div class="mini">
-                <label for="id_last_name">Apellido(s)</label>
-                {{form.last_name}}
-                </div>
-                <!-- fak más modales con js yupiii -->
-                <div class="mini">
-                    <div class="nFoto">
-                    <label for="search" class="text">Añadir foto</label>
-                        <button
-                          type="button"
-                          class="search sbtn"
-                          id="search"
-                          name="foto"
-                          >
-                          <span class="addicon">
-                          <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
-                          </span>
-                          <span>Foto</span>
-                        </button>
+
+                <!-- Columna Derecha -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_username" class="form-label">
+                            <i class="fas fa-user-tag me-2"></i>Nombre de usuario
+                        </label>
+                        {{form.username}}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_bday" class="form-label">
+                            <i class="fas fa-calendar me-2"></i>Fecha de nacimiento
+                        </label>
+                        {{form.bday}}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_password" class="form-label">
+                            <i class="fas fa-lock me-2"></i>Contraseña
+                        </label>
+                        {{form.password}}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_confirmP" class="form-label">
+                            <i class="fas fa-lock me-2"></i>Confirmar contraseña
+                        </label>
+                        {{form.confirmP}}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_rol" class="form-label">
+                            <i class="fas fa-user-shield me-2"></i>Rol del usuario
+                        </label>
+                        {{form.rol}}
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="mini">
-                <label for="id_username">Nombre de usuario</label>
-                {{form.username}}
-                </div>
-                <div class="mini">
-                <label for="id_bday">Fecha de nacimiento</label>
-                {{form.bday}}
-                </div>
-                <div class="mini">
-                <label for="id_password">Contraseña</label>
-                {{form.password}}
-                </div>
-                <div class="mini">
-                <label for="id_confirmP">Confirmar contraseña</label>
-                {{form.confirmP}}
-                </div>
-                <div class="mini">
-                    <label for="id_rol">Rol del usuario</label>
-                    {{form.rol}}
-                </div>
-            </div>
-        </div>
-        <button type="button" class="back bbtn" id="back" data-url="{% url 'menu' %}">Volver</button>
-        <button type="submit" class="next nbtn">Registrar usuario</button>
 
-        {{form.foto}}
-    </form>
-</div>
+            <!-- Input oculto para foto -->
+            {{form.foto}}
+
+            <!-- Botones de acción -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary" id="back" data-url="{% url 'menu' %}">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-user-check me-2"></i>Registrar usuario
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
 {% endblock %}
 
-
-
 {% block footer %}
-<div class="footer" style="height: 50px; background: rgb(0, 0, 78);"></div>
 <script src="{% static 'cminScripts/cminBtns.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
 <script>
-  flatpickr("#id_bday",{
+  flatpickr("#id_bday", {
     dateFormat: "Y-m-d",
     locale: "es",
-    altInput: "true",
+    altInput: true,
     altFormat: "F j, Y",
   });
-</script>
-<script>
-    document.getElementById("search").addEventListener('click', function(){
-    console.log("click");
-        document.getElementById("id_foto").click();
-    });
+
+  document.getElementById("search").addEventListener('click', function(){
+    document.getElementById("id_foto").click();
+  });
 </script>
 {% endblock %}

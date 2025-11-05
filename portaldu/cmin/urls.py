@@ -12,8 +12,9 @@ Funcionalidades principales:
 - APIs para integración externa
 """
 
-from . import views as view
 from django.urls import path, include
+
+from . import views as view
 
 urlpatterns = [
     # === RUTAS PRINCIPALES DEL SISTEMA ===
@@ -102,3 +103,4 @@ urlpatterns = [
     # Funcionalidades: Recepción de encuestas offline, sincronización de datos
     path('api/', include('portaldu.cmin.api_urls')),
 ]
+#handler404 = 'portaldu.cmin.views.custom_handler404'

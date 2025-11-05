@@ -58,7 +58,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-+1cgdo&)u_qlg()^r5ukuyo7s*w%v=#(dxbuck2jq6uwfqejuu')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = False
 
 # Configuración segura de hosts permitidos
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if not DEBUG else ['*']
@@ -92,6 +92,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -412,6 +413,8 @@ SESSION_WARNING_TIME = 300
 # Configuración de cookies CSRF
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 

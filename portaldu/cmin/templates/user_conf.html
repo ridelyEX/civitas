@@ -4,84 +4,95 @@
     {% load django_bootstrap5 %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
-    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=1">
-
-<style>
-    .nFoto {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-</style>
-
+    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 {% endblock %}
 
 {% block title %}
-    Usuarios
+    Configuración de Usuario
 {% endblock %}
 
 {% block content %}{% include 'navmin.html' %}
-<text>Configuración de usuario</text>
-<div class="container text-center">
-    <form method="post" enctype="multipart/form-data" action="{% url 'user_conf' %}">
-        <div class="col-md-8 offset-md-2">
+
+<main class="user-container">
+    <div class="page-header">
+        <h2 class="page-title">
+            <i class="fas fa-user-cog me-2"></i>
+            Configuración de Usuario
+        </h2>
+        <p class="page-subtitle">Actualiza tu información personal y credenciales</p>
+    </div>
+
+    <div class="form-wrapper">
+        <form method="post" enctype="multipart/form-data" action="{% url 'user_conf' %}">
             {% csrf_token %}
 
-            <div class="foto">
-                {% if user.foto and user.foto.name %}
-                <img src="{{ user.foto.url }}" alt="Avatar Logo" class="rounded" style="width: 200px; height: 200px;">
-                {% else %}
-                <img src="{% static 'stock/stock.png' %}" alt="Avatar logo" class="rounded-pill">
-                {% endif %}
+            <!-- Foto de perfil -->
+            <div class="form-group text-center">
+                <label class="form-label">
+                    <i class="fas fa-user-circle me-2"></i>Foto de Perfil
+                </label>
+                <div class="profile-photo-container">
+                    {% if user.foto and user.foto.name %}
+                    <img src="{{ user.foto.url }}" alt="Foto de perfil" class="profile-photo">
+                    {% else %}
+                    <img src="{% static 'stock/stock.png' %}" alt="Foto de perfil por defecto" class="profile-photo">
+                    {% endif %}
+                </div>
+                <div class="photo-upload mt-3">
+                    <button type="button" class="photo-btn" id="search">
+                        <i class="fas fa-camera me-2"></i>
+                        Cambiar foto
+                    </button>
+                    <small class="text-muted mt-2 d-block">Formatos: JPG, PNG (Máx. 2MB)</small>
+                </div>
+                <input type="file" name="foto" id="id_foto" accept="image/*">
             </div>
 
-            <div class="mini">
-                <label for="id_username">Nombre de usuario</label>
-                {{form.username}}
+            <!-- Campos del formulario centrados -->
+            <div class="form-fields-centered">
+                <div class="form-group">
+                    <label for="id_username" class="form-label">
+                        <i class="fas fa-user-tag me-2"></i>Nombre de usuario
+                    </label>
+                    <input type="text" name="username" value="{{ user.username }}" id="id_username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password" class="form-label">
+                        <i class="fas fa-key me-2"></i>Nueva contraseña
+                    </label>
+                    <input type="password" name="password" id="id_password">
+                    <small class="text-muted d-block mt-1">Deja en blanco si no deseas cambiarla</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_confirmP" class="form-label">
+                        <i class="fas fa-key me-2"></i>Confirmar contraseña
+                    </label>
+                    <input type="password" name="confirmP" id="id_confirmP">
+                </div>
             </div>
-            <div class="mini">
-            <label for="id_password">Contraseña</label>
-                {{form.password}}
+
+            <!-- Botones de acción -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary" id="back" data-url="{% url 'menu' %}">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Guardar cambios
+                </button>
             </div>
-            <div class="mini">
-                <label for="id_confirmP">Confirmar contraseña</label>
-                {{form.confirmP}}
-            </div>
-              <div class="mini">
-                    <div class="nFoto">
-                    <label for="search" class="text">Cambiar foto</label>
-                        <button
-                          type="button"
-                          class="search sbtn"
-                          id="search"
-                          name="foto"
-                          >
-                          <span class="addicon">
-                          <img src="{% static 'images/photo.png' %}" alt="add" class="add" />
-                          </span>
-                          <span>Foto</span>
-                        </button>
-                    </div>
-              </div>
-            {{form.foto}}
-        </div>
-        <div class="Ibottom" style="margin-bottom: 70px;">
-            <button type="button" class="back bbtn" id="back" data-url="{% url 'menu' %}">Volver</button>
-            <button type="submit" class="next nbtn">Guadar cambios</button>
-        </div>
         </form>
-</div>
+    </div>
+</main>
 
 {% endblock %}
 
-
 {% block footer %}
-<div class="footer" style="height: 50px; background: rgb(0, 0, 78); margin-top: 75px;"></div>
 <script src="{% static 'cminScripts/cminBtns.js' %}"></script>
 <script>
     document.getElementById("search").addEventListener('click', function(){
-    console.log("click");
         document.getElementById("id_foto").click();
     });
 </script>

@@ -25,7 +25,7 @@ Permisos:
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+
 from . import views
 
 # Router para APIs REST (actualmente comentado)
@@ -51,7 +51,7 @@ urlpatterns = [
     # Login de DesUr (redirige al sistema unificado)
     # GET - Muestra mensaje y redirige a /auth/login/
     # Mantiene compatibilidad con URLs antiguas
-    path('auth/login/', views.desur_login_view, name='desur_login'),
+    #path('auth/login/', views.desur_login_view, name='desur_login'),
 
     # Logout de DesUr (redirige al sistema unificado)
     # GET - Cierra sesión y redirige
@@ -62,13 +62,13 @@ urlpatterns = [
     # GET - Muestra formulario de configuración
     # POST - Guarda cambios en perfil (nombre, foto, contraseña, etc.)
     # Requiere: @login_required, @desur_access_required
-    path('auth/user_conf/', views.desur_user_conf, name='desur_user_conf'),
+    #path('auth/user_conf/', views.desur_user_conf, name='desur_user_conf'),
 
     # Menú principal de DesUr (dashboard)
     # GET - Muestra dashboard con opciones de captura de trámites
     # Requiere: @login_required, @desur_access_required
     # Template: main.html
-    path('', views.desur_menu, name='desur_menu'),
+    #path('', views.desur_menu, name='desur_menu'),
 
     # ============================================================================
     # HISTORIAL Y BÚSQUEDA DE TRÁMITES
@@ -79,14 +79,14 @@ urlpatterns = [
     # Query params: ?page=N
     # Requiere: @login_required, @desur_access_required
     # Template: auth/desur_historial.html
-    path('auth/historial/', views.desur_historial, name='desur_historial'),
+    #path('auth/historial/', views.desur_historial, name='desur_historial'),
 
     # Búsqueda avanzada de trámites
     # GET - Busca por folio, nombre, CURP, etc.
     # Query params: ?q=término_búsqueda
     # Requiere: @login_required, @desur_access_required
     # Template: auth/desur_buscar.html
-    path('auth/buscar/', views.desur_buscar_tramite, name='desur_buscar'),
+    #path('auth/buscar/', views.desur_buscar_tramite, name='desur_buscar'),
 
     # ============================================================================
     # PRESUPUESTO PARTICIPATIVO - Captura de propuestas ciudadanas
@@ -284,9 +284,12 @@ urlpatterns = [
     # VIsta para testear vistas nuevas o modificadas
     path('test/', views.test_views, name='test'),
 
+    path('test-404/', views.test_404, name='test_404'),
     # Router de APIs REST (comentado hasta implementar FilesViewSet)
     # path('', include(router.urls)),
 
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+#handler404 = 'portaldu.desUr.views.custom_handler_404'
 # Servir archivos de media en desarrollo (imágenes, PDFs, documentos subidos)
 # En producción, esto debería manejarse por nginx u otro servidor web

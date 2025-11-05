@@ -92,10 +92,14 @@ NOTAS DE DESARROLLO:
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+
 from django.conf.urls.static import static
+from django.views.generic import RedirectView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
+from portaldu.desUr.views import custom_handler_404
 
 # ============================================================================
 # CONFIGURACIÓN DE SWAGGER - Documentación automática de APIs
@@ -240,6 +244,7 @@ urlpatterns = [
     # URL: /api/docs/
     # Funcionalidad: Idéntica a /swagger/
     path('api/docs/', schema_view.with_ui('swagger', cache_timeout=0), name='api-docs'),
+
 ]
 
 # ============================================================================
@@ -268,6 +273,8 @@ if settings.DEBUG:
     # Ubicación física: /staticfiles/ (definido en settings.STATIC_ROOT)
     # URL: /static/{ruta_archivo}
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+handler404 = custom_handler_404
 
 # ============================================================================
 # NOTAS PARA PRODUCCIÓN

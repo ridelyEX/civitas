@@ -185,34 +185,6 @@ class soli(models.Model):
         return f"Solicitud {self.soli_ID} - {self.data_ID.nombre}"
 
 
-class Files(models.Model):
-    """
-    Modelo de archivos finales generados por el sistema
-    Almacena PDFs oficiales y documentos generados automáticamente
-    """
-    # Clave primaria autoincremental del archivo final
-    fDoc_ID = models.AutoField(primary_key=True)
-
-    # Nombre del documento final generado
-    nomDoc = models.CharField(max_length=200, verbose_name="Nombre del documento")
-
-    # Relación con UUID de sesión - vincula archivo con trámite
-    fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="UUID")
-
-    # Relación con solicitud específica (opcional)
-    soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Solicitud")
-
-    # Archivo PDF final generado - almacenado en 'documents/'
-    finalDoc = models.FileField(upload_to='documents/', verbose_name="Documento final")
-
-    class Meta:
-        db_table = 'solicitudes'  # Tabla: solicitudes
-        ordering = ['fDoc_ID']  # Ordenar por ID de archivo
-        verbose_name = "solicitudes"
-
-    def __str__(self):
-        return str(self.nomDoc)
-
 
 # === MODELOS DE PRESUPUESTO PARTICIPATIVO ===
 
@@ -518,25 +490,38 @@ class PpPluvial(models.Model):
     def __str__(self):
         return str(self.pp_pluvial_ID) or None
 
-class PpFiles(models.Model):
+
+class Files(models.Model):
     """
-    Modelo para archivos específicos de propuestas de presupuesto participativo
-    Almacena documentos adicionales requeridos para la evaluación de propuestas
+    Modelo de archivos finales generados por el sistema
+    Almacena PDFs oficiales y documentos generados automáticamente
     """
-    pp_file_ID = models.AutoField(primary_key=True)
+    # Clave primaria autoincremental del archivo final
+    fDoc_ID = models.AutoField(primary_key=True)
+
+    # Nombre del documento final generado
     nomDoc = models.CharField(max_length=200, verbose_name="Nombre del documento")
+
+    # Relación con UUID de sesión - vincula archivo con trámite
     fuuid = models.ForeignKey(Uuid, on_delete=models.CASCADE, verbose_name="UUID")
-    fk_pp = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, verbose_name="Proyecto PP")
-    finalDoc = models.FileField(upload_to='pp_documents/', verbose_name="Documento final")
+
+    # Relación con solicitud específica (opcional)
+    soli_FK = models.ForeignKey(soli, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Solicitud")
+
+    # Relación con propuesta de presupuesto participativo (opcional)
+    pp_FK = models.ForeignKey(PpGeneral, on_delete=models.CASCADE, null=True, blank=True,
+                              verbose_name="Presupuesto Participativo")
+
+    # Archivo PDF final generado - almacenado en 'documents/'
+    finalDoc = models.FileField(upload_to='documents/', verbose_name="Documento final")
 
     class Meta:
-        db_table = 'pp_files'
-        ordering = ['pp_file_ID']
-        verbose_name = "Archivo PP"
+        db_table = 'solicitudes'  # Tabla: solicitudes
+        ordering = ['fDoc_ID']  # Ordenar por ID de archivo
+        verbose_name = "solicitudes"
 
     def __str__(self):
         return str(self.nomDoc)
-
 
 class Pagos(models.Model):
     """

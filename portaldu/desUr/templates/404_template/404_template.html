@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link href="{% static 'styles/404_style.css' %}" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Página no encontrada</title>
+</head>
+<body>
+    <div class="error-container">
+        {% if module %}
+            <span class="module-badge">{{ module|upper }}</span>
+        {% endif %}
+
+        <div class="error-code">404</div>
+        <h1 class="error-title">Página no encontrada</h1>
+
+        <p class="error-message">
+            {% if is_authenticated %}
+                Lo sentimos, la página que buscas no existe o no tienes permisos para acceder a ella.
+            {% else %}
+                Parece que te has perdido. Inicia sesión para acceder al sistema.
+            {% endif %}
+        </p>
+
+        {% if error_path %}
+        <div class="error-details">
+            <strong>Ruta solicitada:</strong> <code>{{ error_path }}</code>
+        </div>
+        {% endif %}
+
+        <div class="action-buttons">
+            {% if is_authenticated %}
+                <a href="{% url home_url %}" class="btn btn-primary">
+                    {% if module == 'ageo' %}
+                        Ir a AGEO
+                    {% elif module == 'cmin' %}
+                        Ir a AGEO ADMIN
+                    {% else %}
+                        Ir al inicio
+                    {% endif %}
+                </a>
+                <a href="javascript:history.back()" class="btn btn-secondary">
+                    ← Volver atrás
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-primary">
+                    🔐 Iniciar sesión
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

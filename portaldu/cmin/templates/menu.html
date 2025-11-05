@@ -1,42 +1,66 @@
 {% extends 'master.html' %}{% load static %}
 
-
 {% block head %}
     {% load django_bootstrap5 %}
-    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}?v=1">
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 {% endblock %}
-
 
 {% block content %}{% include 'navmin.html' %}
 
-<main class="container">
+<main class="container py-4">
     <div class="menus">
-        <h4>Bienvenido</h4>
+        <h4>
+            <i class="fas fa-home me-2"></i>
+            Panel de Control
+        </h4>
+
         {% if user.is_superuser %}
         <div class="form">
-            <button type="button" class="back bbtn" id="back" data-url="{% url 'users' %}">Crear usuario</button>
+            <button type="button" class="back bbtn" id="back" data-url="{% url 'users' %}">
+                <i class="fas fa-user-plus me-2"></i>
+                Crear Usuario
+            </button>
         </div>
         {% endif %}
+
         <div class="ver">
-            <h2 class="txt">Ver asuntos</h2>
+            <h2 class="txt">
+                <i class="fas fa-folder-open me-2"></i>
+                Ver Asuntos
+            </h2>
+            <p class="description">
+                Consulta y gestiona todas las solicitudes pendientes y enviadas del sistema
+            </p>
             <div class="btn">
-                <button class="ver-btn" id="ver-btn" data-url="{% url 'tablas' %}">Ver</button>
+                <button class="ver-btn" id="ver-btn" data-url="{% url 'tablas' %}">
+                    <i class="fas fa-eye me-2"></i>
+                    Ver Asuntos
+                </button>
             </div>
-        </div><br>
+        </div>
+
         <div class="seguimiento">
-            <h2 class="txt">Seguimiento</h2>
+            <h2 class="txt">
+                <i class="fas fa-chart-line me-2"></i>
+                Seguimiento
+            </h2>
+            <p class="description">
+                Realiza el seguimiento detallado de todas las solicitudes en proceso
+            </p>
             <div class="btn">
-                <button class="fllw-btn" id="fllw-btn" data-url="{% url 'seguimiento' %}">Ver</button>
+                <button class="fllw-btn" id="fllw-btn" data-url="{% url 'seguimiento' %}">
+                    <i class="fas fa-search me-2"></i>
+                    Ver Seguimiento
+                </button>
             </div>
         </div>
     </div>
 </main>
 
-
 {% endblock %}
-
 
 {% block footer %}
 <script src="{% static 'cminScripts/cminBtns.js' %}"></script>
-
 {% endblock %}

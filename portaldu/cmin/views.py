@@ -85,7 +85,7 @@ def role_required(allowed_roles):
                 messages.error(request, "No tienes permisos para acceder a esta página")
                 # Redirigir usuarios de campo al módulo DesUr
                 if request.user.rol == 'campo':
-                    return redirect('/ageo/')
+                    return redirect('/ageo/home/')
                 else:
                     return redirect('menu')
 
@@ -307,6 +307,7 @@ def tables(request):
 
     # Obtener todas las solicitudes enviadas ordenadas por fecha
     solicitudesE = SolicitudesEnviadas.objects.all().order_by('-fechaEnvio')
+
 
     # Opciones de prioridad disponibles para asignación
     prioridad_choices = SolicitudesEnviadas.PRIORIDAD_CHOICES
@@ -737,7 +738,7 @@ def seguimiento_docs(request, solicitud_id):
 
     return redirect('seguimiento')
 
-def custom_handler404(request, exception=None):
+def custom_handler404(request, exception):
     """
     Manejo personalizado de errores 404 (página no encontrada).
 

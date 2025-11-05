@@ -4,117 +4,246 @@
     {% load django_bootstrap5 %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
-    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}?v=3">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 {% endblock %}
 
-
 {% block content %}{% include 'navmin.html' %}
-<main class="container">
-    <div class="cards">
-      <div class="card">
-        <h3>Asuntos pendientes</h3>
-        <ul class="asuntos">
-          {% for solicitud in solicitudesP %}
-          <li>
-              <form method="post" action="{% url 'saveSoli' %}">
-                {% csrf_token %}
-                  <input type="hidden" name="doc_id" value="{{ solicitud.fDoc_ID }}">
-                  <strong>{{ solicitud.nomDoc }}</strong>
-                  <p>{{ solicitud.fuuid }}</p>
-                  <a href="{{ solicitud.finalDoc.url }}" target="_blank">Ver documentos</a>
-                  <!--button type="submit" class="guardar-btn">Guardar</button-->
-              </form>
-          </li>
-         {% empty %}
-          <li><strong>No hay asuntos pendientes.</strong><p>No hay nuevas solicitudes.</p></li>
-         {% endfor %}
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>Asuntos enviados</h3>
-        <ul class="asuntos">
-          {% for solicitud in solicitudesE %}
-          <li>
-              <strong>{{ solicitud.nomSolicitud }}</strong>
-              <p>Enviado: {{ solicitud.fechaEnvio|date:"d/m/y" }}</p>
-              <p>Folio: {{ solicitud.doc_FK.soli_FK.folio }}</p>
-              <p>Destinatario: {{ solicitud.solicitud_FK.destinatario }}</p>
-              <p>Enviado por: {{ solicitud.user_FK.username }}</p>
-
-              <!--
-               campos:
-               Destinatario
-               Folio  (a ver cómo mando el folio a la base de datos)
-               -->
-              <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
-          </li>
-           {% empty %}
-          <li><strong>No hay asuntos enviados</strong><p>No hay solicitudes enviadas.</p></li>
-           {% endfor %}
-        </ul>
-      </div>
+<main class="container py-4">
+    <div class="page-header mb-4">
+        <h2 class="page-title">
+            <i class="fas fa-tasks me-2"></i>
+            Gestión de Solicitudes
+        </h2>
+        <p class="page-subtitle">Administra las solicitudes pendientes y enviadas</p>
     </div>
 
-    <div class="acciones Ibottom">
-        <button type="button" class="back bbtn" id="bback" data-url="{% url 'menu' %}">Regresar</button>
-        <button type="button" class="enviar-btn" onclick="showSendForm()">Enviar asunto</button>
-    </div>
-
-    <!-- otro modal dios ayudame -->
-
-    <div id="modal-sender" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h3>Enviar solicitud</h3>
-            <form method="post" action="{% url 'send_mail' %}">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="solicitud">Seleccione solicitud:</label>
-                    <select name="solicitud_id" id="solicitud" class="form-control">
-                        <option value="">-- Seleccione solicitud --</option>
+    <div class="row g-4 justify-content-center">
+        <!-- Asuntos Pendientes -->
+        <div class="col-lg-6 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-warning bg-gradient text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-clock me-2"></i>
+                        <h5 class="mb-0">Asuntos Pendientes</h5>
+                        <span class="badge bg-light text-dark ms-auto">{{ solicitudesP|length }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush solicitudes-list">
                         {% for solicitud in solicitudesP %}
-                        <option value="{{ solicitud.fDoc_ID }}">{{ solicitud.nomDoc }}</option>
+                        <div class="list-group-item solicitud-item hover-shadow">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold text-dark">
+                                        <i class="fas fa-file-alt text-primary me-2"></i>
+                                        {{ solicitud.nomDoc }}
+                                    </h6>
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-fingerprint me-1"></i>
+                                        UUID: {{ solicitud.fuuid }}
+                                    </small>
+                                </div>
+                                {% if solicitud.pp_FK %}
+                                <span class="badge bg-info ms-2">
+                                    <i class="fas fa-users me-1"></i>PP
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="{{ solicitud.finalDoc.url }}"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="fas fa-eye me-1"></i>Ver Documento
+                                </a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                            <h6 class="mt-3 text-muted">No hay asuntos pendientes</h6>
+                            <p class="small text-muted">Todas las solicitudes han sido procesadas</p>
+                        </div>
                         {% endfor %}
-                    </select>
-                    <label for="cat">Seleccione una categoría:</label>
-                    <select name="categorias" id="cat" class="form-control">
-                        <option value="">-- Categorías de obras --</option>
-                        <option value="Construcción">Construcción</option>
-                        <option value="Rehabilitación">Rehabilitación</option>
-                        <option value="Equipamiento">Equipamiento</option>
-                        <option value="Elaboración">Elaboración</option>
-                        <option value="Programa">Programa</option>
-                    </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="usuario">Asigne un usuario</label>
-                    <select name="usuario" class="form-control" id="usuario">
-                        <option value="">-- Seleccione un usuario --</option>
-                        {% for user in users %}
-                            <option value="{{ user.username }}"
-                                    data-email="{{ user.email }}"
-                            >{{ user.username }} - {{ user.email }}</option>
+            </div>
+        </div>
+
+        <!-- Asuntos Enviados -->
+        <div class="col-lg-5 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-success bg-gradient text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        <h5 class="mb-0">Asuntos Enviados</h5>
+                        <span class="badge bg-light text-dark ms-auto">{{ solicitudesE|length }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush solicitudes-list">
+                        {% for solicitud in solicitudesE %}
+                        <div class="list-group-item solicitud-item hover-shadow">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-1 fw-bold text-dark">
+                                    <i class="fas fa-file-alt text-success me-2"></i>
+                                    {{ solicitud.nomSolicitud }}
+                                </h6>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        <strong>Enviado:</strong> {{ solicitud.fechaEnvio|date:"d/m/Y" }}
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-hashtag me-1"></i>
+                                        <strong>Folio:</strong> {{ solicitud.doc_FK.soli_FK.folio }}
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        <strong>Destinatario:</strong> {{ solicitud.solicitud_FK.destinatario }}
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-user me-1"></i>
+                                        <strong>Por:</strong> {{ solicitud.user_FK.username }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <a href="{{ solicitud.doc_FK.finalDoc.url }}"
+                               target="_blank"
+                               class="btn btn-sm btn-outline-success w-100">
+                                <i class="fas fa-download me-1"></i>Descargar Documento
+                            </a>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox text-muted" style="font-size: 3rem;"></i>
+                            <h6 class="mt-3 text-muted">No hay asuntos enviados</h6>
+                            <p class="small text-muted">No se han enviado solicitudes aún</p>
+                        </div>
                         {% endfor %}
-                    </select>
-                    <label for="correo">Correo electrónico del destinatario:</label>
-                    <input type="email" id="correo" name="correo" class="form-control">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="prioridad">Prioridad</label>
-                    <select name="prioridad" id="prioridad" class="form-control">
-                            <option value="">-- Nivel de prioridad --</option>
-                        {% for value, display in prioridad_choices %}
-                            <option value="{{ value }}">{{ display }}</option>
-                        {% endfor %}
-                    </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de Acción Centrados -->
+    <div class="action-bar mt-4">
+        <div class="d-flex gap-3 justify-content-center">
+            <button type="button" class="btn btn-outline-secondary" id="bback" data-url="{% url 'menu' %}">
+                <i class="fas fa-arrow-left me-2"></i>Regresar
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalEnviar">
+                <i class="fas fa-paper-plane me-2"></i>Enviar Asunto
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Bootstrap para Enviar Asunto -->
+    <div class="modal fade" id="modalEnviar" tabindex="-1" aria-labelledby="modalEnviarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalEnviarLabel">
+                        <i class="fas fa-paper-plane me-2"></i>Enviar Solicitud
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="form-group">
-                    <label for="mensaje">Mensaje:</label>
-                    <textarea name="mensaje" id="mensaje" class="form-control" rows="4"></textarea>
-                </div>
-                    <button type="submit" class="enviar-btn">Enviar</button>
-            </form>
+                <form method="post" action="{% url 'send_mail' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="solicitud" class="form-label fw-bold">
+                                    <i class="fas fa-file-alt me-1"></i>Solicitud
+                                </label>
+                                <select name="solicitud_id" id="solicitud" class="form-select" required>
+                                    <option value="">-- Seleccione una solicitud --</option>
+                                    {% for solicitud in solicitudesP %}
+                                    <option value="{{ solicitud.fDoc_ID }}">
+                                        {{ solicitud.nomDoc }}
+                                        {% if solicitud.pp_FK %}(PP){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="cat" class="form-label fw-bold">
+                                    <i class="fas fa-tags me-1"></i>Categoría
+                                </label>
+                                <select name="categorias" id="cat" class="form-select" required>
+                                    <option value="">-- Seleccione categoría --</option>
+                                    <option value="Construcción">Construcción</option>
+                                    <option value="Rehabilitación">Rehabilitación</option>
+                                    <option value="Equipamiento">Equipamiento</option>
+                                    <option value="Elaboración">Elaboración</option>
+                                    <option value="Programa">Programa</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="prioridad" class="form-label fw-bold">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Prioridad
+                                </label>
+                                <select name="prioridad" id="prioridad" class="form-select" required>
+                                    <option value="">-- Nivel de prioridad --</option>
+                                    {% for value, display in prioridad_choices %}
+                                    <option value="{{ value }}">{{ display }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="usuario" class="form-label fw-bold">
+                                    <i class="fas fa-user me-1"></i>Usuario Asignado
+                                </label>
+                                <select name="usuario" class="form-select" id="usuario" required>
+                                    <option value="">-- Seleccione usuario --</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.username }}" data-email="{{ user.email }}">
+                                        {{ user.username }} - {{ user.email }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="correo" class="form-label fw-bold">
+                                    <i class="fas fa-envelope me-1"></i>Correo Destinatario
+                                </label>
+                                <input type="email" id="correo" name="correo" class="form-control" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="mensaje" class="form-label fw-bold">
+                                    <i class="fas fa-comment me-1"></i>Mensaje
+                                </label>
+                                <textarea name="mensaje" id="mensaje" class="form-control" rows="4" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>Enviar Solicitud
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </main>
@@ -122,8 +251,14 @@
 {% endblock %}
 
 {% block footer %}
-<footer class="footer"></footer>
-
 <script src="{% static 'cminScripts/cminBtns.js' %}"></script>
+<script>
+// Auto-rellenar correo cuando se selecciona usuario
+document.getElementById('usuario').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const email = selectedOption.getAttribute('data-email');
+    document.getElementById('correo').value = email || '';
+});
+</script>
 <script src="{% static 'cminScripts/cminModal.js' %}"></script>
 {% endblock %}
