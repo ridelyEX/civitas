@@ -200,6 +200,9 @@ def login_view(request):
                 if user.has_desur_access() and not user.has_cmin_access():
                     # Usuario exclusivo de DesUr (rol campo)
                     return redirect('/ageo/home/')
+                elif user.rol == 'delegador':
+                    # Usuario con acceso limitado a bandeja de entrada
+                    return redirect('bandeja_entrada')
                 elif user.has_cmin_access():
                     # Usuario con acceso a CMIN (administrador, delegador)
                     return redirect('menu')
@@ -257,10 +260,37 @@ def user_conf(request):
     if request.method == 'POST':
         # Procesar actualización de perfil
         form = UsersConfig(request.POST, request.FILES, instance=usuario)
+
+        # Obtener contraseña
+        password = request.POST.get('password', '').strip()
+        confirm_password = request.POST.get('confirmP', '').strip()
+
+        if password or confirm_password:
+            if password != confirm_password:
+                messages.error(request, "Las contraseñas no coinciden.")
+                return render(request, 'user_conf.html', {'form': form})
+            if len(password) < 8:
+                messages.error(request, "La contraseña debe tener al menos 8 caracteres.")
+                return render(request, 'user_conf.html', {'form': form})
+
         if form.is_valid():
-            form.save()  # Guardar cambios en la base de datos
-            messages.success(request, "Perfil actualizado correctamente.")
-            return redirect('menu')  # Redirigir al menú principal
+            user = form.save(commit=False)  # Guardar cambios en la base de datos
+
+            if password:
+                user.set_password(password)
+                user.save()
+                messages.success(request, "Contraseña actualizada correctamente. Por favor, inicia sesión de nuevo.")
+                logout(request)
+                return redirect('login')
+            else:
+                user.save()
+                messages.success(request, "Perfil actualizado correctamente.")
+                return redirect('menu')  # Redirigir al menú principal
+        else:
+            messages.error(request, "Error al actualizar el perfil. Revisa los datos ingresados.")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
         # Mostrar formulario con datos actuales
         form = UsersConfig(instance=usuario)

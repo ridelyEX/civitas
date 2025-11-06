@@ -134,3 +134,4 @@ volumes:
   redis_data:
   media_volume:
   static_volume:
+  media_data:

@@ -4,7 +4,7 @@
     {% load django_bootstrap5 %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
-    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=8">
+    <link rel="stylesheet" href="{% static 'cminStyles/userStyles.css' %}?v=11">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 {% endblock %}
 
@@ -23,6 +23,18 @@
         <p class="page-subtitle">Actualiza tu información personal y credenciales</p>
     </div>
 
+    <!-- Mensajes de éxito/error -->
+    {% if messages %}
+    <div class="alert-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="form-wrapper">
         <form method="post" enctype="multipart/form-data" action="{% url 'user_conf' %}">
             {% csrf_token %}
@@ -34,9 +46,9 @@
                 </label>
                 <div class="profile-photo-container">
                     {% if user.foto and user.foto.name %}
-                    <img src="{{ user.foto.url }}" alt="Foto de perfil" class="profile-photo">
+                    <img src="{{ user.foto.url }}" alt="Foto de perfil" class="profile-photo" id="preview-foto">
                     {% else %}
-                    <img src="{% static 'stock/stock.png' %}" alt="Foto de perfil por defecto" class="profile-photo">
+                    <img src="{% static 'stock/stock.png' %}" alt="Foto de perfil por defecto" class="profile-photo" id="preview-foto">
                     {% endif %}
                 </div>
                 <div class="photo-upload mt-3">
@@ -46,31 +58,31 @@
                     </button>
                     <small class="text-muted mt-2 d-block">Formatos: JPG, PNG (Máx. 2MB)</small>
                 </div>
-                <input type="file" name="foto" id="id_foto" accept="image/*">
+                {{ form.foto }}
             </div>
 
             <!-- Campos del formulario centrados -->
             <div class="form-fields-centered">
-                <div class="form-group">
+                 <div class="form-group">
                     <label for="id_username" class="form-label">
                         <i class="fas fa-user-tag me-2"></i>Nombre de usuario
                     </label>
-                    <input type="text" name="username" value="{{ user.username }}" id="id_username" required>
+                    <input type="text" name="username" value="{{ user.username }}" id="id_username" class="form-control">
                 </div>
 
                 <div class="form-group">
                     <label for="id_password" class="form-label">
                         <i class="fas fa-key me-2"></i>Nueva contraseña
                     </label>
-                    <input type="password" name="password" id="id_password">
-                    <small class="text-muted d-block mt-1">Deja en blanco si no deseas cambiarla</small>
+                    <input type="password" name="password" id="id_password" class="form-control" autocomplete="new-password">
+                    <small class="text-muted d-block mt-1">Deja en blanco si no deseas cambiarla (mínimo 8 caracteres)</small>
                 </div>
 
                 <div class="form-group">
                     <label for="id_confirmP" class="form-label">
                         <i class="fas fa-key me-2"></i>Confirmar contraseña
                     </label>
-                    <input type="password" name="confirmP" id="id_confirmP">
+                    <input type="password" name="confirmP" id="id_confirmP" class="form-control" autocomplete="new-password">
                 </div>
             </div>
 
@@ -91,6 +103,44 @@
 
 {% block footer %}
 <script src="{% static 'cminScripts/cminBtns.js' %}"></script>
+<script>
+    // Abrir selector de archivos
+    document.getElementById("search").addEventListener('click', function(){
+        document.getElementById("{{ form.foto.id_for_label }}").click();
+    });
+
+    // Preview de foto antes de subir
+    document.getElementById("{{ form.foto.id_for_label }}").addEventListener('change', function(e){
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('preview-foto').src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Validación de contraseñas en el frontend
+    document.querySelector('form').addEventListener('submit', function(e){
+        const password = document.getElementById('id_password').value;
+        const confirmP = document.getElementById('id_confirmP').value;
+
+        if (password || confirmP) {
+            if (password !== confirmP) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                return false;
+            }
+
+            if (password.length < 8) {
+                e.preventDefault();
+                alert('La contraseña debe tener al menos 8 caracteres');
+                return false;
+            }
+        }
+    });
+</script>
 <script>
     document.getElementById("search").addEventListener('click', function(){
         document.getElementById("id_foto").click();

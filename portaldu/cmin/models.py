@@ -278,6 +278,15 @@ class Users(AbstractUser, PermissionsMixin):
         """
         return self.rol == 'administrador'
 
+    def can_manage_bandeja(self):
+        """
+        Verifica si el usuario puede gestionar la bandeja de entrada
+
+        Returns:
+            bool: True si puede gestionar (administrador o delegador)
+        """
+        return self.rol == 'delegador' or self.rol == 'administrador'
+
     # === MÉTODOS PARA COMPATIBILIDAD CON DESUR ===
 
     def get_full_name(self):

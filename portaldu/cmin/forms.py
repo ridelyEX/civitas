@@ -253,9 +253,10 @@ class UsersConfig(forms.ModelForm):
     class Meta:
         model = Users
         fields = [
-            'first_name',   # Nombre(s) modificable
-            'last_name',    # Apellidos modificables
-            'email',        # Email (con validaciones especiales)
+            'username',     # Nombre de usuario
+            'first_name',   # Nombre(s) no modificable
+            'last_name',    # Apellidos no modificables
+            'email',        # Email no modificable
             'foto',         # Fotografía de perfil
         ]
 
@@ -263,22 +264,33 @@ class UsersConfig(forms.ModelForm):
         widgets = {
             'first_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nombre(s)'
+                'readonly': 'readonly',  # Campo solo lectura
+                'disabled': 'disabled',  # Deshabilitado para evitar edición
             }),
             'last_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Apellidos'
+                'readonly': 'readonly',  # Campo solo lectura
+                'disabled': 'disabled',  # Deshabilitado para evitar edición
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'correo@ejemplo.com'
+                'readonly': 'readonly',  # Campo solo lectura
+                'disabled': 'disabled',  # Deshabilitado para evitar edición
             }),
             'foto': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': 'image/*'  # Solo archivos de imagen
             }),
-
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Deshabilitar campos sensibles para edición
+        if self.instance and self.instance.pk:
+            self.fields['first_name'].disabled = True
+            self.fields['last_name'].disabled = True
+            self.fields['email'].disabled = True
+
 
     def clean_email(self):
         """

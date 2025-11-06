@@ -6,6 +6,8 @@
     {% bootstrap_css %}
     {% bootstrap_javascript %}
     <link rel="stylesheet" href="{% static 'cminStyles/tableStyle2.css' %}?v=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<title>Seguimiento</title>
 {% endblock %}
 
 
@@ -183,7 +185,9 @@
     </div>
 
     <div class="Ibottom">
-        <button class="back bbtn" id="bback" type="button" data-url="{% url 'menu' %}">regresar</button>
+        <button type="button" class="btn btn-outline-secondary" id="bback" data-url="{% url 'menu' %}">
+                <i class="fas fa-arrow-left me-2"></i>Regresar
+        </button>
     </div>
 </main>
 
