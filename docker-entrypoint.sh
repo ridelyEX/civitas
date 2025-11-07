@@ -114,8 +114,8 @@ if [ "$DB_INITIALIZED" = "no" ]; then
   echo "Aplicando migraciones restantes..."
   python manage.py migrate --noinput
 
-  # Solo crear superusuario si este es el contenedor web
-  if [ "$1" = "python" ] && [ "$2" = "manage.py" ] && [ "$3" = "runserver" ]; then
+  # Solo crear superusuario si este es el contenedor web (ejecutando gunicorn)
+  if [ "$1" = "gunicorn" ]; then
     echo "Creando superusuario (solo desde contenedor web)..."
     python manage.py shell -c "
 from django.contrib.auth import get_user_model

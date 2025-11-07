@@ -253,7 +253,7 @@ urlpatterns = [
 
 # Servir archivos MEDIA y STATIC solo en modo DEBUG (desarrollo)
 # En producción (DEBUG=False), nginx u otro servidor web debe manejar estos archivos
-if settings.DEBUG:
+#if settings.DEBUG:
     # Servir archivos MEDIA (subidos por usuarios)
     # Incluye:
     # - Fotos de ciudadanos
@@ -262,7 +262,7 @@ if settings.DEBUG:
     # - Fotos de problemas reportados
     # Ubicación física: /media/ (definido en settings.MEDIA_ROOT)
     # URL: /media/{ruta_archivo}
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+#    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
     # Servir archivos STATIC (recursos del sistema)
     # Incluye:
@@ -272,7 +272,7 @@ if settings.DEBUG:
     # - Archivos de administración de Django
     # Ubicación física: /staticfiles/ (definido en settings.STATIC_ROOT)
     # URL: /static/{ruta_archivo}
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+#    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 handler404 = custom_handler_404
 

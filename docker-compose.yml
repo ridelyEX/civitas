@@ -15,7 +15,7 @@ services:
       redis:
         condition: service_started
     environment:
-      - DEBUG=True
+      - DEBUG=False
       - SECRET_KEY=${SECRET_KEY}
       - DB_ENGINE=${DB_ENGINE}
       - DB_NAME=${DB_NAME}
@@ -70,6 +70,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    entrypoint: ""
     command: celery -A civitas worker -l info
     depends_on:
       - web
@@ -94,6 +95,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    entrypoint: ""
     command: celery -A civitas beat -l info
     depends_on:
       - web
@@ -115,8 +117,9 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:alpine
-    container_name: nginx
+    build:
+      context: ./custom_nginx
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     depends_on:
@@ -134,4 +137,3 @@ volumes:
   redis_data:
   media_volume:
   static_volume:
-  media_data:
