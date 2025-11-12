@@ -4,6 +4,9 @@
 <link rel="stylesheet" href="{% static 'styles/form-optimized.css' %}?v=1" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% load django_bootstrap5 %}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
 
 
 <title>Obras Públicas</title>
@@ -160,7 +163,10 @@
                   type="button"
                   class="addbtn"
                   id="ubi"
-                  onclick="openm()">
+                  data-bs-toggle="modal"
+                  data-bs-target="#buscarDireccionModal"
+          >
+                  <!--onclick="openm()"-->
                   <span class="addicon">
                     <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
                   </span>
@@ -227,9 +233,30 @@
 <div class="modal hidden" id="modal">
     {% include 'modals/modal_map.html' %}
 </div>
+
+{% include 'modals/buscar_direccion.html' %}
 {% endblock %}
 
 {% block footer %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar modal manualmente
+    const modalElement = document.getElementById('buscarDireccionModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+
+        // Evento para el botón que abre el modal
+        document.querySelectorAll('[data-bs-target="#buscarDireccionModal"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.show();
+            });
+        });
+    }
+});
+
+
+</script>
 
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 
@@ -501,6 +528,12 @@ function habilitarD(estado) {
 function habilitarV(estado) {
     document.getElementById("vulnerables").disabled = !estado;
 }
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('buscarDireccionModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            console.log('Modal inicializado correctamente');
+        }
+    });
 </script>
 
 <!-- Flatpickr -->

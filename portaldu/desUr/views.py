@@ -29,6 +29,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .WSDService import WsDomicilios
+from .WsConfig import WSDConfig
 from .services import LocalGISService
 
 # Imports para PDF (weasyprint)
@@ -317,6 +319,8 @@ def intData(request):
     uuid = request.COOKIES.get('uuid')
     if not uuid:
         return redirect('home')
+
+    colonias_wsd = []
 
     logger.debug("Procesando datos de ciudadano")
 
@@ -2338,6 +2342,166 @@ def reverse_geocode_view(request):
             'error': 'Error interno del servidor',
             'processing_time': processing_time
         })
+
+# Implementación de WsDomicilios
+def get_wsd_client():
+    config = WSDConfig()
+
+    return WsDomicilios(
+        base_url=config.BASE_URL,
+        windows_user=config.WINDOWS_USER,
+        windows_password=config.WINDOWS_PASSWORD
+    )
+
+def consulta_colonias(request):
+    """
+    Consulta de colonias desde el servicio web municipal
+    """
+    try:
+        client = get_wsd_client()
+
+        if not client.get_token(client.windows_user, client.windows_password):
+            messages.error(request, "No se pudo conectar al servicio de domicilios.")
+            return redirect('home')
+
+        colonias = client.get_colonias()
+        if not colonias:
+            messages.warning(request, "No se encontraron colonias")
+            colonias = []
+
+        context = {
+            'colonias': colonias,
+            'total': len(colonias),
+        }
+
+        return render(request, 'modals/direcciones.html', context)
+
+    except Exception as e:
+        logger.error(f"Error consultado colonias: {str(e)}")
+        messages.error(request, f"Error consultando colonias: {str(e)}")
+        return redirect('home')
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def get_calles(request):
+    """Ajax mejorado para búsqueda de colonias, calles y números"""
+    try:
+        data = json.loads(request.body)
+
+        client = get_wsd_client()
+        if not client.get_token(client.windows_user, client.windows_password):
+            return JsonResponse({
+                'success': False,
+                'error': 'No se pudo conectar al servicio'
+            })
+
+        # Búsqueda de colonias
+        if 'search_colonia' in data:
+            query = data['search_colonia']
+            colonias = client.search_colonia(query)
+            return JsonResponse({
+                'success': True,
+                'colonias': colonias if colonias else [],
+                'total': len(colonias) if colonias else 0
+            })
+
+        # Búsqueda de calles
+        if 'id_colonia' in data and 'search_calle' in data:
+            id_colonia = int(data['id_colonia'])
+            query = data['search_calle']
+            calles = client.search_calle(id_colonia, query)
+            return JsonResponse({
+                'success': True,
+                'calles': calles if calles else [],
+                'total': len(calles) if calles else 0
+            })
+
+        # Obtener números de calle
+        if 'id_colonia' in data and 'id_calle' in data:
+            id_colonia = int(data['id_colonia'])
+            id_calle = int(data['id_calle'])
+            numeros = client.get_ext_num(id_colonia, id_calle)
+            return JsonResponse({
+                'success': True,
+                'numeros': numeros if numeros else [],
+                'total': len(numeros) if numeros else 0
+            })
+
+        return JsonResponse({
+            'success': False,
+            'error': 'Parámetros incompletos'
+        })
+
+    except Exception as e:
+        logger.error(f"Error en get_calles: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
+
+@login_required
+@desur_access_required
+def domicilios(request):
+    """
+      Renderiza modal de búsqueda de direcciones con autocompletado WSD
+
+      Args:
+          request: HttpRequest con sesión activa
+
+      Returns:
+          HttpResponse con template del modal
+
+      Template:
+          modals/buscar_direccion.html
+      """
+    try:
+        client = get_wsd_client()
+
+        if not client.get_token(client.windows_user, client.windows_password):
+            messages.error(request, "No se pudo conectar al sercivio")
+            return redirect('home')
+
+        nombre_colonia = request.POST.get('colonia', '').strip()
+        nombre_calle = request.POST.get('calle', '').strip()
+        id_colonia = request.POST.get('id_colonia')
+        id_calle = request.POST.get('id_calle')
+
+        resultados = {}
+
+        #Buscar colonias
+        if nombre_colonia:
+            resultados['colonias'] = client.search_colonia(nombre_colonia)
+
+        # Buscar calles
+        if id_colonia and nombre_calle:
+            resultados['calles'] = client.search_calle(
+                int(id_colonia),
+                nombre_calle
+            )
+
+        # Obtener números de calle
+        if id_colonia and id_calle:
+            resultados['numeros'] = client.get_ext_num(
+                int(id_colonia),
+                int(id_calle)
+            )
+
+        context = {
+            'resultados': resultados,
+            'busqueda': {
+                'colonia': nombre_colonia,
+                'calle': nombre_calle
+            },
+        }
+
+        return render(request, 'modals/buscar_dirección.html', context)
+
+    except Exception as e:
+        logger.error(f"Error de búsqueda: {str(e)}")
+        messages.error(request, f"Error: {str(e)}")
+
+    return render(request, 'modals/buscar_direccion.html')
+
 
 # Presupuesto participativo
 

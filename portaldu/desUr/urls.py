@@ -288,6 +288,10 @@ urlpatterns = [
     # Router de APIs REST (comentado hasta implementar FilesViewSet)
     # path('', include(router.urls)),
 
+    path('colonias/', views.consulta_colonias, name='colonias'),
+    path('calles/', views.get_calles, name='calles'),
+    path('direccion/', views.domicilios, name='domicilios'),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 #handler404 = 'portaldu.desUr.views.custom_handler_404'
