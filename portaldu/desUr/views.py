@@ -2386,6 +2386,7 @@ def consulta_colonias(request):
 def get_calles(request):
     """Ajax mejorado para búsqueda de colonias, calles y números"""
     try:
+        #body = json.loads(request.body)
         data = json.loads(request.body)
 
         client = get_wsd_client()
@@ -2399,9 +2400,47 @@ def get_calles(request):
         if 'search_colonia' in data:
             query = data['search_colonia']
             colonias = client.search_colonia(query)
+
+            logger.debug(f"query: {query}")
+            logger.debug(f"Colonias: {len(colonias) if colonias else 0}")
+            logger.debug(f"Datos: {colonias}")
+
+            colonias_formateadas = [{
+                'id': c.get('id_colonia'),
+                'nombre': c.get('colonia', ''),
+                'codigo_postal': c.get('cp', '')
+            } for c in colonias]
+
             return JsonResponse({
                 'success': True,
-                'colonias': colonias if colonias else [],
+                'colonias': colonias_formateadas,
+                'total': len(colonias) if colonias else 0
+            })
+
+        #Búsqueda por CP
+        if 'search_cp' in data:
+            cp = data['search_cp'].strip()
+
+            if not cp.isdigit() or len(cp) != 5:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'El código postal debe ser un número de 5 dígitos'
+                })
+
+            colonias = client.search_colonia_by_cp(cp)
+
+            logger.debug(f"Búsqueda por cp {cp}")
+            logger.debug(f"Volonias encontradas: {len(colonias) if colonias else 0}")
+
+            colonias_formateadas = [{
+                'id': c.get('id_colonia'),
+                'nombre': c.get('colonia', ''),
+                'codigo_postal': c.get('cp', '')
+            } for c in colonias]
+
+            return JsonResponse({
+                'success': True,
+                'colonias': colonias_formateadas,
                 'total': len(colonias) if colonias else 0
             })
 
@@ -2410,9 +2449,15 @@ def get_calles(request):
             id_colonia = int(data['id_colonia'])
             query = data['search_calle']
             calles = client.search_calle(id_colonia, query)
+
+            calles_formateadas = [{
+                'id': c.get('id_calle'),
+                'nombre': c.get('calle', '')
+            } for c in calles]
+
             return JsonResponse({
                 'success': True,
-                'calles': calles if calles else [],
+                'calles': calles_formateadas,
                 'total': len(calles) if calles else 0
             })
 
@@ -2421,9 +2466,14 @@ def get_calles(request):
             id_colonia = int(data['id_colonia'])
             id_calle = int(data['id_calle'])
             numeros = client.get_ext_num(id_colonia, id_calle)
+
+            numeros_formateados = [{
+                'numero': n.get('numero', '')
+            } for n in numeros]
+
             return JsonResponse({
                 'success': True,
-                'numeros': numeros if numeros else [],
+                'numeros': numeros_formateados,
                 'total': len(numeros) if numeros else 0
             })
 

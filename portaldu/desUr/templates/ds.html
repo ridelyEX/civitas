@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block head %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+{% load django_bootstrap5 %}
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="{% static 'styles/form-cards.css' %}?v=1" />
@@ -45,17 +46,21 @@
         </div>
 
         <div class="form-group">
+          <div class="plus">
           <button
-            type="button"
-            class="action-btn location-btn"
-            id="ubi"
-            onclick="modals('open', 'modal')"
+                  type="button"
+                  class="addbtn"
+                  id="ubi"
+                  data-bs-toggle="modal"
+                  data-bs-target="#buscarDireccionModal"
           >
-            <span class="btn-icon">
-              <img src="{% static 'images/addw.png' %}" alt="add" />
-            </span>
-            <span class="btn-text">Añadir ubicación en mapa</span>
+                  <!--onclick="openm()"-->
+                  <span class="addicon">
+                    <img src="{% static 'images/addw.png' %}" alt="add" class="add" />
+                  </span>
+            <span class="txt">Añadir dirección</span>
           </button>
+        </div>
         </div>
 
         <div class="form-group">
@@ -266,9 +271,8 @@
   {% include 'modals/camaraS.html' %}
 </div>
 
-<div class="modal hidden" id="modal">
-  {% include 'modals/modal_map.html' %}
-</div>
+{% include 'modals/buscar_direccion.html' %}
+
 
 <div class="modal hidden" id="modalD">
   {% include 'modals/modal_docs.html' %}
@@ -277,11 +281,30 @@
 {% endblock %}
 
 {% block footer %}
-<!-- Scripts existentes... -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar modal manualmente
+    const modalElement = document.getElementById('buscarDireccionModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+
+        // Evento para el botón que abre el modal
+        document.querySelectorAll('[data-bs-target="#buscarDireccionModal"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.show();
+            });
+        });
+    }
+});
+
+
+</script>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/esri-leaflet@3.0.8/dist/esri-leaflet.js"></script>
 <script src="{% static 'sripts/LocalGisMap.js' %}"></script>
-<!-- Tu JavaScript existente... -->
+
 <script>
 
 function initializeMap() {

@@ -98,7 +98,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         clearTimeout(calleTimeout);
 
-        if (!idColonia || query.length < 2) {
+        if (!idColonia) {
+            console.log('No hay colonia seleccionada');
+            return;
+        }
+
+        if (query.length < 2) {
             listCalles.style.display = 'none';
             listCalles.innerHTML = '';
             resetNumero();
@@ -128,7 +133,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
 
-            // Cambio clave: ahora data.colonias está directamente en la respuesta
             if (data.success && data.colonias && data.colonias.length > 0) {
                 mostrarColonias(data.colonias);
             } else {
@@ -148,6 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function buscarCalles(idColonia, query) {
         showLoading();
 
+        console.log('Buscando calles - Colonia ID:', idColonia, 'Query:', query);
+
         fetch('{% url "calles" %}', {
             method: 'POST',
             headers: {
@@ -163,7 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
 
-            // Cambio clave: data.calles está directamente en la respuesta
+            console.log('Respuesta calles:', data);
+
             if (data.success && data.calles && data.calles.length > 0) {
                 mostrarCalles(data.calles);
             } else {
@@ -200,7 +207,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
 
-            // Cambio clave: data.numeros está directamente en la respuesta
             if (data.success && data.numeros && data.numeros.length > 0) {
                 selectNumero.innerHTML = '<option value="">Selecciona un número...</option>';
                 data.numeros.forEach(num => {
@@ -222,8 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-
-
     // Mostrar resultados de colonias
     function mostrarColonias(colonias) {
         listColonias.innerHTML = '';
@@ -236,17 +240,30 @@ document.addEventListener('DOMContentLoaded', function() {
             item.dataset.id = colonia.id;
             item.dataset.nombre = colonia.nombre;
 
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Asignar valores
                 inputColonia.value = this.dataset.nombre;
                 document.getElementById('idColonia').value = this.dataset.id;
+
+                // Ocultar lista
                 listColonias.style.display = 'none';
+                listColonias.innerHTML = '';
+
+                // Resetear calle y número
+                resetCalle();
 
                 // Habilitar búsqueda de calles
-                inputCalle.disabled = false;
-                inputCalle.placeholder = 'Escribe para buscar calle...';
-                inputCalle.focus();
+                setTimeout(() => {
+                    inputCalle.disabled = false;
+                    inputCalle.placeholder = 'Escribe para buscar calle...';
+                    inputCalle.value = '';
+                    inputCalle.focus();
 
-                resetCalle();
+                    console.log('Colonia seleccionada:', this.dataset.nombre, 'ID:', this.dataset.id);
+                }, 50);
             });
 
             listColonias.appendChild(item);
@@ -282,16 +299,19 @@ document.addEventListener('DOMContentLoaded', function() {
         listCalles.style.display = 'block';
     }
 
-
-
     // Funciones auxiliares
     function resetCalle() {
         inputCalle.value = '';
-        inputCalle.disabled = true;
-        inputCalle.placeholder = 'Selecciona primero una colonia...';
         document.getElementById('idCalle').value = '';
         listCalles.innerHTML = '';
         listCalles.style.display = 'none';
+
+        const idColonia = document.getElementById('idColonia').value;
+        if (!idColonia) {
+            inputCalle.disabled = true;
+            inputCalle.placeholder = 'Selecciona primero una colonia...';
+        }
+
         resetNumero();
     }
 
@@ -338,25 +358,74 @@ document.addEventListener('DOMContentLoaded', function() {
     btnAplicar.addEventListener('click', function() {
         const direccionCompleta = `${inputCalle.value} ${selectNumero.value}, ${inputColonia.value}`;
 
-        // Aquí debes ajustar según dónde quieres que aparezca la dirección
-        // Por ejemplo, si tienes un input con id 'dir' en tu formulario principal:
         const inputDireccion = document.querySelector('input[name="dir"]');
         if (inputDireccion) {
             inputDireccion.value = direccionCompleta;
+
+            // Mostrar confirmación
+            const confirmMsg = document.createElement('div');
+            confirmMsg.innerHTML = `✅ Dirección aplicada: ${direccionCompleta}`;
+            confirmMsg.style.cssText = `
+                position: fixed; top: 20px; right: 20px;
+                background: #4CAF50; color: white;
+                padding: 12px; border-radius: 6px;
+                z-index: 10000; box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(confirmMsg);
+            setTimeout(() => confirmMsg.remove(), 3000);
         }
 
-        // Cerrar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('buscarDireccionModal'));
-        modal.hide();
+        const modalElement = document.getElementById('buscarDireccionModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+
+        setTimeout(() => {
+            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }, 500);
+
+
+
+
     });
 
     // Limpiar al cerrar modal
-    document.getElementById('buscarDireccionModal').addEventListener('hidden.bs.modal', function() {
-        inputColonia.value = '';
-        resetCalle();
-        listColonias.innerHTML = '';
-        listColonias.style.display = 'none';
-    });
+    const modalEl = document.getElementById('buscarDireccionModal');
+
+// Solo ocultar listas al cerrar
+modalEl.addEventListener('hide.bs.modal', () => {
+    listColonias.style.display = 'none';
+    listCalles.style.display = 'none';
+});
+
+// Limpieza suave (no bloquea búsqueda futura)
+modalEl.addEventListener('hidden.bs.modal', () => {
+    // 🔹 Limpia los valores visibles, pero NO desactiva los campos
+    inputColonia.value = '';
+    document.getElementById('idColonia').value = '';
+
+    inputCalle.value = '';
+    document.getElementById('idCalle').value = '';
+
+    // 🔹 Mantiene habilitado el inputColonia e inputCalle
+    inputColonia.disabled = false;
+    inputCalle.disabled = true;
+    inputCalle.placeholder = 'Selecciona primero una colonia...';
+
+    // 🔹 Restablece número
+    selectNumero.innerHTML = '<option value="">Selecciona calle primero...</option>';
+    selectNumero.disabled = true;
+    btnAplicar.disabled = true;
+
+    // 🔹 Limpia las listas visuales
+    listColonias.innerHTML = '';
+    listCalles.innerHTML = '';
+});
+
 });
 </script>
 

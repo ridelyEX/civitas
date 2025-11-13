@@ -364,6 +364,26 @@ class WsDomicilios:
         logger.info(f" {len(resultados)} calles encontradas")
         return resultados
 
+    def search_colonia_by_cp(self, cp):
+        """Busca colonias por código postal"""
+        endpoint = f"{self.base_url}/api/colonias/buscar-cp"
+
+        try:
+            response = self.session.get(
+                endpoint,
+                params={'cp': cp},
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                return response.json()
+
+            return []
+
+        except Exception as e:
+            logger.error(f"Error buscando por CP: {str(e)}")
+            return []
+
     def get_complete_address(self, id_colonias: int, id_calle: int) -> Dict[str, Any]:
         """Obtiene la dirección completa a partir de los IDs de colonia y calle."""
         colonias = self.get_colonias()

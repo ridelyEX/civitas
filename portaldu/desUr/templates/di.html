@@ -1,13 +1,8 @@
-<!-- AÑADIR REQUIRED -->
-
 {% extends 'base.html' %} {% load static %} {% block head %}
 <link rel="stylesheet" href="{% static 'styles/form-optimized.css' %}?v=1" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 {% load django_bootstrap5 %}
-{% bootstrap_css %}
-{% bootstrap_javascript %}
-
 
 <title>Obras Públicas</title>
 {% endblock %} {% block body %} {% include 'nav.html' %}
@@ -230,9 +225,7 @@
     </div>
   </div>
 </form>
-<div class="modal hidden" id="modal">
-    {% include 'modals/modal_map.html' %}
-</div>
+
 
 {% include 'modals/buscar_direccion.html' %}
 {% endblock %}
