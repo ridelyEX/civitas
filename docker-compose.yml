@@ -1,6 +1,11 @@
 networks:
   civitas-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: br_civitas
 
 services:
   web:
@@ -31,6 +36,13 @@ services:
       - static_volume:/app/staticfiles
     networks:
       - civitas-network
+    dns:
+      - 10.218.33.153
+      - 8.8.8.8
+    dns_search:
+      - mpiochih.gob.mx
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   db:
@@ -64,6 +76,13 @@ services:
       - redis_data:/data
     networks:
       - civitas-network
+    dns:
+      - 10.218.33.153
+      - 8.8.8.8
+    dns_search:
+      - mpiochih.gob.mx
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   celery:
@@ -89,6 +108,13 @@ services:
       - .:/app
     networks:
       - civitas-network
+    dns:
+      - 10.218.33.153
+      - 8.8.8.8
+    dns_search:
+      - mpiochih.gob.mx
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   celery-beat:
@@ -114,6 +140,13 @@ services:
       - .:/app
     networks:
       - civitas-network
+    dns:
+      - 10.218.33.153
+      - 8.8.8.8
+    dns_search:
+      - mpiochih.gob.mx
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   nginx:
@@ -130,6 +163,13 @@ services:
       - media_volume:/app/media
     networks:
       - civitas-network
+    dns:
+      - 10.218.33.153
+      - 8.8.8.8
+    dns_search:
+      - mpiochih.gob.mx
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
 volumes:

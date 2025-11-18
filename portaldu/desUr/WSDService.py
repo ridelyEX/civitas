@@ -33,7 +33,7 @@ class WsDomicilios:
     def __init__(
             self,
             base_url: str = "http://10.218.2.253/WSDomicilios",
-            mock_mode: bool = False,  # 🆕
+            mock_mode: bool = False,  # 
             windows_user: str = None,
             windows_password: str = None
     ):
@@ -43,7 +43,7 @@ class WsDomicilios:
         self.session = requests.Session()
         self.windows_user = windows_user
         self.windows_password = windows_password
-        self.mock_mode = mock_mode  # 🆕
+        self.mock_mode = mock_mode  #
 
         # Configurar autenticación de Windows si hay credenciales
         if windows_user and windows_password:
