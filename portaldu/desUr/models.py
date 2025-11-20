@@ -2,6 +2,7 @@
 Modelos de datos para el sistema DesUr (Desarrollo Urbano)
 Sistema de gestión de trámites ciudadanos y presupuesto participativo
 """
+from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import AutoField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -56,7 +57,17 @@ class data(models.Model):
 
     # === DATOS DE CONTACTO ===
     # Número telefónico con validación para región México
-    tel = PhoneNumberField(region="MX")
+    tel = PhoneNumberField(
+        region="MX",
+        max_length=15,
+        validators=[
+            RegexValidator(
+                regex=r'^\d{10,15}$',
+                message='El teléfono debe contener entre 10 y 15 dígitos',
+            )
+        ],
+        help_text='Teléfono de contacto (solo números)'
+    )
 
     # === DATOS OFICIALES ===
     # CURP (Clave Única de Registro de Población) - 18 caracteres

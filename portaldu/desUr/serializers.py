@@ -17,6 +17,9 @@ Características principales:
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 from .models import Files, data, Uuid, soli, SubirDocs
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FilesSerializer(serializers.ModelSerializer):
     """
@@ -68,16 +71,16 @@ class FilesSerializer(serializers.ModelSerializer):
             except Uuid.DoesNotExist:
                 raise serializers.ValidationError('UUID no válido')
 
-            # Validar referencia a solicitud si está presente
-            soli_fk = attrs.get('soli_FK')
-            if soli_fk and not isinstance(soli_fk, soli):
-                try:
-                    # Buscar solicitud por ID
-                    attrs['soli_FK'] = soli.objects.get(soli_ID=soli_fk)
-                except soli.DoesNotExist:
-                    raise serializers.ValidationError("Solicitud no válida")
+        # Validar referencia a solicitud si está presente
+        soli_fk = attrs.get('soli_FK')
+        if soli_fk and not isinstance(soli_fk, soli):
+            try:
+                # Buscar solicitud por ID
+                attrs['soli_FK'] = soli.objects.get(soli_ID=soli_fk)
+            except soli.DoesNotExist:
+                raise serializers.ValidationError("Solicitud no válida")
 
-            return attrs
+        return attrs
 
 class UuidSerializer(serializers.ModelSerializer):
     """
@@ -219,34 +222,27 @@ class CiudadanoSerializer(serializers.ModelSerializer):
         """
         return f"{obj.nombre} {obj.pApe} {obj.mApe}".strip()
 
-    def validate_curp(self, value):
+    def validate_tel(self, value):
         """
-        Validación adicional para el campo CURP.
-
-        Verifica que la CURP no esté duplicada en el sistema,
-        permitiendo actualización del mismo registro pero evitando
-        duplicados entre diferentes ciudadanos.
-
-        Args:
-            value (str): Valor de CURP a validar
-
-        Returns:
-            str: CURP en mayúsculas y validada
-
-        Raises:
-            ValidationError: Si la CURP ya existe para otro ciudadano diferente
-
-        Business Rules:
-            - CURP debe ser única en el sistema
-            - Se normaliza automáticamente a mayúsculas
-            - Se permite actualizar el mismo registro sin error
+        Validación del campo teléfono.
+        Acepta formatos: 1234567890 o 123-456-7890
         """
-        if data.objects.filter(curp=value).exists():
-            # Permitir actualización del mismo registro
-            if self.instance and self.instance.curp == value:
-                return value
-            raise serializers.ValidationError("Ya existe un ciudadano con esta CURP")
-        return value.upper()  # Convertir a mayúsculas para consistencia
+
+        logger.info(f"telefono '{value}' (tipo: {type(value)}")
+        # Limpiar espacios y guiones
+        tel_limpio = value.strip().replace('-', '').replace(' ', '')
+
+        logger.info(f"telefono limpio '{tel_limpio}'")
+
+        # Validar que solo contenga dígitos
+        if not tel_limpio.isdigit():
+            raise serializers.ValidationError('El teléfono solo debe contener números')
+
+        # Validar longitud (10-15 dígitos)
+        if len(tel_limpio) < 10 or len(tel_limpio) > 15:
+            raise serializers.ValidationError('El teléfono debe tener entre 10 y 15 dígitos')
+
+        return tel_limpio
 
     def validate(self, attrs):
         """

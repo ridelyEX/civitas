@@ -61,7 +61,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-+1cgdo&)u_qlg()^r5ukuyo7s*
 DEBUG = False
 
 # Configuración segura de hosts permitidos
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if not DEBUG else ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,10.218.33.153,*').split(',') if not DEBUG else ['*']
 
 # Application definition
 
@@ -164,6 +164,7 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -180,6 +181,11 @@ REST_FRAMEWORK = {
         'user': '1000/hour'
     }
 }
+
+EXEMPT_URLS = [
+    r'^ageo/api_sol/$',
+    r'^ageo/api_sol/auth/token/$',
+]
 
 # Configuración CORS
 CORS_ALLOWED_ORIGINS = [

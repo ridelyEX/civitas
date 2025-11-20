@@ -36,6 +36,7 @@ Todas las respuestas siguen el formato:
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import api_views
+from .api_views import get_token
 
 # Router para ViewSets - Proporciona CRUD completo automático
 # Registra CiudadanosViewSet para operaciones estándar de REST
@@ -135,7 +136,7 @@ urlpatterns = [
     # ============================================================================
 
     # Endpoints de autenticación (comentados hasta implementar)
-    # TODO: Implementar sistema de autenticación por token
+    path('auth/token/', get_token, name='api-token'),
     # TODO: Considerar usar JWT para mayor seguridad
 
     # Login via API

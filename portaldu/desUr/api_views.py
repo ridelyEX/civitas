@@ -5,12 +5,15 @@ Utiliza Django REST Framework para serialización y validación
 """
 import uuid
 
+from django.contrib.auth import authenticate
 from rest_framework import viewsets, status, permissions
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.authtoken.models import Token
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.db import transaction
@@ -32,6 +35,34 @@ from .views import desur_access_required
 
 # Logger para registro de eventos de la API
 logger = logging.getLogger(__name__)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_token(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    if not username or not password:
+        return Response({
+            'error': 'Usuario y contraseña requeridos',
+
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    user = authenticate(username=username, password=password)
+
+    if user is not None:
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'username': user.username,
+        }, status=status.HTTP_200_OK)
+    else:
+        return Response({
+            'error': 'Credenciales inválidas',
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class CiudadanoPagination(PageNumberPagination):
     """
@@ -72,7 +103,8 @@ class CiudadanosViewSet(viewsets.ModelViewSet):
     """
     queryset = data.objects.all().order_by('-data_ID')
     serializer_class = CiudadanoSerializer
-    permission_classes = [AllowAny]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
     parser_classes = (JSONParser, MultiPartParser, FormParser)
 
     def get_queryset(self):
@@ -101,7 +133,7 @@ class CiudadanosViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-data_ID')
 
 
-    @action(detail=False, methods=['post'], url_path='recibir_datos')
+    @action(detail=False, methods=['post', 'GET'], url_path='recibir_datos')
     def recibir_datos(self, request):
         """
         Endpoint multipropósito para recibir datos desde aplicaciones externas
@@ -367,33 +399,55 @@ class CiudadanosViewSet(viewsets.ModelViewSet):
             data_copy = request.data.copy()
 
             # Validar existencia del ciudadano
-            data_id = data_copy.get('data_ID')
-            if data_id:
-                try:
-                    ciudadano = data.objects.get(data_ID=data_id)
-                    data_copy['data_ID'] = ciudadano.data_ID
-                except data.DoesNotExist:
-                    return Response({
-                        'status': 'error',
-                        'message': f'Ciudadano no encontrado con ID: {data_id}'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+            data_id_list = data_copy.get('data_ID_id', [])
+            if isinstance(data_id_list, list) and len(data_id_list) > 0:
+                data_id = data_id_list[0].get('data_ID')
+            else:
+                data_id = data_copy.get('data_ID')
 
-            serializer = SolicitudSerializer(data=data_copy)
+            if not data_id:
+                return Response({
+                    'status': 'error',
+                    'message': 'data_ID es requerido'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validar existencia del ciudadano
+            try:
+                ciudadano = data.objects.get(data_ID=data_id)
+            except data.DoesNotExist:
+                return Response({
+                    'status': 'error',
+                    'message': f'Ciudadano no encontrado con ID: {data_id}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Construir datos limpios para el serializer
+            solicitud_data = {
+                'data_ID': ciudadano.data_ID,  # Solo el ID numérico
+                'dirr': data_copy.get('dirr'),
+                'descc': data_copy.get('descc'),
+                'info': data_copy.get('info'),
+                'puo': data_copy.get('puo'),
+                'folio': data_copy.get('folio'),
+            }
+
+            serializer = SolicitudSerializer(data=solicitud_data)
 
             if serializer.is_valid():
                 solicitud = serializer.save()
                 return Response({
                     'status': 'success',
                     'message': 'Solicitud creada',
-                    'data': {'soli_ID': solicitud.soli_ID}
+                    'data': {
+                        'soli_ID': solicitud.soli_ID,
+                        'folio': solicitud.folio
+                    }
                 }, status=status.HTTP_201_CREATED)
-
             else:
                 logger.error(f"Errores validando la solicitud: {serializer.errors}")
                 return Response({
                     'status': 'error',
                     'message': 'Datos de la solicitud inválidos',
-                    'errors': serializer.errors,
+                    'errors': serializer.errors
                 }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
