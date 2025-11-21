@@ -60,12 +60,6 @@ class data(models.Model):
     tel = PhoneNumberField(
         region="MX",
         max_length=15,
-        validators=[
-            RegexValidator(
-                regex=r'^\d{10,15}$',
-                message='El teléfono debe contener entre 10 y 15 dígitos',
-            )
-        ],
         help_text='Teléfono de contacto (solo números)'
     )
 

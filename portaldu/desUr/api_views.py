@@ -315,15 +315,15 @@ class CiudadanosViewSet(viewsets.ModelViewSet):
             fuuid_value = data_copy.get('fuuid')
             if fuuid_value:
                 try:
-                    if isinstance(fuuid_value, str):
-                        uuid_obj = Uuid.objects.get(uuid=fuuid_value)
-                    else:
-                        uuid_obj = Uuid.objects.get(prime=fuuid_value)
+                    # Buscar por el string UUID
+                    uuid_obj = Uuid.objects.get(uuid=fuuid_value)
+                    # Pasar el ID primario al serializer
                     data_copy['fuuid'] = uuid_obj.prime
+                    logger.info("UUID encontrado: %s (ID: %s)", uuid_obj.uuid, uuid_obj.prime)
                 except Uuid.DoesNotExist:
                     return Response({
                         'status': 'error',
-                        'message': f"UUID no encontrado: {fuuid_value}"
+                        'message': f'UUID {fuuid_value} no existe'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
             serializer = CiudadanoSerializer(data=data_copy)

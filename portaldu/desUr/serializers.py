@@ -17,6 +17,8 @@ Características principales:
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 from .models import Files, data, Uuid, soli, SubirDocs
+import phonenumbers
+from phonenumbers import NumberParseException
 import logging
 
 logger = logging.getLogger(__name__)
@@ -138,9 +140,13 @@ class CiudadanoSerializer(serializers.ModelSerializer):
         - edad: Campo calculado - edad actual en años
         - nombre_completo: Campo calculado - nombre y apellidos concatenados
     """
-
+    tel = serializers.CharField(max_length=15, required=False)
     # Campo UUID de solo lectura (se asigna automáticamente en el backend)
-    fuuid = UuidSerializer(read_only=True)
+    fuuid = serializers.PrimaryKeyRelatedField(
+        queryset=Uuid.objects.all(),
+        write_only=True,
+        required=True
+    )
 
     # Campos calculados automáticamente mediante métodos get_*
     edad = serializers.SerializerMethodField()              # Edad calculada desde fecha nacimiento
@@ -177,6 +183,16 @@ class CiudadanoSerializer(serializers.ModelSerializer):
             'edad',            # Campo calculado - edad actual
             'nombre_completo'  # Campo calculado - nombre completo
         ]
+
+    def create(self, validated_data):
+        uuid_obj = validated_data.pop('fuuid')
+        logger.info("UUID recibido en create : %s", uuid_obj)
+
+        ciudadano = data.objects.create(fuuid=uuid_obj, **validated_data)
+        logger.info("Ciudadano creado con UUID=%s y ID=%s", uuid_obj.uuid, ciudadano.data_ID)
+
+        return ciudadano
+
 
     def get_edad(self, obj):
         """
@@ -224,25 +240,52 @@ class CiudadanoSerializer(serializers.ModelSerializer):
 
     def validate_tel(self, value):
         """
-        Validación del campo teléfono.
-        Acepta formatos: 1234567890 o 123-456-7890
+        Validación del campo teléfono para México.
+        Acepta números de 10 dígitos con o sin código de país.
         """
+        # Obtener el valor raw del campo
+        raw = self.initial_data.get('tel', '')
+        logger.info("Tel raw recibido: %s (tipo: %s)", raw, type(raw))
 
-        logger.info(f"telefono '{value}' (tipo: {type(value)}")
-        # Limpiar espacios y guiones
-        tel_limpio = value.strip().replace('-', '').replace(' ', '')
+        if not raw:
+            raise serializers.ValidationError("Teléfono requerido")
 
-        logger.info(f"telefono limpio '{tel_limpio}'")
+        # Limpiar el número (remover espacios, guiones, paréntesis)
+        cleaned = ''.join(filter(str.isdigit, str(raw)))
+        logger.info("Tel limpio: %s", cleaned)
 
-        # Validar que solo contenga dígitos
-        if not tel_limpio.isdigit():
-            raise serializers.ValidationError('El teléfono solo debe contener números')
+        # Validar longitud básica (10 dígitos sin código país, o 12 con código +52)
+        if len(cleaned) not in [10, 12]:
+            raise serializers.ValidationError(
+                f"El teléfono debe tener 10 dígitos. Recibido: {len(cleaned)} dígitos ({cleaned})"
+            )
 
-        # Validar longitud (10-15 dígitos)
-        if len(tel_limpio) < 10 or len(tel_limpio) > 15:
-            raise serializers.ValidationError('El teléfono debe tener entre 10 y 15 dígitos')
+        try:
+            # Parsear el número con código de país de México
+            if len(cleaned) == 10:
+                parsed = phonenumbers.parse(f"+52{cleaned}", None)
+            else:
+                parsed = phonenumbers.parse(f"+{cleaned}", None)
 
-        return tel_limpio
+            logger.info("Tel parseado: %s", parsed)
+
+            # Validar que sea un número válido para México
+            if not phonenumbers.is_valid_number(parsed):
+                raise serializers.ValidationError(
+                    f"El número {cleaned} no es válido para México"
+                )
+
+            # Normalizar a formato E164 (+52XXXXXXXXXX)
+            normalized = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            logger.info("Tel normalizado: %s", normalized)
+
+            return normalized
+
+        except NumberParseException as e:
+            logger.error("Error parseando teléfono '%s': %s", raw, str(e))
+            raise serializers.ValidationError(
+                f"Formato de teléfono inválido: {str(e)}"
+            )
 
     def validate(self, attrs):
         """
@@ -272,14 +315,6 @@ class CiudadanoSerializer(serializers.ModelSerializer):
             attrs['pApe'] = attrs['pApe'].upper()
         if 'mApe' in attrs:
             attrs['mApe'] = attrs['mApe'].upper()
-
-        # Validar y convertir UUID si viene como ID
-        fuuid = attrs.get('fuuid')
-        if fuuid and not isinstance(fuuid, Uuid):
-            try:
-                attrs['fuuid'] = Uuid.objects.get(prime=fuuid)
-            except Uuid.DoesNotExist:
-                raise serializers.ValidationError({'fuuid': 'UUID no válido'})
 
         return attrs
 
