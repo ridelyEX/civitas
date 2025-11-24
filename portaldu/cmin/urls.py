@@ -13,10 +13,18 @@ Funcionalidades principales:
 """
 
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
 from . import views as view
+from .api_views import SolicitudesViewSet
+
+router = DefaultRouter()
+router.register(r'solicitudes', SolicitudesViewSet, basename='solicitudes')
 
 urlpatterns = [
+    # Rutas de API
+    path('api/', include(router.urls)),
+
     # === RUTAS PRINCIPALES DEL SISTEMA ===
 
     # Página principal del sistema (dashboard)

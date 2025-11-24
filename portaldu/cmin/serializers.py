@@ -14,7 +14,43 @@ Características principales:
 """
 
 from rest_framework import serializers
-from .models import EncuestasOffline, EncuestasOnline, EncuestaModel
+from .models import EncuestasOffline, EncuestasOnline, EncuestaModel, SolicitudesEnviadas
+from portaldu.desUr.models import Files
+
+class SolicitudSerializer(serializers.ModelSerializer):
+    """
+    Serializer para el modelo SolicitudesEnviadas.
+    """
+
+    # Datos del documento
+    doc_nom = serializers.CharField(source='doc_FK.nomDoc', read_only=True)
+    doc_uuid = serializers.UUIDField(source='doc_FK.fuuid.uuid', read_only=True)
+    archivo_generado = serializers.SerializerMethodField()
+
+    # Datos de la solicitud original
+    folio = serializers.CharField(source='solicitud_FK.folio', read_only=True)
+
+    class Meta:
+        model = SolicitudesEnviadas
+        fields = [
+            'solicitud_ID',
+            'estado',
+            'nomSolicitud',
+            'folio',
+            'doc_FK',
+            'solicitud_FK',
+            'fechaEnvio',
+            'categoria',
+            'prioridad',
+            'doc_nom',
+            'doc_uuid',
+            'archivo_generado',
+        ]
+
+    def get_archivo_generado(self, obj):
+        if obj.doc_FK and obj.doc_FK.nomDoc:
+            return f"/media/documents/{obj.doc_FK.nomDoc}"
+        return None
 
 
 class OfflineSerializer(serializers.ModelSerializer):

@@ -24,8 +24,8 @@ import uuid
 import logging
 
 # Importar modelos y serializers específicos para encuestas móviles
-from portaldu.cmin.models import EncuestasOffline, EncuestasOnline
-from portaldu.cmin.serializers import OfflineSerializer, OnlineSerializer
+from portaldu.cmin.models import EncuestasOffline, EncuestasOnline, SolicitudesEnviadas
+from portaldu.cmin.serializers import OfflineSerializer, OnlineSerializer, SolicitudSerializer
 
 # Logger para seguimiento de eventos y errores de la API
 logger = logging.getLogger(__name__)
@@ -292,6 +292,95 @@ class AgeoMobileViewSet(viewsets.ViewSet):
             ip = request.META.get('REMOTE_ADDR')
 
         return ip
+
+class SolicitudesViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+       ViewSet para consultar solicitudes enviadas con su estado y datos relacionados.
+
+       Proporciona endpoints para consultar el estado de solicitudes y sus documentos
+       asociados de DesUr, útil para seguimiento y monitoreo de solicitudes.
+
+       Funcionalidades:
+       - Listado de solicitudes con filtros por estado
+       - Consulta de solicitud específica por ID
+       - Estadísticas de solicitudes por estado
+       - Datos relacionados de documentos de DesUr
+       """
+
+    queryset = SolicitudesEnviadas.objects.select_related(
+        'doc_FK',
+        'doc_FK__fuuid',
+        'solicitud_FK'
+    ).all()
+    serializer_class = SolicitudSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        """
+        Permite filtrar solicitudes por estado usando query params.
+
+        Query Parameters:
+            - estado: 'pendiente', 'en_proceso' o 'completado'
+            - fecha_desde: Filtrar desde fecha (YYYY-MM-DD)
+            - fecha_hasta: Filtrar hasta fecha (YYYY-MM-DD)
+        """
+
+        queryset = super().get_queryset()
+
+        estado = self.request.query_params.get('estado')
+        if estado:
+            queryset = queryset.filter(estado=estado)
+
+        fecha_desde = self.request.query_params.get('fecha_desde')
+        fecha_hasta = self.request.query_params.get('fecha_hasta')
+
+
+        if fecha_desde:
+            queryset = queryset.filter(fechaEnvio__date__gte=fecha_desde)
+        if fecha_hasta:
+            queryset = queryset.filter(fechaEnvio__date__lte=fecha_hasta)
+
+        return queryset.order_by('-fechaEnvio')
+
+    @action(detail=False, methods=['get'])
+    def estado(self, request, estado=None):
+        """
+        Endpoint para listar solicitudes por estado específico.
+
+        Args:
+            Estado de la solicitud ('pendiente', 'en_proceso', 'completado')
+        """
+
+        try:
+            estado = request.query_params.get('estado')
+
+            if not estado or estado not in ['pendiente', 'en_proceso', 'completado']:
+                return Response({
+                    'status': 'error',
+                    'message': 'Estado inválido. Usar: pendiente, en_proceso, completado.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            solicitudes = self.get_queryset().filter(estado=estado)
+            serializer = self.get_serializer(solicitudes, many=True)
+
+            return Response({
+                'status': 'success',
+                'estado': estado,
+                'total': solicitudes.count(),
+                'data': serializer.data,
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error al filtrar por estado: {str(e)}")
+            return Response({
+                'status': 'error',
+                'message': 'Error al filtrar solicitudes por estado',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
 
 
 class EncuestasViewSet(viewsets.ViewSet):
