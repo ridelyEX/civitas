@@ -1119,12 +1119,12 @@ def pp_document(request):
         - datos: Información del promovente y proyecto
         - propuesta: Diccionario con campos específicos de la categoría
         - notas: Notas adicionales específicas
-        - folio: Folio generado con formato GOP-CPP
+        - folio: Folio generado con formato DOP-CPP
         - instalaciones_dict: Catálogo de tipos de instalaciones
         - estados_dict: Catálogo de estados del proyecto
 
     Folio Format:
-        GOP-CPP-{id:05d}-{uuid[:4]}/{año}
+        DOP-CPP-{id:05d}-{uuid[:4]}/{año}
 
     Side Effects:
         - Genera PDF y lo guarda en PpFiles
@@ -1464,11 +1464,11 @@ def gen_folio(uid, puo):
     Returns:
         tuple: (puo_txt, folio)
             - puo_txt: Descripción legible del tipo de proceso
-            - folio: Folio generado con formato GOP-{PUO}-{id:05d}-{uuid[:4]}/{año}
+            - folio: Folio generado con formato DOP-{PUO}-{id:05d}-{uuid[:4]}/{año}
 
     Folio Format:
-        GOP-{PUO}-{id:05d}-{uuid_prefix}/{year}
-        - GOP: Gobierno de Obra Pública
+        DOP-{PUO}-{id:05d}-{uuid_prefix}/{year}
+        - DOP: Gobierno de Obra Pública
         - PUO: Código del proceso (3 letras)
         - id: ID numérico con padding de 5 dígitos
         - uuid_prefix: Primeros 4 caracteres del UUID
@@ -1512,43 +1512,43 @@ def gen_folio(uid, puo):
 
         match puo:
             case 'OFI':
-                folio = f'GOP-OFI-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-OFI-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Oficio'
             case 'CRC':
-                folio = f'GOP-CRC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-CRC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'CRC'
             case 'MEC':
-                folio = f'GOP-MEC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-MEC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Marca el cambio'
             case 'DLO':
-                folio = f'GOP-DLO-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-DLO-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Diputado Local'
             case 'DFE':
-                folio = f'GOP-DFE-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-DFE-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Diputado Federal'
             case 'REG':
-                folio = f'GOP-REG-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-REG-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Regidores'
             case 'DEA':
-                folio = f'GOP-DEA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-DEA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Despacho del Alcalde'
             case 'EVA':
-                folio = f'GOP-EVA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-EVA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Evento con el Alcalde'
             case 'PED':
-                folio = f'GOP-PED-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-PED-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Presencial en Dirección'
             case 'VIN':
-                folio = f'GOP-VIN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-VIN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Vinculación'
             case 'PPA':
-                folio = f'GOP-PPA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-PPA-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Presupuesto participativo'
             case 'CPC':
-                folio = f'GOP-CPC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-CPC-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'Coordinación de Participación Ciudadana'
             case _:
-                folio = f'GOP-VIN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
+                folio = f'DOP-VIN-{uuid_id:05d}-{uid_str[:4]}/{year_slice}'
                 puo_txt = 'General'
 
         logger.info(f"Folio generado correctamente: {folio}")
@@ -1566,10 +1566,10 @@ def gen_pp_folio(fuuid):
         fuuid: Objeto Uuid de la sesión
 
     Returns:
-        str: Folio con formato GOP-CPP-{id:05d}-{uuid[:4]}/{año}
+        str: Folio con formato DOP-CPP-{id:05d}-{uuid[:4]}/{año}
 
     Folio Format:
-        GOP-CPP-{id:05d}-{uuid_prefix}/{year}
+        DOP-CPP-{id:05d}-{uuid_prefix}/{year}
         - CPP: Código fijo para Presupuesto Participativo
         - id: ID del registro PpGeneral con padding de 5 dígitos
         - uuid_prefix: Primeros 4 caracteres del UUID
@@ -1587,7 +1587,7 @@ def gen_pp_folio(fuuid):
         year_str = str(fecha.year)
         year_slice = year_str[2:4]
 
-        folio = f'GOP-CPP-{id_pp:05d}-{uid_str[:4]}/{year_slice}'
+        folio = f'DOP-CPP-{id_pp:05d}-{uid_str[:4]}/{year_slice}'
 
         logger.debug("Folio de PP generado correctamente")
         return folio

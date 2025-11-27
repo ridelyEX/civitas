@@ -23,7 +23,7 @@
             </button>
         </div>
     </div>
-    <div class="bottom">
+    <!--div class="bottom">
         <div class="lBtn">
             <button type="button" class="back bbtn" id="back" data-url="{% url 'soli' %}">Regresar</button>
         </div>
@@ -38,6 +38,39 @@
                 {% include 'adv.html' %}
             </div>
         </div>
+    </div-->
+    <div class="form-actions">
+      <div class="actions-row">
+        <button
+          type="button"
+          class="nav-btn back-btn"
+          id="back"
+          data-url="{% url 'soli' %}"
+        >
+          ← Regresar
+        </button>
+
+        <button
+          type="submit"
+          class="nav-btn next-btn"
+          id="next"
+          name="action"
+          value="guardar"
+        >
+          Guardar
+        </button>
+      </div>
+
+      <div class="cancel-action">
+        <button
+          type="button"
+          class="nav-btn cancel-btn"
+          id="cancel"
+          onclick="document.querySelector('.popup').classList.add('active');"
+        >
+          Cancelar
+        </button>
+      </div>
     </div>
 </form>
     

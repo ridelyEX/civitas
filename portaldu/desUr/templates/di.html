@@ -216,13 +216,27 @@
         </div>
   </div>
 
-  <div class="Ibottom">
-    <div class="lBtn">
-      <button type="button" class="back bbtn" id="back" data-url="{% url 'clear' %}">Regresar</button>
-    </div>
-    <div class="rBtn">
-      <button type="submit" class="next nbtn" id="next">Siguiente</button>
-    </div>
+  <div class="form-actions">
+      <div class="actions-row">
+        <button
+          type="button"
+          class="nav-btn back-btn"
+          id="back"
+          data-url="{% url 'clear' %}"
+        >
+          ← Regresar
+        </button>
+
+        <button
+          type="submit"
+          class="nav-btn next-btn"
+          id="next"
+          name="action"
+          value="save"
+        >
+          Siguiente →
+        </button>
+      </div>
   </div>
 </form>
 
