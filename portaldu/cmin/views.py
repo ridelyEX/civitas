@@ -343,7 +343,7 @@ def tables(request):
     prioridad_choices = SolicitudesEnviadas.PRIORIDAD_CHOICES
 
     # Usuarios del staff activos para asignación de responsables
-    users = Users.objects.filter(is_staff=True, is_active=True).order_by('username')
+    users = Users.objects.filter(is_active=True).order_by('username')
 
     # Todas las solicitudes del sistema
     solicitudes = soli.objects.all()

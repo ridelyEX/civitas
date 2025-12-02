@@ -199,8 +199,7 @@
 
 
 {% block footer %}
-<script src="{% static 'cminScripts/cminModal.js' %}"></script>
-<script src="{% static 'cminScripts/cminBtns.js' %}"></script>
+
 <script>
     const searchBtn = document.getElementById('up-btn');
     const fileInput = document.getElementById('documento');
@@ -226,29 +225,29 @@
 
     //autosubmit al cambiar los filtros
     document.addEventListener('DOMContentLoaded', function() {
-        const selectFilters = document.querySelectroAll('select[name="estado=], select[name="prioridad"]');
+        const selectFilters = document.querySelectorAll('select[name="estado"], select[name="prioridad"]');
         const dateInputs = document.querySelectorAll('input[type="date"]');
 
         selectFilters.forEach(select => {
-            selecto.addEventListener('change', function() {
+            select.addEventListener('change', function() {
                 document.getElementById('searchForm').submit();
             });
         });
 
         dateInputs.forEach (input => {
             input.addEventListener('change', function() {
-                document.getElementById(searchForm').submit();
+                document.getElementById('searchForm').submit();
             });
         });
 
-        const searchInput = documetn.querySelector('input[name="search"]');
+        const searchInput = document.querySelector('input[name="search"]');
         if (searchInput) {
             let timeout;
             searchInput.addEventListener('input', function() {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => {
-                    if (this.value.lenght >=3 || this.value.length === 0) {
-                        socument.getElementById('searchForm').submit();
+                    if (this.value.length >=3 || this.value.length === 0) {
+                        document.getElementById('searchForm').submit();
                     }
                 }, 500);
             });
@@ -267,5 +266,7 @@
         // Aquí puedes implementar un modal o redirection para mostrar el historial
     }
 </script>
+<script src="{% static 'cminScripts/cminModal.js' %}"></script>
+<script src="{% static 'cminScripts/cminBtns.js' %}"></script>
 
 {% endblock %}
