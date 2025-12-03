@@ -7,7 +7,7 @@ organizadas por funcionalidad y con control de acceso basado en roles.
 
 Roles de usuario:
 - administrador: Acceso completo al sistema
-- delegador: Gestión y seguimiento de solicitudes
+- delegado: Gestión y seguimiento de solicitudes
 - campo: Acceso limitado a DesUr (redirigido automáticamente)
 
 Dependencias principales:
@@ -61,7 +61,7 @@ def role_required(allowed_roles):
 
     Args:
         allowed_roles (list): Lista de roles permitidos para acceder a la vista
-                             Valores posibles: ['administrador', 'delegador', 'campo']
+                             Valores posibles: ['administrador', 'delegado', 'campo']
 
     Returns:
         function: Decorador que valida permisos antes de ejecutar la vista
@@ -200,11 +200,11 @@ def login_view(request):
                 if user.has_desur_access() and not user.has_cmin_access():
                     # Usuario exclusivo de DesUr (rol campo)
                     return redirect('/ageo/home/')
-                elif user.rol == 'delegador':
+                elif user.rol == 'delegado':
                     # Usuario con acceso limitado a bandeja de entrada
                     return redirect('bandeja_entrada')
                 elif user.has_cmin_access():
-                    # Usuario con acceso a CMIN (administrador, delegador)
+                    # Usuario con acceso a CMIN (administrador, delegado)
                     return redirect('menu')
                 else:
                     # Usuario sin permisos específicos
@@ -310,11 +310,11 @@ def usertest(request):
     return render(request, 'user_conf.html')
 
 @login_required
-@role_required(['administrador', 'delegador'])
+@role_required(['administrador', 'delegado'])
 def tables(request):
     """
     Vista principal para gestión de solicitudes.
-    Acceso restringido a administradores y delegadores.
+    Acceso restringido a administradores y delegados.
 
     Args:
         request (HttpRequest): Objeto de solicitud HTTP
@@ -360,11 +360,11 @@ def tables(request):
     return render(request, 'tables.html', context)
 
 @login_required
-@role_required(['administrador', 'delegador'])
+@role_required(['administrador', 'delegado'])
 def save_request(request): #saveSoli
     """
     Vista para guardar nuevas solicitudes en el sistema.
-    Acceso restringido a administradores y delegadores.
+    Acceso restringido a administradores y delegados.
 
     Args:
         request (HttpRequest): Objeto de solicitud HTTP
@@ -377,7 +377,7 @@ def save_request(request): #saveSoli
         - Asigna automáticamente folio y nombre a la solicitud
         - Manejo de errores y validaciones
     """
-    # Solo administradores y delegadores pueden guardar solicitudes
+    # Solo administradores y delegados pueden guardar solicitudes
     if request.method == 'POST':
         doc_id = request.POST.get('doc_id')
         try:
@@ -401,11 +401,11 @@ def save_request(request): #saveSoli
     return redirect('tablas')
 
 @login_required
-@role_required(['administrador', 'delegador'])
+@role_required(['administrador', 'delegado'])
 def seguimiento(request):
     """
     Vista para gestión de seguimiento de solicitudes.
-    Acceso restringido a administradores y delegadores.
+    Acceso restringido a administradores y delegados.
 
     Args:
         request (HttpRequest): Objeto de solicitud HTTP
@@ -419,7 +419,7 @@ def seguimiento(request):
         - Estadísticas de solicitudes para monitoreo
         - Opción de cerrar solicitudes con o sin seguimiento
     """
-    # Solo administradores y delegadores pueden hacer seguimiento
+    # Solo administradores y delegados pueden hacer seguimiento
     solicitudesE = SolicitudesEnviadas.objects.all().select_related(
         'doc_FK', 'user_FK', 'solicitud_FK', 'usuario_asignado'
     ).prefetch_related('close_set', 'seguimiento_set').order_by('-fechaEnvio')
@@ -548,7 +548,7 @@ def seguimiento(request):
 
 
 @login_required
-@role_required(['administrador', 'delegador'])
+@role_required(['administrador', 'delegado'])
 def menu(request):
     """
     Vista del menú principal con acceso restringido por roles"""
@@ -985,7 +985,7 @@ def get_excel(request):
 
 def is_staff_user(user):
     """
-    Verifica si el usuario tiene permisos de staff (administrador o delegador).
+    Verifica si el usuario tiene permisos de staff (administrador o delegado).
 
     Args:
         user (User): Objeto de usuario a verificar

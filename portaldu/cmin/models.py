@@ -91,7 +91,7 @@ class Users(AbstractUser, PermissionsMixin):
     # Opciones de roles disponibles en el sistema
     ROLE_CHOICES = [
         ('administrador', 'Administrador'),  # Acceso completo CMIN + DesUr + gestión usuarios
-        ('delegador', 'Delegador'),         # Acceso CMIN + visualización datos + reportes
+        ('delegado', 'Delegado'),         # Acceso CMIN + visualización datos + reportes
         ('campo', 'Campo'),                 # Acceso solo DesUr para trabajo de campo
     ]
     
@@ -220,9 +220,9 @@ class Users(AbstractUser, PermissionsMixin):
         Verifica si el usuario tiene acceso al módulo CMIN
 
         Returns:
-            bool: True si tiene acceso (administrador o delegador)
+            bool: True si tiene acceso (administrador o delegado)
         """
-        return self.rol in ['administrador', 'delegador']
+        return self.rol in ['administrador', 'delegado']
 
     def has_desur_access(self):
         """
@@ -238,18 +238,18 @@ class Users(AbstractUser, PermissionsMixin):
         Verifica si el usuario puede acceder a tablas y reportes
 
         Returns:
-            bool: True si puede acceder (administrador o delegador)
+            bool: True si puede acceder (administrador o delegado)
         """
-        return self.rol in ['administrador', 'delegador']
+        return self.rol in ['administrador', 'delegado']
 
     def can_access_seguimiento(self):
         """
         Verifica si el usuario puede hacer seguimiento de trámites
 
         Returns:
-            bool: True si puede hacer seguimiento (administrador o delegador)
+            bool: True si puede hacer seguimiento (administrador o delegado)
         """
-        return self.rol in ['administrador', 'delegador']
+        return self.rol in ['administrador', 'delegado']
 
     def can_access_admin(self):
         """
@@ -283,9 +283,9 @@ class Users(AbstractUser, PermissionsMixin):
         Verifica si el usuario puede gestionar la bandeja de entrada
 
         Returns:
-            bool: True si puede gestionar (administrador o delegador)
+            bool: True si puede gestionar (administrador o delegado)
         """
-        return self.rol == 'delegador' or self.rol == 'administrador'
+        return self.rol == 'delegado' or self.rol == 'administrador'
 
     # === MÉTODOS PARA COMPATIBILIDAD CON DESUR ===
 

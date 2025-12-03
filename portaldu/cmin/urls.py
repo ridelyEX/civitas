@@ -50,7 +50,7 @@ urlpatterns = [
 
     # === GESTIÓN DE SOLICITUDES ===
 
-    # Panel principal de solicitudes (requiere rol administrador/delegador)
+    # Panel principal de solicitudes (requiere rol administrador/delegado)
     # Vista: tables() - Muestra solicitudes pendientes y enviadas con filtros
     path('tables/', view.tables, name='tablas'),
 
@@ -64,7 +64,7 @@ urlpatterns = [
 
     # === SEGUIMIENTO Y MONITOREO ===
 
-    # Panel de seguimiento de trámites (requiere rol administrador/delegador)
+    # Panel de seguimiento de trámites (requiere rol administrador/delegado)
     # Vista: seguimiento() - Monitoreo completo con filtros, estadísticas y gestión de estados
     path('seguimiento/', view.seguimiento, name='seguimiento'),
 

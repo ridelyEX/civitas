@@ -281,7 +281,7 @@ def role_required(allowed_roles):
 
 **Roles permitidos:**
 - `administrador`: Acceso completo al sistema
-- `delegador`: Acceso a funciones de gestión y seguimiento
+- `delegado`: Acceso a funciones de gestión y seguimiento
 - `campo`: Acceso limitado a DesUr (redirigido automáticamente)
 
 #### 6.1.2 Vistas de Autenticación
@@ -306,7 +306,7 @@ def role_required(allowed_roles):
 ##### Tabla Principal de Solicitudes
 - **Vista:** `tables(request)`
 - **Template:** `tables.html`
-- **Acceso:** Administradores y delegadores
+- **Acceso:** Administradores y delegados
 - **Datos mostrados:**
   - Solicitudes pendientes (`SolicitudesPendientes`)
   - Solicitudes enviadas (`SolicitudesEnviadas`)
@@ -401,7 +401,7 @@ class AgeoMobileViewSet(viewsets.ViewSet):
 Extiende `AbstractUser` con funcionalidades específicas del sistema:
 
 **Campos adicionales:**
-- `rol`: Rol del usuario (administrador, delegador, campo)
+- `rol`: Rol del usuario (administrador, delegado, campo)
 - `foto`: Imagen de perfil
 - `area`: Área de trabajo asignada
 - `telefono`: Número de contacto

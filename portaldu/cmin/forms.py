@@ -105,7 +105,7 @@ class UsersRender(forms.ModelForm):
         if self.creator_user is None or self.creator_user.rol != 'administrador':
             # Solo administradores pueden crear otros administradores
             self.fields['rol'].choices = [
-                ('delegador', 'Delegador'),
+                ('delegado', 'Delegado'),
                 ('campo', 'Campo'),
             ]
             # Remover campos de permisos avanzados para no administradores
@@ -171,7 +171,7 @@ class UsersRender(forms.ModelForm):
         if user.rol == 'administrador':
             user.is_staff = True
             user.is_superuser = True
-        elif user.rol == 'delegador':
+        elif user.rol == 'delegado':
             user.is_staff = True
             user.is_superuser = False
         else:  # campo
