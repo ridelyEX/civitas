@@ -22,7 +22,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-warning text-red">
+                    <div class="card bg-warning text-white">
                         <div class="card-body">
                             <h5>Pendientes</h5>
                             <h3>{{ stats.pendientes }}</h3>
@@ -30,7 +30,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-info text-yellow">
+                    <div class="card bg-info text-white">
                         <div class="card-body">
                             <h5>En Proceso</h5>
                             <h3>{{ stats.en_proceso }}</h3>
@@ -38,7 +38,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-success text-green">
+                    <div class="card bg-success text-white">
                         <div class="card-body">
                             <h5>Completadas</h5>
                             <h3>{{ stats.completadas }}</h3>
@@ -105,12 +105,12 @@
                                             <td>{{ solicitud.nomSolicitud }}</td>
                                             <td>{{ solicitud.fechaEnvio|date:"d/m/Y" }}</td>
                                             <td>
-                                                <span class="badge badge-{% if solicitud.prioridad == 'alta' %}danger{% elif solicitud.prioridad == 'media' %}warning{% else %}info{% endif %}">
+                                                <span class="badge badge-{% if solicitud.prioridad == 'alta' %}danger{% elif solicitud.prioridad == 'media' %}warning{% else %}info{% endif %} text-black">
                                                     {{ solicitud.get_prioridad_display }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge badge-{% if solicitud.estado == 'completado' %}success{% elif solicitud.estado == 'en_proceso' %}info{% else %}warning{% endif %}">
+                                                <span class="badge badge-{% if solicitud.estado == 'completado' %}success{% elif solicitud.estado == 'en_proceso' %}info{% else %}warning{% endif %} text-black">
                                                     {{ solicitud.get_estado_display }}
                                                 </span>
                                             </td>
