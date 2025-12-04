@@ -1,9 +1,9 @@
-# 🏛️ CIVITAS - Sistema Integrado de Gestión de Trámites Ciudadanos
+# 🏛️ AGEO - Sistema Integrado de Gestión de Trámites Ciudadanos
 
 **Versión**: 1.0.0  
-**Proyecto**: Estadías Mayo - Octubre 2025  
+**Proyecto**: AGEO 2025  
 **Framework**: Django 4.2+ | Python 3.10+  
-**Estado**: ✅ Producción
+**Estado**: Producción
 
 ---
 
@@ -29,7 +29,7 @@
 
 ## 🎯 Descripción General
 
-**CIVITAS** es un sistema web integral desarrollado en Django para la gestión eficiente de trámites ciudadanos y atención a la comunidad. El sistema está compuesto por dos módulos principales que trabajan de forma integrada:
+**AGEO** es un sistema web integral desarrollado en Django para la gestión eficiente de trámites ciudadanos y atención a la comunidad. El sistema está compuesto por dos módulos principales que trabajan de forma integrada:
 
 ### Características Principales
 
@@ -38,7 +38,7 @@
 ✅ **Presupuesto participativo** con 5 categorías de proyectos  
 ✅ **Generación automática** de documentos PDF oficiales  
 ✅ **Gestión de licitaciones** de obra pública  
-✅ **Geolocalización** de proyectos y problemas reportados  
+<!--✅ **Geolocalización** de proyectos y problemas reportados-->  
 ✅ **APIs REST** para integración con aplicaciones externas  
 ✅ **Documentación automática** de APIs con Swagger/ReDoc  
 ✅ **Sistema de autenticación unificado** con roles y permisos  
@@ -46,16 +46,17 @@
 
 ### Tecnologías Utilizadas
 
-| Categoría | Tecnología |
-|-----------|------------|
-| **Backend** | Django 4.2+, Django REST Framework |
-| **Base de Datos** | SQLite (desarrollo), PostgreSQL (producción) |
-| **Frontend** | HTML5, CSS3, JavaScript, Bootstrap 5 |
-| **PDF Generation** | WeasyPrint |
-| **APIs** | DRF, drf-yasg (Swagger) |
-| **Geolocalización** | OpenStreetMap, Leaflet.js |
-| **Autenticación** | Django Auth, Session-based |
-| **Async Tasks** | Celery (opcional) |
+| Categoría           | Tecnología                                          |
+|---------------------|-----------------------------------------------------|
+| **Backend**         | Django 4.2+, Django REST Framework                  |
+| **Base de Datos**   | MySQL (desarrollo), MySQL (producción)              |
+| **Frontend**        | HTML5, CSS3, JavaScript, Bootstrap 5                |
+| **PDF Generation**  | WeasyPrint                                          |
+| **APIs**            | DRF, drf-yasg (Swagger)                             |
+| **Geolocalización** | OpenStreetMap, Leaflet.js, WSDomicilios Municipales |
+| **Autenticación**   | Django Auth, Session-based                          |
+| **Async Tasks**     | Celery (opcional)                                   |
+| **Servidor**        | Nginx, Ubuntu server 22                             |
 
 ---
 
@@ -65,12 +66,13 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    CIVITAS - Sistema Principal               │
+│                    AGEO - Sistema Principal                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
 │  ┌──────────────────────┐      ┌──────────────────────┐    │
 │  │   MÓDULO CMIN        │      │   MÓDULO AGEO        │    │
-│  │ (Centro Municipal)   │◄────►│ (Desarrollo Urbano)  │    │
+│  │   (Administrador)    │◄────►│ (Levantamiento de    |    |
+   |                      |      |     necesidades)     │    │
 │  └──────────────────────┘      └──────────────────────┘    │
 │           │                              │                   │
 │           │                              │                   │
@@ -82,7 +84,7 @@
 │           │                              │                   │
 │           ▼                              ▼                   │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │              Base de Datos (SQLite/PostgreSQL)        │  │
+│  │              Base de Datos (MySQL)                   │  │
 │  └──────────────────────────────────────────────────────┘  │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
@@ -90,8 +92,8 @@
          ▼                                     ▼
 ┌──────────────────┐                 ┌──────────────────┐
 │   APIs REST      │                 │   Documentación  │
-│   /api/cmin/     │                 │   /swagger/      │
-│   /api/ageo/     │                 │   /redoc/        │
+│/cmin/solicitudes/│                 │   /swagger/      │
+│   /ageo/api_sol/ │                 │   /redoc/        │
 └──────────────────┘                 └──────────────────┘
 ```
 
@@ -99,7 +101,11 @@
 
 ```
 Usuario → Login → Validación → Roles → Módulo correspondiente
-                                        ├─> CMIN (Atención ciudadana)
+                                        ├─> CMIN (Módulo de administración)
+                                        |        ├─> Creación de usuarios
+                                        |        ├─> Asignación de solicitudes
+                                        |        ├─> Análisis de seguimiento
+                                        |        └─> Administración de solicitudes
                                         └─> AGEO (Trámites en campo)
                                                  ├─> Captura datos
                                                  ├─> Genera folio
@@ -111,30 +117,30 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 
 ## 🔧 Módulos del Sistema
 
-### 1️⃣ CMIN - Centro Municipal de Información
+### 1️⃣ CMIN - Módulo de dministración de AGEO
 
 **Ruta base**: `/cmin/`  
-**API**: `/api/cmin/`
+**API**: `/cmin/solicitudes/`
 
 #### Funcionalidades
 
-- **Atención Ciudadana Presencial**
-  - Registro de ciudadanos
-  - Consulta de trámites
-  - Validación de documentos
-  - Historial de atención
+- **Administración de solicitudes**
+  - Asignación de solicitudes
+  - Cambios de estado (pendiente, en proceso, completado)
+  - Validación de documentos de seguimineto
+  - Cierre de solicitudes
 
-- **Gestión de Licitaciones**
+- **Gestión de Licitaciones (WIP)**
   - CRUD completo de licitaciones
   - Publicación de convocatorias
   - Administración de fechas límite
   - Seguimiento de participantes
 
 - **Reportes y Estadísticas**
-  - Dashboard con métricas en tiempo real
-  - Reportes por fecha, tipo, empleado
-  - Exportación a Excel/PDF
-  - Gráficas interactivas
+  - Dashboard con métricas en tiempo real (WIP?)
+  - Reportes por fecha, tipo, empleado (WIP?)
+  - Exportación a Excel/PDF (WIP)
+  <!-- Gráficas interactivas (hell nah)-->
 
 - **Sistema de Usuarios**
   - Gestión centralizada de usuarios
@@ -144,24 +150,24 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 
 #### Roles en CMIN
 
-| Rol | Permisos | Descripción |
-|-----|----------|-------------|
-| `Empleado` | Lectura/Escritura trámites | Usuario básico de atención |
-| `Supervisor` | Lectura/Escritura + Reportes | Supervisión de operaciones |
+| Rol             | Permisos | Descripción |
+|-----------------|----------|-------------|
+| `Campo`         | Lectura/Escritura trámites | Usuario básico de atención |
+| `Delegado`      | Lectura/Escritura + Reportes | Supervisión de operaciones |
 | `Administrador` | Acceso total CMIN | Gestión completa del módulo |
-| `Superusuario` | Acceso total sistema | Control total (ambos módulos) |
+| `Superusuario`  | Acceso total sistema | Control total (ambos módulos) |
 
 ### 2️⃣ AGEO - Gestión de Obra Pública (DesUr)
 
 **Ruta base**: `/ageo/`  
-**API**: `/api/ageo/`
+**API**: `/ageo/api_sol/`
 
 #### Funcionalidades
 
 - **Captura de Trámites en Campo**
   - Registro de datos ciudadanos (CURP, teléfono, dirección)
   - Captura de solicitudes con fotografías
-  - Geolocalización de problemas
+  - Geolocalización(?) de problemas / localización de solicitudes
   - Documentos adjuntos múltiples
   - Generación automática de folios
 
@@ -181,46 +187,46 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
   - Documentos de presupuesto participativo
   - Almacenamiento en base de datos
 
-- **Servicios de Geolocalización**
-  - Geocodificación (dirección → coordenadas)
-  - Geocodificación inversa (coordenadas → dirección)
+- **Servicios de Geolocalización(?) / Locaclización**
+  - Geocodificación (dirección → coordenadas(?))
+  - Geocodificación inversa (coordenadas → dirección)(Ya no?)
   - Validación con catastro local
   - Sugerencias de direcciones
 
 #### Códigos de Trámites (DOP)
 
-| Código | Descripción |
-|--------|-------------|
-| `DOP00001` | Arreglo de calles de terracería |
-| `DOP00002` | Bacheo de calles |
-| `DOP00003` | Limpieza de arroyos al sur |
-| `DOP00004` | Limpieza de rejillas pluviales |
-| `DOP00005` | Pago de licitaciones |
-| `DOP00006` | Rehabilitación de calles |
-| `DOP00007` | Retiro de escombro |
-| `DOP00008` | Solicitud de material caliche/fresado |
-| `DOP00009` | Solicitud de pavimentación |
-| `DOP00010` | Reductores de velocidad |
-| `DOP00011` | Pintura para señalamientos |
-| `DOP00012` | Arreglo de derrumbes de bardas |
-| `DOP00013` | Tapiado |
+| Código      | Descripción |
+|-------------|-------------|
+| `DOP00001`  | Arreglo de calles de terracería |
+| `DOP00002`  | Bacheo de calles |
+| `DOP00003`  | Limpieza de arroyos al sur |
+| `DOP00004`  | Limpieza de rejillas pluviales |
+| `DOP00005`  | Pago de licitaciones |
+| `DOP00006`  | Rehabilitación de calles |
+| `DOP00007`  | Retiro de escombro |
+| `DOP00008`  | Solicitud de material caliche/fresado |
+| `DOP00009`  | Solicitud de pavimentación |
+| `DOP000010` | Reductores de velocidad |
+| `DOP000011` | Pintura para señalamientos |
+| `DOP000012` | Arreglo de derrumbes de bardas |
+| `DOP000013` | Tapiado |
 
 #### Tipos de Proceso (PUO)
 
-| Código | Descripción | Formato Folio |
-|--------|-------------|---------------|
-| `OFI` | Oficio | GOP-OFI-#####-XXXX/YY |
-| `CRC` | CRC | GOP-CRC-#####-XXXX/YY |
-| `MEC` | Marca el cambio | GOP-MEC-#####-XXXX/YY |
-| `DLO` | Diputado Local | GOP-DLO-#####-XXXX/YY |
-| `DFE` | Diputado Federal | GOP-DFE-#####-XXXX/YY |
-| `REG` | Regidores | GOP-REG-#####-XXXX/YY |
-| `DEA` | Despacho del Alcalde | GOP-DEA-#####-XXXX/YY |
-| `EVA` | Evento con el Alcalde | GOP-EVA-#####-XXXX/YY |
-| `PED` | Presencial en Dirección | GOP-PED-#####-XXXX/YY |
-| `VIN` | Vinculación | GOP-VIN-#####-XXXX/YY |
-| `PPA` | Presupuesto Participativo | GOP-PPA-#####-XXXX/YY |
-| `CPC` | Participación Ciudadana | GOP-CPC-#####-XXXX/YY |
+| Código | Descripción                          | Formato Folio |
+|--------|--------------------------------------|---------------|
+| `OFI` | Oficio                               | GOP-OFI-#####-XXXX/YY |
+| `CRC` | CRC                                  | GOP-CRC-#####-XXXX/YY |
+| `MEC` | Marca el cambio                      | GOP-MEC-#####-XXXX/YY |
+| `DLO` | Diputado Local                       | GOP-DLO-#####-XXXX/YY |
+| `DFE` | Diputado Federal                     | GOP-DFE-#####-XXXX/YY |
+| `REG` | Regidores                            | GOP-REG-#####-XXXX/YY |
+| `DEA` | Despacho del Alcalde                 | GOP-DEA-#####-XXXX/YY |
+| `EVA` | Evento con el Alcalde                | GOP-EVA-#####-XXXX/YY |
+| `PED` | Presencial en Dirección              | GOP-PED-#####-XXXX/YY |
+| `VIN` | Vinculación                          | GOP-VIN-#####-XXXX/YY |
+| `PPA` | Presupuesto Participativo            | GOP-PPA-#####-XXXX/YY |
+| `CPC` | Coordinación Participación Ciudadana | GOP-CPC-#####-XXXX/YY |
 
 ---
 
@@ -230,16 +236,16 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 
 ```bash
 # Software requerido
-- Python 3.10 o superior
+- Python 3.11 o superior
 - pip (administrador de paquetes Python)
 - Git
 - Virtualenv (recomendado)
 
-# Opcional para producción
-- PostgreSQL 12+
+# Para producción
+- Mysql 8+
 - Nginx
 - Gunicorn
-- Redis (para Celery)
+- Redis (para Celery, opcional)
 ```
 
 ### Instalación Paso a Paso
@@ -247,7 +253,7 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 #### 1. Clonar el Repositorio
 
 ```bash
-git clone https://github.com/tu-organizacion/civitas.git
+git clone https://github.com/ridelyEX/civitas.git
 cd civitas
 ```
 
@@ -277,19 +283,15 @@ Crear archivo `.env` en la raíz del proyecto:
 # Django Settings
 SECRET_KEY=tu-clave-secreta-aqui-cambiar-en-produccion
 DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Base de Datos (Desarrollo)
-DB_ENGINE=django.db.backends.sqlite3
-DB_NAME=db.sqlite3
+ALLOWED_HOSTS=dirección_host
 
 # Base de Datos (Producción)
-# DB_ENGINE=django.db.backends.postgresql
-# DB_NAME=civitas_db
-# DB_USER=civitas_user
+# DB_ENGINE=django.db.backends.mysql
+# DB_NAME=ageo
+# DB_USER=usuario_ageo
 # DB_PASSWORD=password_seguro
 # DB_HOST=localhost
-# DB_PORT=5432
+# DB_PORT=3306
 
 # Email Settings (opcional)
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
@@ -297,7 +299,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=tu-email@gmail.com
-EMAIL_HOST_PASSWORD=tu-password
+EMAIL_HOST_PASSWORD=password-de-aplicación
 
 # Celery (opcional)
 CELERY_BROKER_URL=redis://localhost:6379/0
@@ -339,6 +341,15 @@ El proyecto incluye `setup_project.bat` para configuración automática:
 setup_project.bat
 ```
 
+Configuración dentro de un servidor Linux (ubunut) por medio de en
+un archivo de configuración en la carpeta de nginx y otro en la carpeta
+system
+
+```bash
+/etc/nginx/sites-available/civitas
+/etc/systemd/system/civitas.conf
+```
+
 ---
 
 ## 📁 Estructura del Proyecto
@@ -348,13 +359,13 @@ civitas/
 ├── civitas/                    # Configuración principal del proyecto
 │   ├── __init__.py
 │   ├── settings.py            # Configuraciones generales
-│   ├── urls.py                # URLs principales (✅ DOCUMENTADO)
+│   ├── urls.py                # URLs principales 
 │   ├── wsgi.py                # WSGI para deployment
 │   └── asgi.py                # ASGI para async
 │
 ├── portaldu/                   # Paquete de aplicaciones
 │   ├── cmin/                   # Módulo CMIN
-│   │   ├── models.py          # Modelos: Users, Licitaciones, LoginDate
+│   │   ├── models.py          # Modelos: Users, Licitaciones, LoginDate, etc.
 │   │   ├── views.py           # Vistas principales
 │   │   ├── api_views.py       # ViewSets de API REST
 │   │   ├── serializers.py     # Serializers DRF
@@ -364,16 +375,18 @@ civitas/
 │   │   ├── admin.py           # Configuración admin
 │   │   └── templates/         # Templates HTML
 │   │
-│   └── desUr/                  # Módulo AGEO (Desarrollo Urbano)
+│   └── desUr/                  # Módulo AGEO 
 │       ├── models.py          # Modelos: data, soli, Files, PpGeneral, etc.
-│       ├── views.py           # 70+ vistas (✅ DOCUMENTADO)
-│       ├── api_views.py       # ViewSets API (✅ DOCUMENTADO)
-│       ├── serializers.py     # 5 Serializers (✅ DOCUMENTADO)
-│       ├── forms.py           # 10 Formularios (✅ DOCUMENTADO)
-│       ├── urls.py            # 35+ URLs (✅ DOCUMENTADO)
-│       ├── api_urls.py        # API REST (✅ DOCUMENTADO)
-│       ├── auth.py            # Autenticación (✅ DOCUMENTADO)
+│       ├── views.py           # 70+ vistas 
+│       ├── api_views.py       # ViewSets API 
+│       ├── serializers.py     # 5 Serializers 
+│       ├── forms.py           # 10 Formularios 
+│       ├── urls.py            # 35+ URLs 
+│       ├── api_urls.py        # API REST 
+│       ├── auth.py            # Autenticación 
 │       ├── services.py        # LocalGISService
+|       ├── WsConfig.py        # WsConfig
+|       ├── WSDServices.py     # WsDomicilios
 │       ├── admin.py           # Configuración admin
 │       └── templates/         # Templates HTML
 │
@@ -393,7 +406,7 @@ civitas/
 ├── logs/                       # Logs del sistema
 │   └── civitas.log            # Log principal
 │
-├── db.sqlite3                  # Base de datos SQLite (desarrollo)
+├── db.sqlite3                  # Base de datos SQLite (No funcional)
 ├── manage.py                   # Script de gestión Django
 ├── requirements.txt            # Dependencias Python
 ├── setup_project.bat           # Script de configuración (Windows)
@@ -568,7 +581,7 @@ def vista_ageo(request):
 
 ```
 1. Usuario accede a /auth/login/
-2. Ingresa username/email y password
+2. Ingresa username y password
 3. CivitasAuthBackend valida credenciales
 4. Sistema verifica roles (module_cmin, module_desur)
 5. Redirige según permisos:
@@ -696,16 +709,16 @@ EMAIL_BACKEND=       # Backend de email
 
 ### Checklist de Producción
 
-1. ✅ `DEBUG = False`
-2. ✅ Configurar `ALLOWED_HOSTS`
-3. ✅ Base de datos PostgreSQL
-4. ✅ Configurar Nginx
-5. ✅ Configurar Gunicorn
-6. ✅ HTTPS con certificados SSL
-7. ✅ Collectstatic
-8. ✅ Migraciones actualizadas
-9. ✅ Backups automáticos
-10. ✅ Monitoring y logs
+1. `DEBUG = False`
+2. Configurar `ALLOWED_HOSTS`
+3. Base de datos MySQL
+4. Configurar Nginx
+5. Configurar Gunicorn
+6. HTTPS con certificados SSL (ver con área de sistemas)
+7. Collectstatic
+8. Migraciones actualizadas
+9. Backups automáticos
+10. Monitoring y logs
 
 ---
 
@@ -715,14 +728,14 @@ EMAIL_BACKEND=       # Backend de email
 
 | Módulo | Archivo | Estado |
 |--------|---------|--------|
-| **AGEO** | `views.py` | ✅ 100% |
-| **AGEO** | `api_views.py` | ✅ 100% |
-| **AGEO** | `serializers.py` | ✅ 100% |
-| **AGEO** | `forms.py` | ✅ 100% |
-| **AGEO** | `urls.py` | ✅ 100% |
-| **AGEO** | `api_urls.py` | ✅ 100% |
-| **AGEO** | `auth.py` | ✅ 100% |
-| **Principal** | `urls.py` | ✅ 100% |
+| **AGEO** | `views.py` | 100% |
+| **AGEO** | `api_views.py` | 100% |
+| **AGEO** | `serializers.py` | 100% |
+| **AGEO** | `forms.py` | 100% |
+| **AGEO** | `urls.py` | 100% |
+| **AGEO** | `api_urls.py` | 100% |
+| **AGEO** | `auth.py` | 100% |
+| **Principal** | `urls.py` | 100% |
 
 **Total**: ~6,000 líneas de documentación en 8 archivos principales
 
@@ -737,7 +750,7 @@ Este proyecto está bajo la licencia **BSD License**.
 ## 👥 Equipo de Desarrollo
 
 - **Desarrollado por**: Arturo
-- **Organización**: Gobierno Municipal
+- **Organización**: Dirección de Obras Públicas Municipales
 
 ---
 
@@ -747,13 +760,13 @@ Este proyecto está bajo la licencia **BSD License**.
 
 ---
 
-**Última actualización**: Octubre 2025  
+**Última actualización**: Diciembre 2025  
 **Estado del Proyecto**: Producción  
 **Cobertura de Documentación**: 100% archivos críticos
 
 ---
 
 <div align="center">
-  <strong>🏛️ AGEO - Sistema Integrado de Gestión de Trámites Ciudadanos</strong><br>
+  <strong> AGEO - Atención, gestión inteligente</strong><br>
 </div>
 

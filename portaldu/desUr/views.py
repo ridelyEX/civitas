@@ -8,26 +8,19 @@ from io import BytesIO
 import re
 import json
 import logging
-import os
 from datetime import date
-
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage
-from django.db import transaction, IntegrityError
-from django.db.models import Q
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from .WSDService import WsDomicilios
 from .WsConfig import WSDConfig
