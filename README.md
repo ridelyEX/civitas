@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
 1. [Descripción General](#-descripción-general)
 2. [Arquitectura del Sistema](#-arquitectura-del-sistema)
@@ -27,22 +27,21 @@
 
 ---
 
-## 🎯 Descripción General
+## Descripción General
 
 **AGEO** es un sistema web integral desarrollado en Django para la gestión eficiente de trámites ciudadanos y atención a la comunidad. El sistema está compuesto por dos módulos principales que trabajan de forma integrada:
 
 ### Características Principales
 
-✅ **Gestión de trámites** de obra pública y desarrollo urbano  
-✅ **Atención ciudadana** presencial y en campo  
-✅ **Presupuesto participativo** con 5 categorías de proyectos  
-✅ **Generación automática** de documentos PDF oficiales  
-✅ **Gestión de licitaciones** de obra pública  
-<!--✅ **Geolocalización** de proyectos y problemas reportados-->  
-✅ **APIs REST** para integración con aplicaciones externas  
-✅ **Documentación automática** de APIs con Swagger/ReDoc  
-✅ **Sistema de autenticación unificado** con roles y permisos  
-✅ **Reportes y estadísticas** en tiempo real  
+**Gestión de trámites** de obra pública y desarrollo urbano  
+**Atención ciudadana** presencial y en campo  
+**Presupuesto participativo** con 5 categorías de proyectos  
+**Generación automática** de documentos PDF oficiales  
+**Gestión de licitaciones** de obra pública <!--✅ **Geolocalización** de proyectos y problemas reportados-->  
+**APIs REST** para integración con aplicaciones externas  
+**Documentación automática** de APIs con Swagger/ReDoc  
+**Sistema de autenticación unificado** con roles y permisos  
+**Reportes y estadísticas** en tiempo real  
 
 ### Tecnologías Utilizadas
 
@@ -60,7 +59,7 @@
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ### Diagrama de Arquitectura
 
@@ -68,25 +67,25 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                    AGEO - Sistema Principal                 │
 ├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────────────┐      ┌──────────────────────┐    │
-│  │   MÓDULO CMIN        │      │   MÓDULO AGEO        │    │
-│  │   (Administrador)    │◄────►│ (Levantamiento de    |    |
-   |                      |      |     necesidades)     │    │
-│  └──────────────────────┘      └──────────────────────┘    │
-│           │                              │                   │
-│           │                              │                   │
-│           ▼                              ▼                   │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │         Sistema de Autenticación Unificado           │  │
-│  │              (portaldu.cmin.models.Users)            │  │
-│  └──────────────────────────────────────────────────────┘  │
-│           │                              │                   │
-│           ▼                              ▼                   │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Base de Datos (MySQL)                   │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                               │
+│                                                             │
+│  ┌──────────────────────┐      ┌──────────────────────┐     │
+│  │   MÓDULO CMIN        │      │   MÓDULO AGEO        │     │
+│  │   (Administrador)    │◄────►│ (Levantamiento de    |     |
+|  |                      |      |     necesidades)     │     │
+│  └──────────────────────┘      └──────────────────────┘     │
+│           │                              │                  │
+│           │                              │                  │
+│           ▼                              ▼                  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │         Sistema de Autenticación Unificado           │   │
+│  │              (portaldu.cmin.models.Users)            │   │
+│  └──────────────────────────────────────────────────────┘   │
+│           │                              │                  │
+│           ▼                              ▼                  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              Base de Datos (MySQL)                   │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
          │                                     │
          ▼                                     ▼
@@ -117,7 +116,7 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 
 ## 🔧 Módulos del Sistema
 
-### 1️⃣ CMIN - Módulo de dministración de AGEO
+### CMIN - Módulo de dministración de AGEO
 
 **Ruta base**: `/cmin/`  
 **API**: `/cmin/solicitudes/`
@@ -157,7 +156,7 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 | `Administrador` | Acceso total CMIN | Gestión completa del módulo |
 | `Superusuario`  | Acceso total sistema | Control total (ambos módulos) |
 
-### 2️⃣ AGEO - Gestión de Obra Pública (DesUr)
+### AGEO - Gestión de Obra Pública (DesUr)
 
 **Ruta base**: `/ageo/`  
 **API**: `/ageo/api_sol/`
@@ -230,7 +229,7 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 
 ---
 
-## 🚀 Instalación y Configuración
+## Instalación y Configuración
 
 ### Requisitos Previos
 
@@ -352,7 +351,7 @@ system
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 civitas/
@@ -417,7 +416,7 @@ civitas/
 
 ---
 
-## 🗄️ Base de Datos
+## Base de Datos
 
 ### Modelos Principales
 
@@ -533,7 +532,7 @@ data (ciudadano)
 
 ---
 
-## 🔐 Sistema de Autenticación
+## Sistema de Autenticación
 
 ### Autenticación Unificada
 
@@ -592,7 +591,7 @@ def vista_ageo(request):
 
 ---
 
-## 🌐 APIs REST
+## APIs REST
 
 ### Documentación Automática
 
@@ -665,7 +664,7 @@ curl -X POST http://localhost:8000/api/ageo/soli/ \
 
 ---
 
-## 🔄 Flujos de Trabajo
+## Flujos de Trabajo
 
 ### Flujo 1: Captura de Trámite (AGEO)
 
@@ -690,7 +689,7 @@ curl -X POST http://localhost:8000/api/ageo/soli/ \
 
 ---
 
-## 🔧 Variables de Entorno
+## Variables de Entorno
 
 ### Variables Requeridas
 
@@ -705,7 +704,7 @@ EMAIL_BACKEND=       # Backend de email
 
 ---
 
-## 📦 Deployment
+## Deployment
 
 ### Checklist de Producción
 
@@ -722,7 +721,7 @@ EMAIL_BACKEND=       # Backend de email
 
 ---
 
-## 📚 Documentación de Código
+## Documentación de Código
 
 ### Estado de Documentación
 
@@ -741,20 +740,20 @@ EMAIL_BACKEND=       # Backend de email
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto está bajo la licencia **BSD License**.
 
 ---
 
-## 👥 Equipo de Desarrollo
+## Equipo de Desarrollo
 
 - **Desarrollado por**: Arturo
 - **Organización**: Dirección de Obras Públicas Municipales
 
 ---
 
-## 📞 Soporte
+## Soporte
 
 - **Documentación**: `/swagger/` y `/redoc/`
 
@@ -764,6 +763,13 @@ Este proyecto está bajo la licencia **BSD License**.
 **Estado del Proyecto**: Producción  
 **Cobertura de Documentación**: 100% archivos críticos
 
+---
+
+---
+## Glosario
+
+**WIP**: Work In Progress
+**WIP?**: Work In Progress (Consultar)
 ---
 
 <div align="center">
