@@ -98,6 +98,7 @@ from django.views.generic import RedirectView
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from rest_framework.authentication import TokenAuthentication
 
 from portaldu.desUr.views import custom_handler_404
 
@@ -114,11 +115,12 @@ schema_view = get_schema_view(
       default_version='v1',                                   # Versión de la API
       description="API para el sistema de trámites Civitas", # Descripción breve
       terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contacto@civitas.gov.mx"),  # Contacto de soporte
+      contact=openapi.Contact(email="contacto@civitas.gob.mx"),  # Contacto de soporte
       license=openapi.License(name="BSD License"),            # Licencia del proyecto
    ),
-   public=True,                                               # API pública (visible sin autenticación)
-   permission_classes=(permissions.AllowAny,),                # ⚠️ TODO: Cambiar en producción a IsAuthenticated
+   public=False,                                               # API pública (visible sin autenticación)
+   permission_classes=(permissions.IsAuthenticated,),                # ⚠️ TODO: Cambiar en producción a IsAuthenticated
+    authentication_classes=[TokenAuthentication],
 )
 
 # ============================================================================
