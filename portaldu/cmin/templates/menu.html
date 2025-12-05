@@ -57,6 +57,37 @@
                 </button>
             </div>
         </div>
+        <div class="reportes">
+            <div class="encuestas">
+                <h2 class="txt">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Encuestas
+                </h2>
+                <p class="description">
+                    Revisar y generar reporte de encuestas
+                </p>
+                <div class="btn">
+                    <button class="encuesta-btn" id="encuesta-btn" data-url="{% url 'encuestas' %}"></button>
+                    <i class="fas fa-search me-2"></i>
+                    Ver encuestas
+                </div>
+            </div>
+
+            <div class="reporteria">
+                <h2 class="txt">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Reportería
+                </h2>
+                <p class="description">
+                    Revisar y generar reportes en Excel
+                </p>
+                <div class="btn">
+                    <button class="reporteria-btn" id="reporteria-btn" data-url="{% url 'importar_excel' %}"></button>
+                    <i class="fas fa-search me-2"></i>
+                    Generar reportes
+                </div>
+            </div>
+        </div>
     </div>
 </main>
 

@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const fbtn = document.getElementById("fllw-btn");
         const bback = document.getElementById("bback");
         const busers = document.getElementById("bbtn");
+        const bencuestas = document.getElementById("encuesta-btn");
+        const bexcel = document.getElementById("reporteria-btn");
 
         // Echarle pa atrás en usuarios
         if(bbtn){
@@ -48,6 +50,22 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log("le podemos echar pa trás");
             bback.addEventListener("click", ()=>{
                 window.location.href = back;
+            });
+        }
+
+        if (bencuestas) {
+            const encuestas = bencuestas.dataset.url;
+            console.log("Sí jala pa encuestas");
+            bencuestas.addEventListener("click", ()=> {
+                window.location.href = encuestas;
+            });
+        }
+
+        if (bexcel) {
+            const reportes = bexcel.dataset.url;
+            console.log("Sí jala pa reportes");
+            bexcel.addEventListener("click", () => {
+                window.location.href = reportes;
             });
         }
 
