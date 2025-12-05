@@ -1,0 +1,137 @@
+{% extends 'master.html' %} {% load static %}
+
+{% block head %}
+    {% load django_bootstrap5 %}
+    <link rel="stylesheet" href="{% static 'cminStyles/encuestaStyle.css' %}?v=1">
+    <title>Encuestas</title>
+{% endblock %}
+
+
+{% block content %}{% include 'navmin.html' %}
+<!-- encuestas/encuestas_view.html -->
+<div class="filtros-container">
+    <form method="GET" class="filtros-form">
+        <!-- Búsqueda general -->
+        <div class="form-group">
+            <input type="text" name="search" value="{{ search_query }}"
+                   placeholder="Buscar por escuela, colonia o UUID...">
+        </div>
+
+        <!-- Filtros por dropdown -->
+        <div class="form-group">
+            <select name="escuela">
+                <option value="">Todas las escuelas</option>
+                {% for escuela in escuelas %}
+                <option value="{{ escuela }}" {% if escuela_filter == escuela %}selected{% endif %}>
+                    {{ escuela }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <select name="rol_social">
+                <option value="">Todos los roles</option>
+                {% for rol in roles_sociales %}
+                <option value="{{ rol }}" {% if rol_social_filter == rol %}selected{% endif %}>
+                    {{ rol }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <select name="genero">
+                <option value="">Todos los géneros</option>
+                {% for genero in generos %}
+                <option value="{{ genero }}" {% if genero_filter == genero %}selected{% endif %}>
+                    {{ genero }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Rango de fechas -->
+        <div class="form-group">
+            <label>Desde:</label>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}">
+        </div>
+
+        <div class="form-group">
+            <label>Hasta:</label>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}">
+        </div>
+
+        <!-- Estados -->
+        <div class="form-group">
+            <select name="sincronizado">
+                <option value="">Estado de sincronización</option>
+                <option value="1" {% if sincronizado_filter == '1' %}selected{% endif %}>Sincronizada</option>
+                <option value="0" {% if sincronizado_filter == '0' %}selected{% endif %}>No sincronizada</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-filtrar">Filtrar</button>
+        <a href="{% url 'encuestas' %}" class="btn-limpiar">Limpiar filtros</a>
+    </form>
+</div>
+
+<!-- Estadísticas -->
+<div class="stats-panel">
+    <div class="stat-card">
+        <h3>{{ stats.total }}</h3>
+        <p>Total encuestas</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.completadas }}</h3>
+        <p>Completadas</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.sincronizado }}</h3>
+        <p>Sincronizadas</p>
+    </div>
+</div>
+
+<!-- Tabla de resultados -->
+<table class="encuestas-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Escuela</th>
+            <th>Colonia</th>
+            <th>Rol Social</th>
+            <th>Género</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for encuesta in encuestas %}
+        <tr>
+            <td>{{ encuesta.encuesta_ID }}</td>
+            <td>{{ encuesta.escuela }}</td>
+            <td>{{ encuesta.colonia }}</td>
+            <td>{{ encuesta.rol_social }}</td>
+            <td>{{ encuesta.genero }}</td>
+            <td>{{ encuesta.fecha_respuesta }}</td>
+            <td>
+                {% if encuesta.completada == 1 %}
+                    <span class="badge badge-success">Completa</span>
+                {% else %}
+                    <span class="badge badge-warning">Incompleta</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'detalle_encuesta' encuesta.encuesta_ID %}" class="btn-ver">Ver</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+{% block footer %}
+
+{% endblock %}

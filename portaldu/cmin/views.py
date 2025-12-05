@@ -36,7 +36,7 @@ from django.core.mail import EmailMessage
 import os
 from .forms import UsersRender, Login, UsersConfig, UploadExcel
 from .models import LoginDate, SolicitudesPendientes, SolicitudesEnviadas, Seguimiento, Close, Licitaciones, Users, \
-    Notifications
+    Notifications, EncuestasOffline
 from django.db.models import Q
 from datetime import datetime
 
@@ -1185,6 +1185,106 @@ def marcar_notificacion(request, notificacion_id):
         return JsonResponse({'status':'success'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+def consultar_encuestas(request):
+    encuestas_totales = EncuestasOffline.objects.all().order_by('-encuesta_ID')
+
+    # Parámetros de filtros
+    search_query = request.GET.get('search', '').strip()
+    escuela_filter = request.GET.get('escuelas', '')
+    colonia_filter = request.GET.get('colonia', '')
+    rol_social_filter = request.GET.get('rol_social', '')
+    genero_filter = request.GET.get('genero', '')
+    tipo_proyecto_filter = request.GET.get('tipo_proyecto', '')
+    fecha_desde = request.GET.get('fecha_desde', '')
+    fecha_hasta = request.GET.get('fecha_hasta', '')
+    sincronizado_filter = request.GET.get('sincronizado', '')
+    completado_filter = request.GET.get('completado', '')
+
+    # Aplicar filtros
+    if search_query:
+        encuestas = encuestas_totales.filter(
+            Q(escuelas__icontains=search_query) |
+            Q(colonia__icontains=search_query) |
+            Q(f_uuid__icontains=search_query)
+        )
+
+    # Filtros por sección
+    if escuela_filter:
+        encuestas = encuestas_totales.filter(escuelas__icontains=escuela_filter)
+
+    if colonia_filter:
+        encuestas = encuestas_totales.filter(colonia__icontains=colonia_filter)
+
+    if rol_social_filter:
+        encuesta = encuestas_totales.filter(rol_social=rol_social_filter)
+
+    if genero_filter:
+        encuestas = encuestas_totales.filter(genero=genero_filter)
+
+    if tipo_proyecto_filter:
+        encuestas = encuestas_totales.filter(tipo_proyecto=tipo_proyecto_filter)
+
+    if fecha_desde:
+        encuestas = encuestas_totales.filter(fecha_respuesta__gte=fecha_desde)
+
+    if fecha_hasta:
+        encuestas = encuestas_totales.filter(fecha_respuesta__lte=fecha_hasta)
+
+    if sincronizado_filter:
+        encuestas = encuestas_totales.filter(sincronizado=int(sincronizado_filter))
+
+    if completado_filter:
+        encuestas = encuestas_totales.filter(completada=int(completado_filter))
+
+    # Obtener listas
+    escuelas = EncuestasOffline.objects.values_list('escuela', flat=True)
+    colonias = EncuestasOffline.objects.values_list('colonia', flat=True)
+    roles_sociales = EncuestasOffline.objects.values_list('rol_social', flat=True)
+    generos = EncuestasOffline.objects.values_list('genero', flat=True)
+    tipos_proyectos = EncuestasOffline.objects.values_list('tipo_proyecto', flat=True)
+
+    # Estadísticas
+    total_encuestas = encuestas_totales.count()
+    sincronizado = encuestas_totales.filter(sincronizado=1).count()
+    no_sincronizadas = encuestas_totales.filter(sincronizado=0).count()
+    completadas = encuestas_totales.filter(completada=1).count()
+    incompletas = encuestas_totales.filter(completada=0).count()
+
+    por_genero = {}
+    for genero in generos:
+        if genero:
+            por_genero[genero] = encuestas_totales.filter(genero=genero).count()
+
+    context = {
+        'encuestas': encuestas_totales,
+        'escuelas': escuelas,
+        'colonias': colonias,
+        'roles_sociales': roles_sociales,
+        'generos': generos,
+        'tipo_proyecto': tipos_proyectos,
+
+        'search_query': search_query,
+        'escuela_filter': escuela_filter,
+        'colonia_filter': colonia_filter,
+        'rol_social_filter': rol_social_filter,
+        'genero_filter': genero_filter,
+        'tipo_proyecto_filter': tipo_proyecto_filter,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'sincronizado_filter': sincronizado_filter,
+        'completado_filter': completado_filter,
+
+        'stats': {
+            'total': total_encuestas,
+            'sincronizadas': sincronizado,
+            'no_sincronizadas': no_sincronizadas,
+            'completadas': completadas,
+            'incompletas': incompletas,
+            'por_genero': por_genero,
+        }
+    }
+    return render(request, 'encuestas/encuestas_view.html', context)
 
 @receiver(post_save, sender=SolicitudesEnviadas)
 def solicitud_notificacion(sender, instance, created, **kwargs):

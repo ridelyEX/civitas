@@ -72,6 +72,10 @@ urlpatterns = [
     # Vista: menu() - Dashboard principal con opciones según rol del usuario
     path('menu/', view.menu, name='menu'),
 
+    # Panel de interacción y visualización de encuestas
+    # Vista: consultar_encuestas() - Monitoreo y creación de excel de encuestas con filtros
+    path('encuestas/', view.consultar_encuestas, name='encuestas'),
+
     # === BANDEJA DE ENTRADA ===
 
     # Bandeja de entrada centralizada de solicitudes
