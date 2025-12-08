@@ -76,6 +76,9 @@ urlpatterns = [
     # Vista: consultar_encuestas() - Monitoreo y creación de excel de encuestas con filtros
     path('encuestas/', view.consultar_encuestas, name='encuestas'),
 
+    # Agregar esta línea en la sección de === GESTIÓN DE ENCUESTAS ===
+    path('encuestas/<int:encuesta_id>/', view.detalle_encuesta, name='detalle_encuesta'),
+
     # === BANDEJA DE ENTRADA ===
 
     # Bandeja de entrada centralizada de solicitudes

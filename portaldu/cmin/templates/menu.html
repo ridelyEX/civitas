@@ -67,9 +67,10 @@
                     Revisar y generar reporte de encuestas
                 </p>
                 <div class="btn">
-                    <button class="encuesta-btn" id="encuesta-btn" data-url="{% url 'encuestas' %}"></button>
-                    <i class="fas fa-search me-2"></i>
-                    Ver encuestas
+                    <button class="encuesta-btn" id="encuesta-btn" data-url="{% url 'encuestas' %}">
+                        <i class="fas fa-search me-2"></i>
+                        Ver encuestas
+                    </button>
                 </div>
             </div>
 
@@ -82,9 +83,10 @@
                     Revisar y generar reportes en Excel
                 </p>
                 <div class="btn">
-                    <button class="reporteria-btn" id="reporteria-btn" data-url="{% url 'importar_excel' %}"></button>
-                    <i class="fas fa-search me-2"></i>
-                    Generar reportes
+                    <button class="reporteria-btn" id="reporteria-btn" data-url="{% url 'importar_excel' %}">
+                        <i class="fas fa-search me-2"></i>
+                        Generar reportes
+                    </button>
                 </div>
             </div>
         </div>

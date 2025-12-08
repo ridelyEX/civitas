@@ -32,7 +32,7 @@ class WsDomicilios:
 
     def __init__(
             self,
-            base_url: str = "http://10.218.2.253/WSDomicilios",
+            base_url: str = "https://wsdomicilios.mpiochih.gob.mx/WSDomicilios",
             mock_mode: bool = False,  # 
             windows_user: str = None,
             windows_password: str = None

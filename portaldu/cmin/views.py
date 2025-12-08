@@ -1286,6 +1286,43 @@ def consultar_encuestas(request):
     }
     return render(request, 'encuestas/encuestas_view.html', context)
 
+def detalle_encuesta(request, encuesta_id):
+    try:
+        encuesta = EncuestasOffline.objects.get(encuesta_ID=encuesta_id)
+        respuesta = ""
+
+        match respuesta:
+            case '1':
+                "Totalmente en desacuerdo"
+            case '2':
+                "En desacuerdo"
+            case '3':
+                "Ni de acuerdo ni en desacuerdo"
+            case '4':
+                "De acuerdo"
+            case '5':
+                "Totalmente de acuerdo"
+            case _:
+                respuesta = respuesta
+
+        respuestas_map = {
+            'pregunta_1': '¿Estás enterado(a) de que se realizó obra pública en tu comunidad?',
+            'pregunta_2': '¿Qué tipo de obra fue? (marca una opción si la conoces)',
+            'pregunta_3': '¿Frecuentas o utilizas esa obra?',
+            'pregunta_4': '¿Estás satisfecho(a) con el resultado y la calidad de la obra pública?',
+            'pregunta_5': '¿Sabes aproximadamente cuántas personas se benefician con esa obra?',
+            'pregunta_6': '¿La obra ha mejorado el bienestar y/o calidad de vida o seguridad de niñas, niños y adolescentes o al grupo al que perteneces?',
+
+        }
+
+        context = {
+            'encuesta': encuesta
+        }
+        return render(request, 'encuestas/detalle_encuesta.html', context)
+    except EncuestasOffline.DoesNotExist:
+        messages.error(request, f"Encuesta {encuesta_id} no encontrada")
+        return redirect('encuestas')
+
 @receiver(post_save, sender=SolicitudesEnviadas)
 def solicitud_notificacion(sender, instance, created, **kwargs):
     """
