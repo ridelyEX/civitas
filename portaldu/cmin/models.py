@@ -781,7 +781,7 @@ class EncuestasOffline(models.Model):
     # === CAMPOS DE CONTROL Y METADATOS ===
 
     # Confirmación de envío de la encuesta - máximo 10 caracteres ('Si'/'No')
-    confirmacion = models.CharField(max_length=10, blank=True, null=True)
+    confirmacion = models.CharField(max_length=20, blank=True, null=True)
 
     # URL de foto adjunta a la encuesta - máximo 255 caracteres
     foto_url = models.CharField(max_length=255, blank=True, null=True)
