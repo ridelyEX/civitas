@@ -1,26 +1,46 @@
 <div class="content" id="content">
     <span class="close" onclick="modals('close', 'camaraD')">&times;</span>
-    <div class="input">
-        <div id="camera" class="camera">
-            <video id="videoElement" autoplay playsinline style="width:100%;"></video>
-            <video id="video"></video> <!-- muestra lo que se va a tomar -->
 
-            <button id="start" type="button">TOMAR FOTO</button> <!-- Toma la foto -->
+    <div class="camera-container">
+        <div class="card camera-card">
+            <div class="card-header">
+                <h5 class="card-title">Captura de Fotografía</h5>
+            </div>
+            <div class="card-body">
+                <div id="camera" class="camera">
+                    <div class="video-wrapper">
+                        <video id="videoElement" autoplay playsinline></video>
+                    </div>
 
-            <input type="hidden" value="" name="src" id="webimg"  >
+                    <div class="camera-controls">
+                        <button id="start" type="button" class="btn btn-secondary">
+                            <i class="fa fa-camera"></i> TOMAR FOTO
+                        </button>
+                    </div>
 
-            <canvas id="canvas" hidden></canvas> <!-- muestra la foto tomada -->
-            <!--img src="http://localhost:8000/desUr/soliData/" alt="foto" id="foto"> muestra la foto tomada x2 -->
+                    <input type="hidden" value="" name="src" id="webimg">
+                    <canvas id="canvas" hidden></canvas>
+                </div>
+            </div>
         </div>
-        <br>
-        <div>
-            <img alt="la foto" id="photo">
-            <!-- Campo hidden para la foto en base64 -->
-            <input type="hidden" name="foto_base64" id="foto_base64" />
+
+        <div class="card preview-card">
+            <div class="card-header">
+                <h5 class="card-title">Vista Previa</h5>
+            </div>
+            <div class="card-body">
+                <div class="photo-preview">
+                    <img alt="Vista previa de la foto" id="photo" class="preview-image">
+                    <p class="text-muted no-photo" id="noPhotoText">No se ha capturado ninguna foto</p>
+                </div>
+                <input type="hidden" name="foto_base64" id="foto_base64" />
+            </div>
         </div>
     </div>
+
     <div class="iBottom">
-        <button id="save" type="button" class="btn btn-primary" onclick="modals('close', 'camaraD')">GUARDAR</button> <!-- Guarda la foto tomada -->
+        <button id="save" type="button" class="btn btn-primary" onclick="modals('close', 'camaraD')">
+            <i class="fa fa-save"></i> GUARDAR
+        </button>
     </div>
 </div>
-
