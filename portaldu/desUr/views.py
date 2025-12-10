@@ -1354,7 +1354,7 @@ def pp_document(request):
     pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/')).write_pdf(buffer)
     pdf_file = ContentFile(buffer.getvalue())
     nomDoc = f'VS_{cat}_{gen_data.nombre_promovente}_Presupuesto_Participativo.pdf'
-    doc = Files(nomDoc=nomDoc, fuuid=uuid_object, pp_fk=gen_data)
+    doc = Files(nomDoc=nomDoc, fuuid=uuid_object, pp_FK=gen_data)
     doc.finalDoc.save(nomDoc, pdf_file)
 
     return render(request, 'documet/save.html', {"doc":doc})
