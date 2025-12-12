@@ -5,7 +5,7 @@ from typing import Optional
 @dataclass
 class WSDConfig:
     """Configuración del servicio WS Domicilios"""
-    BASE_URL: str = os.getenv('WSD_BASE_URL', 'http://10.218.2.253/WSDomicilios')
+    BASE_URL: str = os.getenv('WSD_BASE_URL', 'https://wsdomicilios.mpiochih.gob.mx/WSDomicilios')
     WINDOWS_USER: Optional[str] = os.getenv('WSD_WINDOWS_USER')
     WINDOWS_PASSWORD: Optional[str] = os.getenv('WSD_WINDOWS_PASSWORD')
     APP_USER: Optional[str] = os.getenv('WSD_APP_USER')

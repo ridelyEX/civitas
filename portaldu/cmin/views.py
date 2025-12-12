@@ -1289,34 +1289,43 @@ def consultar_encuestas(request):
 def detalle_encuesta(request, encuesta_id):
     try:
         encuesta = EncuestasOffline.objects.get(encuesta_ID=encuesta_id)
-        respuesta = ""
 
-        match respuesta:
-            case '1':
-                "Totalmente en desacuerdo"
-            case '2':
-                "En desacuerdo"
-            case '3':
-                "Ni de acuerdo ni en desacuerdo"
-            case '4':
-                "De acuerdo"
-            case '5':
-                "Totalmente de acuerdo"
-            case _:
-                respuesta = respuesta
+        def convertir_respuesta(valor):
+            respuestas = {
+                '1': 'Totalmente en desacuerdo',
+                '2': 'En desacuerdo',
+                '3': 'Ni de acuedo ni en desacuerdo',
+                '4': 'De acuerdo',
+                '5': 'Totalmente de acuerdo',
+            }
+            return respuestas.get(str(valor), valor)
 
-        respuestas_map = {
-            'pregunta_1': '¿Estás enterado(a) de que se realizó obra pública en tu comunidad?',
-            'pregunta_2': '¿Qué tipo de obra fue? (marca una opción si la conoces)',
-            'pregunta_3': '¿Frecuentas o utilizas esa obra?',
-            'pregunta_4': '¿Estás satisfecho(a) con el resultado y la calidad de la obra pública?',
-            'pregunta_5': '¿Sabes aproximadamente cuántas personas se benefician con esa obra?',
-            'pregunta_6': '¿La obra ha mejorado el bienestar y/o calidad de vida o seguridad de niñas, niños y adolescentes o al grupo al que perteneces?',
-
+        preguntas_map = {
+            'pregunta_1': ('¿Estás enterado(a) de que se realizó obra pública en tu comunidad?', convertir_respuesta(encuesta.pregunta_1)),
+            'pregunta_2': ('¿Qué tipo de obra fue? (marca una opción si la conoces)', encuesta.pregunta_2),
+            'otro_pregunta_2': ('Otro tipo de obra', encuesta.otro_pregunta_2),
+            'pregunta_3': ('¿Frecuentas o utilizas esa obra?', convertir_respuesta(encuesta.pregunta_3)),
+            'pregunta_4': ('¿Estás satisfecho(a) con el resultado y la calidad de la obra pública?', convertir_respuesta(encuesta.pregunta_4)),
+            'pregunta_5': ('¿Sabes aproximadamente cuántas personas se benefician con esa obra?', convertir_respuesta(encuesta.pregunta_5)),
+            'pregunta_6': ('¿La obra ha mejorado el bienestar y/o calidad de vida o seguridad de niñas, niños y adolescentes o al grupo al que perteneces?', convertir_respuesta(encuesta.pregunta_6)),
+            'pregunta_7': ('¿Crees que se pensó en las y los niños, niñas, jóvenes y/o personas vulnerables al hacer la obra?', convertir_respuesta(encuesta.pregunta_7)),
+            'pregunta_8': ('¿Consideras que existen suficientes espacios seguros y adecuados para que niños, niñas y adolescentes jueguen o se expresen en tu comunidad?', convertir_respuesta(encuesta.pregunta_8)),
+            'pregunta_9': ('¿Los servicions de alud y educación son accesibles para los niños y adolescentes en tu colonia?', convertir_respuesta(encuesta.pregunta_9)),
+            'pregunta_10': ('¿Te sientes seguro(a) al caminar por tu colonia?', convertir_respuesta(encuesta.pregunta_10)),
+            'pregunta_11': ('¿Es fácil moverte por la ciudad, como caminar, ir en bicibleta o transporte público?', convertir_respuesta(encuesta.pregunta_11)),
+            'pregunta_12': ('¿Cuáles consiederas que son las necesidades más urgentes de tu comunidad? (Marcar hasta tres opciones)', convertir_respuesta(encuesta.pregunta_12)),
+            'otro_pregunta_12': ('Otras necesidades', encuesta.otro_pregunta_12),
+            'pregunta_13': ('¿Sabías que puedes proponer proyectos comunitarios y votar por ellos?', convertir_respuesta(encuesta.pregunta_13)),
+            'pregunta_14': ('¿Conoces cuales son los espacios o formas para expresar las necesidades de tu colonia?', convertir_respuesta(encuesta.pregunta_14)),
+            'pregunta_15': ('¿Qué fue lo mejor que trajo la obra pública evaluada?', encuesta.pregunta_15),
+            'otro_pregunta_15': ('Otro beneficio', encuesta.otro_pregunta_15),
+            'pregunta_16': ('¿Qué mejorarías o cambiarías de esa obra?', encuesta.pregunta_16),
+            'pregunta_17': ('Si pudieras enviarle un mensaje al alcalde Marco Bonilla sobre las obras públicas, ¿que le dirías?', encuesta.pregunta_17),
         }
 
         context = {
-            'encuesta': encuesta
+            'encuesta': encuesta,
+            'preguntas': preguntas_map,
         }
         return render(request, 'encuestas/detalle_encuesta.html', context)
     except EncuestasOffline.DoesNotExist:

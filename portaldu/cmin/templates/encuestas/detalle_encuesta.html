@@ -13,102 +13,26 @@
     <h2>Detalle de Encuesta #{{ encuesta.encuesta_ID }}</h2>
 
     <div class="info-grid">
-        <div class="info-item">
-            <strong>Escuela:</strong> {{ encuesta.escuela }}
-        </div>
-        <div class="info-item">
-            <strong>Colonia:</strong> {{ encuesta.colonia }}
-        </div>
-        <div class="info-item">
-            <strong>Rol Social:</strong> {{ encuesta.rol_social }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.genero }}
-        </div>
-        <div class="info-item">
-            <strong>Nivel escolar:</strong> {{ encuesta.nivel_escolar }}
-        </div>
-        <div class="info-item">
-            <strong>Pertenece a una comunidad indígena:</strong> {{ encuesta.comunidad_indigena }}
-        </div>
-        <div class="info-item">
-            <strong>Comunidad indígena:</strong> {{ encuesta.otro_comunidad_indigena }}
-        </div>
-        <div class="info-item">
-            <strong>Pertenece a un grupo vulnerable:</strong> {{ encuesta.grupo_vulnerable }}
-        </div>
-        <div class="info-item">
-            <strong>Grupo vulnerable:</strong> {{ encuesta.otro_grupo_vulnerable }}
-        </div>
-        <div class="info-item">
-            <strong>Proyecto:</strong> {{ encuesta.tipo_proyecto }}
-        </div>
-        <h1>Respuestas</h1>
-        <div class="info-item">
-            <strong>1. </strong> {{ encuesta.pregunta_1 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_2 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.otro_pregunta_2 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_3 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_4 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_5 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_6 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_7 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_8 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_9 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_10 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_11 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_12 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.otro_pregunta_12 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_13 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_14 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_15 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.otro_pregunta_15 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_16 }}
-        </div>
-        <div class="info-item">
-            <strong>Género:</strong> {{ encuesta.pregunta_17 }}
-        </div>
-        <div class="info-item">
-            <strong>Fecha:</strong> {{ encuesta.fecha_respuesta }}
-        </div>
-    </div>
+        <div class="info-item"><strong>Escuela:</strong> {{ encuesta.escuela }}</div>
+        <div class="info-item"><strong>Colonia:</strong> {{ encuesta.colonia }}</div>
+        <div class="info-item"><strong>Rol social:</strong> {{ encuesta.rol_social }}</div>
+        <div class="info-item"><strong>Género:</strong> {{ encuesta.genero }}</div>
+        <div class="info-item"><strong>Nivel escolar:</strong> {{ encuesta.nivel_escolar }}</div>
+        <div class="info-item"><strong>Pertenece a comunidad indígena:</strong> {{ encuesta.comunidad_indigena }}</div>
+        <div class="info-item"><strong>Comunidad indígena:</strong> {{ encuesta.otr_comunidad_indigena }}</div>
+        <div class="info-item"><strong>Pertenece a grupo vulnerable:</strong> {{ encuesta.grupo_vulnerable }}</div>
+        <div class="info-item"><strong>Grupo vulnerable:</strong> {{ encuesta.otro_grupo_vulnerable }}</div>
+        <div class="info-item"><strong>Proyecto:</strong> {{ encuesta.tipo_proyecto }}</div>
 
+        <h3>Respuestas</h3>
+        {% for key, value in preguntas.items %}
+        <div class="info-item">
+            <strong>{{ value.0 }}</strong> {{ value.1 }}
+        </div>
+        {% endfor %}
+
+        <div class="info-item"><strong>Fecha:</strong> {{ encuesta.fecha_respuesta }}</div>
+    </div>
     <a href="{% url 'encuestas' %}" class="btn-volver">Volver</a>
 </div>
 

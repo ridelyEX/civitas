@@ -33,7 +33,7 @@ class WsDomicilios:
     def __init__(
             self,
             base_url: str = "https://wsdomicilios.mpiochih.gob.mx/WSDomicilios",
-            mock_mode: bool = False,  # 
+            mock_mode: bool = False,
             windows_user: str = None,
             windows_password: str = None
     ):
@@ -70,7 +70,7 @@ class WsDomicilios:
         Obtiene token de autenticación.
         """
 
-        # 🎭 Si está en modo mock, generar token simulado
+        # Si está en modo mock, generar token simulado
         if self.mock_mode:
             self.token = "mock_token_development_12345"
             self.token_vigencia = "2025-12-31 23:59:59"
@@ -101,7 +101,7 @@ class WsDomicilios:
             logger.debug(f"Response status: {response.status_code}")
             logger.debug(f"Response headers: {dict(response.headers)}")
 
-            # 🔴 Si obtenemos 401, activar modo mock
+            # Si obtenemos 401, activar modo mock
             if response.status_code == 401:
                 logger.error(" Error 401 - Autenticación de Windows requerida")
                 logger.warning(" Activando modo MOCK para continuar desarrollo")
@@ -125,22 +125,22 @@ class WsDomicilios:
 
             return True
 
-        except Timeout:  # 🔧 Corregido
+        except Timeout:
             logger.error(" Timeout al obtener token")
             logger.warning(" Activando modo MOCK")
             return self._activate_mock_mode()
-        except ConnectionError as e:  # 🔧 Corregido
+        except ConnectionError as e:
             logger.error(f" Error de conexión: {e}")
             logger.warning(" Activando modo MOCK")
             return self._activate_mock_mode()
-        except HTTPError as e:  # 🔧 Corregido
+        except HTTPError as e:
             logger.error(f" Error HTTP {response.status_code}")
             if response.status_code == 401:
                 logger.error(" SOLUCIÓN: Necesitas credenciales de Windows válidas")
                 logger.error(" Contacta al administrador del servidor")
             logger.warning(" Activando modo MOCK")
             return self._activate_mock_mode()
-        except RequestException as e:  # 🔧 Corregido
+        except RequestException as e:
             logger.error(f" Error en la petición: {e}")
             logger.warning(" Activando modo MOCK")
             return self._activate_mock_mode()
@@ -156,7 +156,7 @@ class WsDomicilios:
             return self._activate_mock_mode()
 
     def _activate_mock_mode(self) -> bool:
-        """🎭 Activa el modo mock automáticamente"""
+        """ Activa el modo mock automáticamente"""
         logger.info("=" * 60)
         logger.info("MODO SIMULACIÓN ACTIVADO AUTOMÁTICAMENTE")
         logger.info("Razón: No hay acceso al servicio web real")
@@ -186,7 +186,7 @@ class WsDomicilios:
             logger.error("No hay token disponible")
             return None
 
-        # 🎭 Si estamos en modo mock, devolver respuesta simulada
+        # Si estamos en modo mock, devolver respuesta simulada
         if self.mock_mode:
             return self._mock_response(url, **kwargs)
 
@@ -207,7 +207,7 @@ class WsDomicilios:
             response.raise_for_status()
             return response
 
-        except RequestException as e:  # 🔧 Corregido
+        except RequestException as e:
             logger.error(f"Error en petición {method} {url}: {e}")
             return None
 
@@ -257,7 +257,7 @@ class WsDomicilios:
         mock_response.json.return_value = mock_data
         mock_response.text = json.dumps(mock_data)
 
-        logger.debug(f"🎭 Mock response para {url}")
+        logger.debug(f"Mock response para {url}")
         return mock_response
 
     def get_colonias(self) -> Optional[List[Dict[str, Any]]]:
@@ -399,7 +399,7 @@ class WsDomicilios:
             "calle": calle_info,
             "numeros_exteriores": numeros,
             "total_numeros": len(numeros) if numeros else 0,
-            "mock_mode": self.mock_mode  # 🆕
+            "mock_mode": self.mock_mode
         }
 
     def test_connection(self) -> bool:
@@ -412,6 +412,6 @@ class WsDomicilios:
             response = self.session.get(self.base_url, timeout=5)
             logger.info(f" Test conectividad - Status: {response.status_code}")
             return response.status_code < 400
-        except RequestException as e:  # 🔧 Corregido
+        except RequestException as e:
             logger.error(f" Error de conectividad: {e}")
             return False
