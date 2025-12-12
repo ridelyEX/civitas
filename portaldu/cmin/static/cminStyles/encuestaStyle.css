@@ -143,3 +143,27 @@
 .btn-ver:hover {
     background: #138496;
     }
+
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    }
+
+.btn-volver:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    color: white;
+    }
+
+.actions-container {
+    margin-top: 2rem;
+    text-align: center;
+    }

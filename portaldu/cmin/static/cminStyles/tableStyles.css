@@ -202,7 +202,9 @@
 
 /* Secciones de Ver y Seguimiento con mayor separación */
 .ver,
-.seguimiento {
+.seguimiento,
+.reportes,
+.reporteria {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 0.75rem;
     padding: 2rem;
@@ -223,15 +225,27 @@
     margin-top: 3rem;
 }
 
+.reportes {
+    margin-top: 3rem;
+}
+
+.reporteria {
+    margin-top: 3rem;
+}
+
 .ver:hover,
-.seguimiento:hover {
+.seguimiento:hover,
+.reportes:hover,
+.reporteria:hover {
     transform: translateX(5px);
     box-shadow: var(--hover-shadow);
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
 .ver::before,
-.seguimiento::before {
+.seguimiento::before,
+.reportes:before,
+.reporteria:before {
     content: '';
     position: absolute;
     top: 0;
@@ -243,7 +257,9 @@
 }
 
 .ver:hover::before,
-.seguimiento:hover::before {
+.seguimiento:hover::before,
+.reportes:hover::before,
+.reporteria:hover::before {
     width: 8px;
 }
 
