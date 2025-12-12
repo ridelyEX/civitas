@@ -2,7 +2,9 @@
 {% load static %}
 
 {% block head %}
-    <link rel="stylesheet" href="{% static 'cminStyles/encuestaStyle.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/form-cards.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'cminStyles/detalleStyle.css' %}">
     <title>Detalle Encuesta {{ encuesta.encuesta_ID }}</title>
 {% endblock %}
 
@@ -10,30 +12,105 @@
 {% include 'navmin.html' %}
 
 <div class="detalle-container">
-    <h2>Detalle de Encuesta #{{ encuesta.encuesta_ID }}</h2>
-
-    <div class="info-grid">
-        <div class="info-item"><strong>Escuela:</strong> {{ encuesta.escuela }}</div>
-        <div class="info-item"><strong>Colonia:</strong> {{ encuesta.colonia }}</div>
-        <div class="info-item"><strong>Rol social:</strong> {{ encuesta.rol_social }}</div>
-        <div class="info-item"><strong>Género:</strong> {{ encuesta.genero }}</div>
-        <div class="info-item"><strong>Nivel escolar:</strong> {{ encuesta.nivel_escolar }}</div>
-        <div class="info-item"><strong>Pertenece a comunidad indígena:</strong> {{ encuesta.comunidad_indigena }}</div>
-        <div class="info-item"><strong>Comunidad indígena:</strong> {{ encuesta.otr_comunidad_indigena }}</div>
-        <div class="info-item"><strong>Pertenece a grupo vulnerable:</strong> {{ encuesta.grupo_vulnerable }}</div>
-        <div class="info-item"><strong>Grupo vulnerable:</strong> {{ encuesta.otro_grupo_vulnerable }}</div>
-        <div class="info-item"><strong>Proyecto:</strong> {{ encuesta.tipo_proyecto }}</div>
-
-        <h3>Respuestas</h3>
-        {% for key, value in preguntas.items %}
-        <div class="info-item">
-            <strong>{{ value.0 }}</strong> {{ value.1 }}
-        </div>
-        {% endfor %}
-
-        <div class="info-item"><strong>Fecha:</strong> {{ encuesta.fecha_respuesta }}</div>
+    <div class="detalle-header">
+        <h2><i class="fas fa-clipboard-list"></i>Detalle de Encuesta #{{ encuesta.encuesta_ID }}</h2>
     </div>
-    <a href="{% url 'encuestas' %}" class="btn-volver">Volver</a>
+
+    <!-- Información General -->
+    <div class="info-card">
+        <div class="info-card-header">
+            <h3><i class="fas fa-user"></i>Información del Encuestado</h3>
+        </div>
+        <div class="info-card-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Escuela</strong>
+                    <span>{{ encuesta.escuela|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Colonia</strong>
+                    <span>{{ encuesta.colonia|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Rol Social</strong>
+                    <span>{{ encuesta.rol_social|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Género</strong>
+                    <span>{{ encuesta.genero|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Nivel Escolar</strong>
+                    <span>{{ encuesta.nivel_escolar|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Proyecto</strong>
+                    <span>{{ encuesta.tipo_proyecto|default:"Sin respuesta" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Comunidad -->
+    <div class="info-card">
+        <div class="info-card-header">
+            <h3><i class="fas fa-users"></i>Información de Comunidad</h3>
+        </div>
+        <div class="info-card-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Pertenece a comunidad indígena</strong>
+                    <span>{{ encuesta.comunidad_indigena|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Comunidad Indígena</strong>
+                    <span>{{ encuesta.otr_comunidad_indigena|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Pertenece a grupo vulnerable</strong>
+                    <span>{{ encuesta.grupo_vulnerable|default:"Sin respuesta" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Grupo Vulnerable</strong>
+                    <span>{{ encuesta.otro_grupo_vulnerable|default:"Sin respuesta" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Respuestas -->
+    <div class="info-card">
+        <div class="info-card-header">
+            <h3><i class="fas fa-question-circle"></i>Respuestas de la Encuesta</h3>
+        </div>
+        <div class="info-card-content">
+            {% for key, value in preguntas.items %}
+            <div class="pregunta-item">
+                <strong>{{ value.0 }}</strong>
+                <div class="respuesta">{{ value.1 }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Fecha -->
+    <div class="info-card">
+        <div class="info-card-header">
+            <h3><i class="fas fa-calendar-alt"></i>Información de Registro</h3>
+        </div>
+        <div class="info-card-content">
+            <div class="info-item">
+                <strong>Fecha de Respuesta</strong>
+                <span>{{ encuesta.fecha_respuesta|default:"Sin respuesta" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions-container">
+        <a href="{% url 'encuestas' %}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i>Volver
+        </a>
+    </div>
 </div>
 
 {% endblock %}
