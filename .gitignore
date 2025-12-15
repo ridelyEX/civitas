@@ -9,6 +9,7 @@ vrtl/
 VinculacionSocial/
 civitas/portaldu/desUr/static/videos/fondo.mp4
 media/
+.venv/
 
 # Archivos de desarrollo y pruebas
 analyze_size.py
@@ -37,6 +38,7 @@ logs/*.log
 Thumbs.db
 
 # Static files collected (producción)
+staticfiles/
 
 # Certificados SSL (si los usas localmente)
 *.crt
