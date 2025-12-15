@@ -58,7 +58,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-+1cgdo&)u_qlg()^r5ukuyo7s*w%v=#(dxbuck2jq6uwfqejuu')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Configuración segura de hosts permitidos
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,10.218.33.153,*').split(',') if not DEBUG else ['*']
