@@ -1748,8 +1748,8 @@ def validar_datos(post_data):
     sexo = post_data.get('sexo', '').strip()
     if not sexo:
         errors.append("El sexo es obligatorio")
-    elif sexo not in ['mujer', 'hombre', 'M', 'H', 'Masculino', 'Femenino']:
-        errors.append("El sexo debe ser M (Mujer) o H (Hombre)")
+    elif sexo not in ['M', 'F', 'Masculino', 'Femenino']:
+        errors.append("El sexo debe ser M (Masculino) o F (Femenino)")
 
     # Validar dirección
     direccion = post_data.get('dir', '').strip()

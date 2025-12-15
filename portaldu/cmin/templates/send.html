@@ -141,7 +141,7 @@
                         <a href="{{ solicitud.doc_FK.finalDoc.url }}" target="_blank">Ver documento</a>
                         <div class="Ibottom">
                             {% if solicitud.seguimiento_set.count %}
-                            <p>✅ Con seguimiento ({{ solicitud.seguimiento_set.count }})</p>
+                            <p>Con seguimiento ({{ solicitud.seguimiento_set.count }})</p>
                             <form method="post" style="display: inline;">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="finish">
@@ -153,7 +153,7 @@
                             <a href="{{ solicitud.seguimiento_set.last.documento.url }}" target="_blank" class="send">Ver último seguimiento</a>
 
                             {% else %}
-                            <p>⏳ Sin seguimiento</p>
+                            <p>Sin seguimiento</p>
                             <form method="post" style="display: inline;">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="finish">

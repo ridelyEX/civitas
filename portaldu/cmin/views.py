@@ -584,6 +584,7 @@ def sendMail(request):
         msg = request.POST.get('mensaje')
         prioridad = request.POST.get('prioridad', '')
         usuario = request.POST.get('usuario', '')
+        categoria = request.POST.get('categorias', '')
 
         usuario_fk = None
 
@@ -683,6 +684,7 @@ def sendMail(request):
                     folio=folio,
                     prioridad=prioridad,
                     usuario_asignado=usuario_fk,
+                    categoria=categoria,
                 )
                 messages.success(request, f"Correo enviado correctamente a {correo_destino}")
                 logger.debug("Correo enviado exitosamente")
