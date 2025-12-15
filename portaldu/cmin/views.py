@@ -868,6 +868,75 @@ def get_excel(request):
         - Personaliza formatos y estructuras de acuerdo a requerimientos
         - Manejo de errores y logging de eventos
     """
+
+    modelos = [
+        {
+            'key': 'ciudadanos',
+            'nombre': 'Ciudadanos',
+            'modelo': data,
+            'campos': {
+                'data_ID': 'ID del ciudadano',
+                'fuuid': 'UUID',
+                'nombre': 'Nombre',
+                'pApe': 'Apellido Paterno',
+                'mApe': 'Apellido Materno',
+                'bDay': 'Fecha de nacimiento',
+                'tel': 'Teléfono',
+                'curp': 'CURP',
+                'sexo': 'Género',
+                'asunto': 'Asunto',
+                'dirr': 'Dirección',
+                'disc': 'Discapacidad',
+                'etnia': 'Etnia',
+                'vul': 'Grupo vulnerable',
+            },
+        },
+        {
+            'key': 'solicitudes',
+            'nombre': 'Solicitudes',
+            'modelo': soli,
+            'campos': {
+                'soli_ID': 'ID de la solicitud',
+                'data_ID__fuuid': 'UUID del ciudadano',
+                'processed_by': 'Procesado por',
+                'dirr': 'Dirección',
+                'descc': 'Descripción',
+                'fecha': 'Fecha de creación',
+                'info': 'Información adicional',
+                'puo': 'P.U.O',
+                'folio': 'Folio',
+            }
+        },
+        {
+            'key': 'pendientes',
+            'nombre': 'Solicitudes Pendientes',
+            'modelo': SolicitudesPendientes,
+            'campos': {
+                'solicitud_ID': 'ID de la solicitud pendiente',
+                'nomSolicitud': 'Nombre de la solicitud',
+                'fechaSolicitud': 'Fecha de la solicitud',
+                'destinatario': 'Destinatario',
+            },
+        },
+        {
+            'key': 'enviadas',
+            'nombre': 'Solicitudes Enviadas',
+            'modelo': SolicitudesEnviadas,
+            'campos': {
+                'solicitud_ID': 'ID de la solicitud enviada',
+                'user_FK__username': 'Usuario que envió',
+                'doc_FK': 'Documento asociado',
+                'solicitud_FK': 'Solicitud pendiente asociada',
+                'usuario_asignado__username': 'Usuario asignado',
+                'folio': 'Folio',
+                'categoria': 'Categoría',
+                'prioridad': 'Prioridad',
+                'estado': 'Estado',
+                'fechaEnvio': 'Fecha de envío',
+            },
+        }
+    ]
+
     if request.method == 'POST':
         try:
             response = HttpResponse(
@@ -880,93 +949,28 @@ def get_excel(request):
             with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
                 manager.create_formats(writer.book)
 
-                modelos = [
-                    {
-                        'nombre': 'Ciudadanos',
-                        'modelo': data,
-                        'campos': None,
-                        'columns': {
-                            'data_ID': 'ID del ciudadano',
-                            'fuuid': 'UUID',
-                            'nombre': 'Nombre',
-                            'apellidoP': 'Apellido Paterno',
-                            'apellidoM': 'Apellido Materno',
-                            'curp': 'CURP',
-                            'bDay': 'Fecha de nacimiento',
-                            'sexo': 'Género',
-                            'asunto': 'Asunto',
-                            'tel': 'Teléfono',
-                            'dirr': 'Dirección',
-                            'disc': 'Discapacidad',
-                            'etnia': 'Etnia',
-                            'vul': 'Grupo vulnerable',
-                        },
-                    },
-                    {
-                        'nombre': 'Solicitudes',
-                        'modelo': soli,
-                        'campos': ['soli_ID', 'data_ID__fuuid', 'processed_by', 'dirr', 'descc', 'fecha', 'info', 'puo', 'folio'],
-                        'columns': {
-                            'soli_ID': 'ID de la solicitud',
-                            'data_ID__fuuid': 'UUID del ciudadano',
-                            'processed_by': 'Procesado por',
-                            'dirr': 'Dirección',
-                            'descc': 'Descripción',
-                            'fecha': 'Fecha de creación',
-                            'info': 'Información adicional',
-                            'puo': 'P.U.O',
-                            'folio': 'Folio',
-                        }
-                    },
-                    {
-                        'nombre': 'Solicitudes Pendientes',
-                        'modelo': SolicitudesPendientes,
-                        'campos': ['solicitud_ID', 'nomSolicitud', 'fechaSolicitud', 'destinatario'],
-                        'columns': {
-                            'solicitud_ID': 'ID de la solicitud pendiente',
-                            'nomSolicitud': 'Nombre de la solicitud',
-                            'fechaSolicitud': 'Fecha de la solicitud',
-                            'destinatario': 'Destinatario',
-                        },
-                    },
-                    {
-                        'nombre': 'Solicitudes Enviadas',
-                        'modelo': SolicitudesEnviadas,
-                        'campos': ['solicitud_ID', 'user_FK__username', 'doc_FK', 'solicitud_FK', 'usuario_asignado__username', 'folio', 'categoria', 'prioridad', 'estado', 'fechaEnvio'],
-                        'columns': {
-                            'solicitud_ID': 'ID de la solicitud enviada',
-                            'user_FK__username': 'Usuario que envió',
-                            'doc_FK': 'Documento asociado',
-                            'solicitud_FK': 'Solicitud pendiente asociada',
-                            'usuario_asignado__username': 'Usuario asignado',
-                            'folio': 'Folio',
-                            'categoria': 'Categoría',
-                            'prioridad': 'Prioridad',
-                            'estado': 'Estado',
-                            'fechaEnvio': 'Fecha de envío',
-                        },
-                    }
-                ]
 
                 # Procesar cada modelo y generar hojas en el Excel
                 for config in modelos:
+                    modelo_key = config['key']
+                    if not request.POST.get(f'incluir_{modelo_key}'):
+                        continue
+
+                    campos_seleccionados = request.POST.getlist(f"campos_{modelo_key}")
+                    if not campos_seleccionados:
+                        continue
+
                     try:
-                        if config['campos']:
-                            queryset = config['modelo'].objects.values(*config['campos'])
-                        else:
-                            queryset = config['modelo'].objects.values()
+                       queryset = config['modelo'].objects.values(*campos_seleccionados)
+                       df = pd.DataFrame(list(queryset))
 
-                        df = pd.DataFrame(list(queryset))
-
-                        if not df.empty:
-                            rename_dict = {k: v for k, v in config['columns'].items()
-                                           if k in df.columns}
-
-                            df.rename(columns=rename_dict, inplace=True)
-
-                            manager.process_sheet(df, config['nombre'], writer)
-                        else:
-                            logger.warning(f"No hay datos para exportar en {config['nombre']}")
+                       if not df.empty:
+                           rename_dict = {k: v for k, v in config['campos'].items()
+                                          if k in campos_seleccionados}
+                           df.rename(columns=rename_dict, inplace=True)
+                           manager.process_sheet(df, config['nombre'], writer)
+                       else:
+                           logger.warning(f"No hay datos en el modeo {config['nombre']}")
 
                     except Exception as e:
                         logger.error(f"Error en {config['nombre']}: {str(e)}")
@@ -979,7 +983,11 @@ def get_excel(request):
             messages.error(request, f"Error al generar el archivo excel: {str(e)}")
             return redirect('menu')
 
-    return render(request, 'excel/import_xlsx.html')
+    context = {
+        'modelos': modelos,
+    }
+
+    return render(request, 'excel/import_xlsx.html', context)
 
 #End excel
 

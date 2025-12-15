@@ -5,13 +5,142 @@
 {% block head %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
-    <link rel="stylesheet" href="{% static 'cminStyles/tableStyles.css' %}">
+    <link rel="stylesheet" href="{% static 'cminStyles/excelStyle.css' %}?v=1">
 {% endblock %}
 
 {% block content %}{% include 'navmin.html' %}
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">excel</button>
-</form>
+<div class="export-container">
+    <div class="export-header">
+        <h1>Generar Reporte Excel</h1>
+        <p>Selecciona los modelos y campos que deseas incluir en tu reporte</p>
+    </div>
 
+    <div class="alerta-info">
+        <strong>Tip:</strong> Activa los modelos que necesitas y selecciona los campos específicos para personalizar tu reporte.
+    </div>
+
+    <form method="post" id="exportForm">
+        {% csrf_token %}
+
+        {% for modelo in modelos %}
+        <div class="modelo-card">
+            <div class="modelo-header">
+                <h3>{{ modelo.nombre }}</h3>
+                <div class="modelo-toggle">
+                    <label for="incluir_{{ modelo.key }}">Incluir</label>
+                    <input type="checkbox"
+                           name="incluir_{{ modelo.key }}"
+                           id="incluir_{{ modelo.key }}"
+                           value="1"
+                           onchange="toggleModeloBody('{{ modelo.key }}')">
+                </div>
+            </div>
+            <div class="modelo-body" id="body_{{ modelo.key }}">
+                <div class="acciones-campos">
+                    <button type="button" class="btn-seleccionar todos"
+                            onclick="seleccionarTodos('{{ modelo.key }}', true)">
+                        ✓ Seleccionar todos
+                    </button>
+                    <button type="button" class="btn-seleccionar ninguno"
+                            onclick="seleccionarTodos('{{ modelo.key }}', false)">
+                        ✗ Deseleccionar todos
+                    </button>
+                    <span class="contador-seleccion" id="contador_{{ modelo.key }}">
+                        0 de {{ modelo.campos|length }} campos seleccionados
+                    </span>
+                </div>
+                <div class="campos-grid">
+                    {% for campo_key, campo_nombre in modelo.campos.items %}
+                    <div class="campo-item">
+                        <input type="checkbox"
+                               name="campos_{{ modelo.key }}"
+                               id="campo_{{ modelo.key }}_{{ campo_key }}"
+                               value="{{ campo_key }}"
+                               class="campo-checkbox-{{ modelo.key }}"
+                               onchange="actualizarContador('{{ modelo.key }}', {{ modelo.campos|length }})">
+                        <label for="campo_{{ modelo.key }}_{{ campo_key }}">
+                            {{ campo_nombre }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="submit-section">
+            <button type="submit" class="btn-generar" id="btnGenerar">
+                Generar y Descargar Excel
+            </button>
+            <p class="contador-seleccion" id="contadorGeneral">
+                Selecciona al menos un modelo con campos para generar el reporte
+            </p>
+        </div>
+    </form>
+    <div class="actions-container">
+        <a href="{% url 'menu' %}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i>Volver
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer %}
+<script>
+    function toggleModeloBody(modeloKey) {
+    const checkbox = document.getElementById('incluir_' + modeloKey);
+    const body = document.getElementById('body_' + modeloKey);
+
+    if (checkbox.checked) {
+        body.classList.add('active');
+    } else {
+        body.classList.remove('active');
+        seleccionarTodos(modeloKey, false);
+    }
+    actualizarBotonGenerar();
+}
+
+function seleccionarTodos(modeloKey, seleccionar) {
+    const checkboxes = document.querySelectorAll('.campo-checkbox-' + modeloKey);
+    checkboxes.forEach(cb => cb.checked = seleccionar);
+    const total = document.querySelectorAll('.campo-checkbox-' + modeloKey).length;
+    actualizarContador(modeloKey, total);
+}
+
+function actualizarContador(modeloKey, total) {
+    const checkboxes = document.querySelectorAll('.campo-checkbox-' + modeloKey + ':checked');
+    const contador = document.getElementById('contador_' + modeloKey);
+    contador.textContent = checkboxes.length + ' de ' + total + ' campos seleccionados';
+    actualizarBotonGenerar();
+}
+
+function actualizarBotonGenerar() {
+    const btnGenerar = document.getElementById('btnGenerar');
+    const contadorGeneral = document.getElementById('contadorGeneral');
+
+    let totalCamposSeleccionados = 0;
+    let modelosActivos = 0;
+
+    {% for modelo in modelos %}
+    const incluir_{{ modelo.key }} = document.getElementById('incluir_{{ modelo.key }}');
+    if (incluir_{{ modelo.key }} && incluir_{{ modelo.key }}.checked) {
+        modelosActivos++;
+        const campos = document.querySelectorAll('.campo-checkbox-{{ modelo.key }}:checked');
+        totalCamposSeleccionados += campos.length;
+    }
+    {% endfor %}
+
+    if (modelosActivos > 0 && totalCamposSeleccionados > 0) {
+        btnGenerar.disabled = false;
+        contadorGeneral.textContent = modelosActivos + ' modelo(s) con ' + totalCamposSeleccionados + ' campo(s) seleccionado(s)';
+    } else {
+        btnGenerar.disabled = true;
+        contadorGeneral.textContent = 'Selecciona al menos un modelo con campos para generar el reporte';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', actualizarBotonGenerar);
+</script>
+<script src="{% static 'cminScripts/cminBtns.js' %}"></script>
 {% endblock %}
