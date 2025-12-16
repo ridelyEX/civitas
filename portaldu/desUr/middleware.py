@@ -42,7 +42,7 @@ class SessionExpiryMiddleware:
 
         if not request.user.is_authenticated:
             messages.warning(request,
-                             "la sesión ha expirado. Por favor, inicie sesión nuevamente.")
+                             "La sesión ha expirado. Por favor, inicie sesión nuevamente.")
             return redirect(f"{reverse('login')}?next={request.path}")
 
         response = self.get_response(request)

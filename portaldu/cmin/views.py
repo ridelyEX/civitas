@@ -1302,11 +1302,11 @@ def detalle_encuesta(request, encuesta_id):
 
         def convertir_respuesta(valor):
             respuestas = {
-                '1': 'Totalmente en desacuerdo',
-                '2': 'En desacuerdo',
-                '3': 'Ni de acuedo ni en desacuerdo',
-                '4': 'De acuerdo',
-                '5': 'Totalmente de acuerdo',
+                '0': 'Totalmente en desacuerdo',
+                '1': 'En desacuerdo',
+                '2': 'Ni de acuerdo ni en desacuerdo',
+                '3': 'De acuerdo',
+                '4': 'Totalmente de acuerdo',
             }
             return respuestas.get(str(valor), valor)
 
@@ -1325,17 +1325,17 @@ def detalle_encuesta(request, encuesta_id):
             'pregunta_6': ('¿La obra ha mejorado el bienestar y/o calidad de vida o seguridad de niñas, niños y adolescentes o al grupo al que perteneces?', convertir_respuesta(encuesta.pregunta_6)),
             'pregunta_7': ('¿Crees que se pensó en las y los niños, niñas, jóvenes y/o personas vulnerables al hacer la obra?', convertir_respuesta(encuesta.pregunta_7)),
             'pregunta_8': ('¿Consideras que existen suficientes espacios seguros y adecuados para que niños, niñas y adolescentes jueguen o se expresen en tu comunidad?', convertir_respuesta(encuesta.pregunta_8)),
-            'pregunta_9': ('¿Los servicions de alud y educación son accesibles para los niños y adolescentes en tu colonia?', convertir_respuesta(encuesta.pregunta_9)),
+            'pregunta_9': ('¿Los servicios de alud y educación son accesibles para los niños y adolescentes en tu colonia?', convertir_respuesta(encuesta.pregunta_9)),
             'pregunta_10': ('¿Te sientes seguro(a) al caminar por tu colonia?', convertir_respuesta(encuesta.pregunta_10)),
-            'pregunta_11': ('¿Es fácil moverte por la ciudad, como caminar, ir en bicibleta o transporte público?', convertir_respuesta(encuesta.pregunta_11)),
-            'pregunta_12': ('¿Cuáles consiederas que son las necesidades más urgentes de tu comunidad? (Marcar hasta tres opciones)', convertir_respuesta(encuesta.pregunta_12)),
+            'pregunta_11': ('¿Es fácil moverte por la ciudad, como caminar, ir en bicicleta o transporte público?', convertir_respuesta(encuesta.pregunta_11)),
+            'pregunta_12': ('¿Cuáles consideras que son las necesidades más urgentes de tu comunidad? (Marcar hasta tres opciones)', convertir_respuesta(encuesta.pregunta_12)),
             'otro_pregunta_12': ('Otras necesidades', get_value(encuesta.otro_pregunta_12)),
             'pregunta_13': ('¿Sabías que puedes proponer proyectos comunitarios y votar por ellos?', convertir_respuesta(encuesta.pregunta_13)),
             'pregunta_14': ('¿Conoces cuales son los espacios o formas para expresar las necesidades de tu colonia?', convertir_respuesta(encuesta.pregunta_14)),
             'pregunta_15': ('¿Qué fue lo mejor que trajo la obra pública evaluada?', encuesta.pregunta_15),
             'otro_pregunta_15': ('Otro beneficio', get_value(encuesta.otro_pregunta_15)),
             'pregunta_16': ('¿Qué mejorarías o cambiarías de esa obra?', encuesta.pregunta_16),
-            'pregunta_17': ('Si pudieras enviarle un mensaje al alcalde Marco Bonilla sobre las obras públicas, ¿que le dirías?', get_value(encuesta.pregunta_17)),
+            'pregunta_17': ('Si pudieras enviarle un mensaje al alcalde Marco Bonilla sobre las obras públicas, ¿qué le dirías?', get_value(encuesta.pregunta_17)),
         }
 
         context = {
