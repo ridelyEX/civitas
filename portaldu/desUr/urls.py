@@ -138,7 +138,7 @@ urlpatterns = [
     # Generación de documento PDF de Presupuesto Participativo
     # GET - Genera PDF según categoría guardada en session
     # Guarda archivo en PpFiles y muestra confirmación
-    # Folio format: GOP-CPP-#####-XXXX/YY
+    # Folio format: DOP-CPP-#####-XXXX/YY
     # Template: documet/save.html (confirmación)
     path('pp/document', views.pp_document, name='pp_document'),
 

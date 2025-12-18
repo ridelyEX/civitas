@@ -1,8 +1,8 @@
-# 🏛️ AGEO - Sistema Integrado de Gestión de Trámites Ciudadanos
+# AGEO - Sistema Integrado de Gestión de Trámites Ciudadanos
 
 **Versión**: 1.0.0  
-**Proyecto**: AGEO 2025  
-**Framework**: Django 4.2+ | Python 3.10+  
+**Proyecto**: AGEO 2025
+**Framework**: Django 4.2+ | Python 3.11+
 **Estado**: Producción
 
 ---
@@ -37,7 +37,7 @@
 **Atención ciudadana** presencial y en campo  
 **Presupuesto participativo** con 5 categorías de proyectos  
 **Generación automática** de documentos PDF oficiales  
-**Gestión de licitaciones** de obra pública <!--✅ **Geolocalización** de proyectos y problemas reportados-->  
+**Gestión de licitaciones** de obra pública <!-- **Geolocalización** de proyectos y problemas reportados-->  
 **APIs REST** para integración con aplicaciones externas  
 **Documentación automática** de APIs con Swagger/ReDoc  
 **Sistema de autenticación unificado** con roles y permisos  
@@ -47,15 +47,18 @@
 
 | Categoría           | Tecnología                                          |
 |---------------------|-----------------------------------------------------|
-| **Backend**         | Django 4.2+, Django REST Framework                  |
-| **Base de Datos**   | MySQL (desarrollo), MySQL (producción)              |
-| **Frontend**        | HTML5, CSS3, JavaScript, Bootstrap 5                |
-| **PDF Generation**  | WeasyPrint                                          |
-| **APIs**            | DRF, drf-yasg (Swagger)                             |
-| **Geolocalización** | OpenStreetMap, Leaflet.js, WSDomicilios Municipales |
-| **Autenticación**   | Django Auth, Session-based                          |
-| **Async Tasks**     | Celery (opcional)                                   |
-| **Servidor**        | Nginx, Ubuntu server 22                             |
+| **Backend**         | Django 5.0, Django REST Framework 3.16.1            |
+| **Base de Datos**   | MySQL 8.0+ con mysqlclient 2.2.7                    |
+| **Frontend**        | HTML5, CSS3, JavaScript, Bootstrap 5.25             |
+| **PDF Generation**  | WeasyPrint 66.0                                     |
+| **APIs**            | DRF 3.16.1, drf-yasg 1.21.11 (Swagger), JWT 5.5.1   |
+| **Geolocalización** | ArcGIS Server Local, OpenStreetMap, WSDomicilios    |
+| **Autenticación**   | Django Auth + Backend personalizado, Session-based  |
+| **Async Tasks**     | Celery 5.5.3, Redis 6.4.0, django-celery-beat 2.8.1 |
+| **Servidor**        | Gunicorn 23.0.0, Nginx, Ubuntu Server 22.04         |
+| **Cache**           | Redis 6.4.0, django-redis 6.0.0                     |
+| **Monitoreo**       | Sentry SDK 2.42.0                                   |
+| **Seguridad**       | django-cors-headers 4.9.0, cryptography 46.0.3      |
 
 ---
 
@@ -114,7 +117,7 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 
 ---
 
-## 🔧 Módulos del Sistema
+## Módulos del Sistema
 
 ### CMIN - Módulo de dministración de AGEO
 
@@ -212,20 +215,20 @@ Usuario → Login → Validación → Roles → Módulo correspondiente
 
 #### Tipos de Proceso (PUO)
 
-| Código | Descripción                          | Formato Folio |
-|--------|--------------------------------------|---------------|
-| `OFI` | Oficio                               | GOP-OFI-#####-XXXX/YY |
-| `CRC` | CRC                                  | GOP-CRC-#####-XXXX/YY |
-| `MEC` | Marca el cambio                      | GOP-MEC-#####-XXXX/YY |
-| `DLO` | Diputado Local                       | GOP-DLO-#####-XXXX/YY |
-| `DFE` | Diputado Federal                     | GOP-DFE-#####-XXXX/YY |
-| `REG` | Regidores                            | GOP-REG-#####-XXXX/YY |
-| `DEA` | Despacho del Alcalde                 | GOP-DEA-#####-XXXX/YY |
-| `EVA` | Evento con el Alcalde                | GOP-EVA-#####-XXXX/YY |
-| `PED` | Presencial en Dirección              | GOP-PED-#####-XXXX/YY |
-| `VIN` | Vinculación                          | GOP-VIN-#####-XXXX/YY |
-| `PPA` | Presupuesto Participativo            | GOP-PPA-#####-XXXX/YY |
-| `CPC` | Coordinación Participación Ciudadana | GOP-CPC-#####-XXXX/YY |
+| Código | Descripción                          | Formato Folio         |
+|--------|--------------------------------------|-----------------------|
+| `OFI` | Oficio                               | DOP-OFI-#####-XXXX/YY |
+| `CRC` | CRC                                  | DOP-CRC-#####-XXXX/YY |
+| `MEC` | Marca el cambio                      | DOP-MEC-#####-XXXX/YY |
+| `DLO` | Diputado Local                       | DOP-DLO-#####-XXXX/YY |
+| `DFE` | Diputado Federal                     | DOP-DFE-#####-XXXX/YY |
+| `REG` | Regidores                            | DOP-REG-#####-XXXX/YY |
+| `DEA` | Despacho del Alcalde                 | DOP-DEA-#####-XXXX/YY |
+| `EVA` | Evento con el Alcalde                | DOP-EVA-#####-XXXX/YY |
+| `PED` | Presencial en Dirección              | DOP-PED-#####-XXXX/YY |
+| `VIN` | Vinculación                          | DOP-VIN-#####-XXXX/YY |
+| `PPA` | Presupuesto Participativo            | DOP-PPA-#####-XXXX/YY |
+| `CPC` | Coordinación Participación Ciudadana | DOP-CPC-#####-XXXX/YY |
 
 ---
 
@@ -340,13 +343,112 @@ El proyecto incluye `setup_project.bat` para configuración automática:
 setup_project.bat
 ```
 
-Configuración dentro de un servidor Linux (ubunut) por medio de en
-un archivo de configuración en la carpeta de nginx y otro en la carpeta
-system
+### Configuración en Servidor Linux
 
+El sistema está diseñado para desplegarse en un servidor Ubuntu 22.04 con Nginx y Gunicorn. Se requieren dos archivos de configuración:
+
+#### 1. Configuración de Nginx
+
+Crear archivo en `/etc/nginx/sites-available/civitas`:
+
+```nginx
+server {
+    listen 80;
+    server_name tu-dominio.gob.mx www.tu-dominio.gob.mx;
+    
+    client_max_body_size 50M;
+    
+    location /static/ {
+        alias /home/usuario/civitas/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        add_header X-Content-Type-Options "nosniff";
+    }
+    
+    location /media/ {
+        alias /home/usuario/civitas/media/;
+        expires 7d;
+        add_header Cache-Control "public";
+        add_header X-Content-Type-Options "nosniff";
+    }
+    
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/civitas/civitas.sock;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+    }
+    
+    # Headers de seguridad
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+}
+
+# Habilitar el sitio
+# sudo ln -s /etc/nginx/sites-available/civitas /etc/nginx/sites-enabled/
+# sudo nginx -t
+# sudo systemctl reload nginx
+```
+
+#### 2. Servicio Systemd
+
+Crear archivo en `/etc/systemd/system/civitas.service`:
+
+```ini
+[Unit]
+Description=CIVITAS Django Application
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+User=usuario
+Group=www-data
+WorkingDirectory=/home/usuario/civitas
+Environment="PATH=/home/usuario/civitas/venv/bin"
+
+# Usar archivo de configuración de Gunicorn
+ExecStart=/home/usuario/civitas/venv/bin/gunicorn \
+    --config /home/usuario/civitas/gunicorn.conf.py \
+    civitas.wsgi:application
+
+# Reinicio automático
+Restart=on-failure
+RestartSec=5s
+
+# Límites de recursos
+LimitNOFILE=65536
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+
+# Comandos de gestión:
+# sudo systemctl daemon-reload
+# sudo systemctl enable civitas
+# sudo systemctl start civitas
+# sudo systemctl status civitas
+```
+
+#### 3. Configuración de Gunicorn
+
+El proyecto incluye `gunicorn.conf.py` con la configuración recomendada:
+
+```python
+bind = "unix:/run/civitas/civitas.sock"
+workers = 9
+threads = 2
+timeout = 120
+worker_class = "gthread"
+```
+
+**Nota**: Crear el directorio para el socket antes de iniciar:
 ```bash
-/etc/nginx/sites-available/civitas
-/etc/systemd/system/civitas.conf
+sudo mkdir -p /run/civitas
+sudo chown usuario:www-data /run/civitas
 ```
 
 ---
@@ -358,7 +460,7 @@ civitas/
 ├── civitas/                    # Configuración principal del proyecto
 │   ├── __init__.py
 │   ├── settings.py            # Configuraciones generales
-│   ├── urls.py                # URLs principales 
+│   ├── urls.py                # URLs principales
 │   ├── wsgi.py                # WSGI para deployment
 │   └── asgi.py                # ASGI para async
 │
@@ -374,15 +476,15 @@ civitas/
 │   │   ├── admin.py           # Configuración admin
 │   │   └── templates/         # Templates HTML
 │   │
-│   └── desUr/                  # Módulo AGEO 
+│   └── desUr/                  # Módulo AGEO
 │       ├── models.py          # Modelos: data, soli, Files, PpGeneral, etc.
-│       ├── views.py           # 70+ vistas 
-│       ├── api_views.py       # ViewSets API 
-│       ├── serializers.py     # 5 Serializers 
-│       ├── forms.py           # 10 Formularios 
-│       ├── urls.py            # 35+ URLs 
-│       ├── api_urls.py        # API REST 
-│       ├── auth.py            # Autenticación 
+│       ├── views.py           # 70+ vistas
+│       ├── api_views.py       # ViewSets API
+│       ├── serializers.py     # 5 Serializers
+│       ├── forms.py           # 10 Formularios
+│       ├── urls.py            # 35+ URLs
+│       ├── api_urls.py        # API REST
+│       ├── auth.py            # Autenticación
 │       ├── services.py        # LocalGISService
 |       ├── WsConfig.py        # WsConfig
 |       ├── WSDServices.py     # WsDomicilios
@@ -446,7 +548,7 @@ class Licitaciones:
     fecha_limite = DateField()
     monto_estimado = DecimalField()
     activa = BooleanField(default=True)
-    
+
 class LoginDate:
     """Registro de accesos al sistema"""
     date = DateTimeField(auto_now_add=True)
@@ -664,6 +766,827 @@ curl -X POST http://localhost:8000/api/ageo/soli/ \
 
 ---
 
+## Reportes y Estadísticas
+
+El sistema AGEO incluye un completo módulo de reportes y estadísticas para análisis de datos, monitoreo de operaciones y toma de decisiones. Todos los reportes están disponibles para usuarios con rol de **Administrador** o **Delegado**.
+
+### Tipos de Reportes Disponibles
+
+#### 1. Reporte Completo en Excel
+
+**Ruta**: `/cmin/importar/`  
+**Método**: POST  
+**Permisos**: Administrador, Delegado
+
+Genera un archivo Excel multi-hoja con datos completos del sistema.
+
+**Hojas incluidas**:
+
+1. **Ciudadanos**
+   - ID del ciudadano
+   - UUID de sesión
+   - Nombre completo (nombre, apellido paterno, apellido materno)
+   - Fecha de nacimiento
+   - Teléfono
+   - CURP
+   - Género
+   - Asunto (código DOP)
+   - Dirección completa
+   - Discapacidad
+   - Etnia
+   - Grupo vulnerable
+
+2. **Solicitudes**
+   - ID de la solicitud
+   - UUID del ciudadano
+   - Procesado por (usuario)
+   - Dirección del problema
+   - Descripción
+   - Fecha de creación
+   - Información adicional
+   - P.U.O (Tipo de proceso)
+   - Folio
+
+3. **Solicitudes Pendientes**
+   - ID de solicitud pendiente
+   - Nombre de la solicitud
+   - Fecha de solicitud
+   - Destinatario
+
+4. **Solicitudes Enviadas**
+   - ID de solicitud enviada
+   - Usuario que envió
+   - Documento asociado
+   - Solicitud pendiente asociada
+   - Usuario asignado
+   - Folio
+   - Categoría
+   - Prioridad (Alta/Media/Baja)
+   - Estado (pendiente/en_proceso/completado)
+   - Fecha de envío
+
+**Características del reporte**:
+- Selección de hojas a incluir mediante checkboxes
+- Selección de campos específicos por hoja
+- Formato automático de columnas (ancho optimizado)
+- Formato de fechas en formato DD/MM/YYYY
+- Headers con formato visual (fondo azul, texto blanco, centrado)
+- Cache de archivos estáticos de 30 días
+- Generación con pandas y xlsxwriter
+
+**Ejemplo de uso**:
+```python
+# La vista procesa formulario POST con campos seleccionados
+# y genera archivo Excel con nombre: reporte_completo.xlsx
+```
+
+#### 2. Panel de Seguimiento
+
+**Ruta**: `/cmin/seguimiento/`  
+**Método**: GET  
+**Permisos**: Administrador, Delegado
+
+Panel interactivo para monitoreo y seguimiento de solicitudes procesadas.
+
+**Estadísticas disponibles**:
+- **Total de solicitudes**: Contador general de solicitudes en el sistema
+- **Cerradas**: Solicitudes que han sido completadas y cerradas formalmente
+- **Activas**: Solicitudes aún en proceso (sin cierre)
+- **Con seguimiento**: Solicitudes que tienen al menos un registro de seguimiento
+
+**Filtros disponibles**:
+- **Búsqueda por texto**: 
+  - Nombre de solicitud
+  - Folio
+  - Destinatario
+- **Estado**:
+  - Cerrada
+  - Activa
+  - Con seguimiento
+  - Sin seguimiento
+- **Usuario**: Filtrar por usuario que envió la solicitud
+- **Prioridad**: Alta, Media, Baja
+- **Rango de fechas**: Desde - Hasta
+
+**Funcionalidades adicionales**:
+- Ver historial completo de seguimiento por solicitud
+- Agregar nuevos registros de seguimiento
+- Subir documentos de evidencia
+- Cerrar solicitudes (con o sin seguimiento previo)
+- Ver documentos asociados
+- Estadísticas en tiempo real
+
+#### 3. Bandeja de Entrada Personal
+
+**Ruta**: `/cmin/bandeja/`  
+**Método**: GET  
+**Permisos**: Todos los usuarios autenticados
+
+Panel personalizado que muestra solo las solicitudes asignadas al usuario logueado.
+
+**Estadísticas personales**:
+- **Total**: Todas las solicitudes asignadas al usuario
+- **Pendientes**: Solicitudes en espera de atención
+- **En proceso**: Solicitudes siendo trabajadas activamente
+- **Completadas**: Solicitudes finalizadas por el usuario
+
+**Filtros disponibles**:
+- **Estado**: pendiente, en_proceso, completado
+- **Prioridad**: Alta, Media, Baja
+
+**Funcionalidades**:
+- Cambio de estado de solicitudes vía AJAX
+- Visualización de evidencias agrupadas por solicitud
+- Actualización en tiempo real sin recargar página
+- Historial de seguimiento asociado
+- Notificaciones automáticas al cambiar estados
+
+**Flujo de actualización de estado**:
+```
+1. Usuario selecciona solicitud
+2. Cambia estado (pendiente → en_proceso → completado)
+3. Sistema registra cambio automáticamente
+4. Genera notificación al usuario asignador
+5. Actualiza estadísticas en tiempo real
+```
+
+#### 4. Consulta de Encuestas Móviles
+
+**Ruta**: `/cmin/encuestas/`  
+**Método**: GET  
+**Permisos**: Administrador, Delegado
+
+Sistema completo de análisis de encuestas recibidas desde aplicaciones móviles.
+
+**Estadísticas generales**:
+- **Total de encuestas**: Contador completo de encuestas recibidas
+- **Sincronizadas**: Encuestas procesadas correctamente
+- **No sincronizadas**: Encuestas pendientes de sincronización
+- **Completadas**: Encuestas con todas las respuestas
+- **Incompletas**: Encuestas parciales
+- **Por género**: Distribución de encuestas por género del encuestado
+
+**Filtros avanzados**:
+- **Búsqueda por texto**:
+  - Nombre de escuela
+  - Colonia
+  - UUID de encuesta
+- **Escuela**: Selección de escuela específica
+- **Colonia**: Filtro por colonia
+- **Rol social**: Estudiante, padre, maestro, etc.
+- **Género**: Masculino, femenino, otro
+- **Tipo de proyecto**: Categoría del proyecto evaluado
+- **Rango de fechas**: Fecha desde - Fecha hasta
+- **Estado de sincronización**: Sincronizada (1) o No sincronizada (0)
+- **Estado de completitud**: Completada (1) o Incompleta (0)
+
+**Datos visualizados por encuesta**:
+- UUID único
+- Fecha de respuesta
+- Escuela
+- Colonia
+- Rol social del encuestado
+- Género
+- Nivel escolar
+- Grado escolar
+- Comunidad indígena (si aplica)
+- Grupo vulnerable (si aplica)
+- Tipo de proyecto
+- 17 preguntas con respuestas (numéricas y texto)
+- Estado de sincronización
+- Estado de completitud
+- Foto asociada (URL)
+- Timestamps (created_at, updated_at)
+
+**Exportación de datos**:
+- Exportación a Excel con filtros aplicados
+- Exportación de encuestas individuales
+- Exportación de estadísticas agregadas
+
+#### 5. Panel de Tablas (Solicitudes de DesUr)
+
+**Ruta**: `/cmin/tables/`  
+**Método**: GET  
+**Permisos**: Administrador, Delegado
+
+Panel principal para gestión de documentos recibidos desde el módulo AGEO.
+
+**Listados disponibles**:
+
+**a) Documentos de DesUr (Files)**
+- Nombre del documento
+- Folio de solicitud asociada
+- UUID de sesión
+- Fecha de creación
+- Acciones: Ver PDF, Guardar como pendiente
+
+**b) Solicitudes Pendientes**
+- ID de solicitud pendiente
+- Nombre de la solicitud
+- Fecha de solicitud
+- Destinatario
+- Documento asociado
+- Acciones: Procesar y enviar
+
+**c) Solicitudes Enviadas**
+- ID de solicitud enviada
+- Nombre de la solicitud
+- Usuario que envió
+- Folio
+- Categoría
+- Prioridad
+- Estado
+- Usuario asignado
+- Fecha de envío
+- Acciones: Ver seguimiento
+
+**Funcionalidades**:
+- Conversión de documentos a solicitudes pendientes
+- Asignación de destinatarios
+- Procesamiento y envío por email
+- Asignación de usuario responsable
+- Definición de prioridad
+- Cambio de categoría
+
+#### 6. Reportes Periódicos Automáticos (Celery)
+
+**Tarea**: `generate_reports()`  
+**Frecuencia**: Configurable vía Celery Beat  
+**Ejecución**: Asíncrona
+
+Tarea programada que genera reportes automáticos del sistema.
+
+**Métricas incluidas**:
+```python
+{
+    "total_solicitudes": int,      # Total de solicitudes en BD
+    "solicitudes_hoy": int,         # Solicitudes creadas hoy
+    "total_ciudadanos": int,        # Total de ciudadanos registrados
+    "fecha_reporte": str            # ISO 8601 timestamp
+}
+```
+
+**Almacenamiento**:
+- Resultados guardados en Celery Results (Redis o DB)
+- Logs en archivo `logs/civitas.log`
+- Disponible para consulta vía API de Celery
+
+### Acceso a Reportes según Rol
+
+| Reporte | Administrador | Delegado | Campo |
+|---------|--------------|----------|-------|
+| Reporte Excel Completo | ✓ | ✓ | ✗ |
+| Panel de Seguimiento | ✓ | ✓ | ✗ |
+| Bandeja de Entrada | ✓ | ✓ | ✓ |
+| Consulta de Encuestas | ✓ | ✓ | ✗ |
+| Panel de Tablas | ✓ | ✓ | ✗ |
+| Reportes Automáticos | ✓ (configuración) | ✗ | ✗ |
+
+### Formatos de Exportación
+
+**Excel (.xlsx)**:
+- Reporte completo multi-hoja
+- Formato automático de columnas
+- Headers personalizados
+- Fechas formateadas
+- Compatible con Excel 2010+
+
+**PDF (vía navegador)**:
+- Documentos individuales de solicitudes
+- Comprobantes de trámites
+- PDFs de presupuesto participativo
+- Visualización inline o descarga
+
+### Tecnologías Utilizadas
+
+- **pandas 2.3.3**: Procesamiento de datos y DataFrames
+- **xlsxwriter 3.2.9**: Generación de archivos Excel con formato
+- **ExcelManager (utils)**: Clase personalizada para gestión de Excel
+  - Auto-ajuste de columnas
+  - Formato de fechas automático
+  - Headers con estilo
+  - Manejo de errores
+
+### Ejemplo de Uso: Generar Reporte Excel
+
+```html
+<!-- Formulario en template -->
+<form method="POST" action="{% url 'importar_excel' %}">
+    {% csrf_token %}
+    
+    <!-- Seleccionar hojas -->
+    <input type="checkbox" name="incluir_ciudadanos" checked>
+    <label>Incluir Ciudadanos</label>
+    
+    <input type="checkbox" name="incluir_solicitudes" checked>
+    <label>Incluir Solicitudes</label>
+    
+    <!-- Seleccionar campos específicos -->
+    <select name="campos_ciudadanos" multiple>
+        <option value="data_ID">ID</option>
+        <option value="nombre">Nombre</option>
+        <option value="curp">CURP</option>
+        <!-- ... más campos -->
+    </select>
+    
+    <button type="submit">Generar Reporte</button>
+</form>
+```
+
+```python
+# Procesamiento en backend (views.py)
+def get_excel(request):
+    # Configuración de modelos y campos
+    modelos = [...]
+    
+    # Generar Excel con pandas
+    with pd.ExcelWriter(response, engine='xlsxwriter') as writer:
+        manager.create_formats(writer.book)
+        
+        for config in modelos:
+            if request.POST.get(f'incluir_{config["key"]}'):
+                # Procesar datos y crear hoja
+                manager.process_sheet(df, config['nombre'], writer)
+    
+    return response  # Descarga automática
+```
+
+### Estadísticas en Tiempo Real
+
+Todos los paneles de reportes incluyen estadísticas calculadas dinámicamente:
+
+```python
+# Ejemplo: Estadísticas de seguimiento
+total_solicitudes = SolicitudesEnviadas.objects.count()
+cerradas = SolicitudesEnviadas.objects.filter(close__isnull=False).count()
+activas = total_solicitudes - cerradas
+con_seguimiento = SolicitudesEnviadas.objects.filter(
+    seguimiento__isnull=False
+).distinct().count()
+```
+
+### Reportes PDF Generados por DesUr/AGEO
+
+El módulo DesUr genera documentos PDF oficiales para todos los trámites capturados en campo. Estos documentos son generados usando **WeasyPrint 66.0** que convierte plantillas HTML con CSS a PDFs de alta calidad.
+
+#### 1. PDF de Trámite General (Obra Pública)
+
+**Ruta de generación**: `/ageo/nada/`  
+**Ruta de guardado**: `/ageo/save/`  
+**Vista**: `document(request)`  
+**Template**: `documet/document.html`  
+**Formato**: Tamaño Carta (Letter), márgenes 2.5cm
+
+**Contenido del documento**:
+
+**Encabezado**:
+- Logo del Municipio de Chihuahua (icono oficial)
+- Título: "Dirección de Obras Públicas" (color azul #2974b1, tamaño 2rem)
+- Línea divisoria azul (#77C9FF)
+
+**Sección 1: Asunto**
+- Título del trámite con código DOP completo
+- Ejemplos:
+  - "Arreglo de calles de terracería - DOP00001"
+  - "Bacheo de calles - DOP00002"
+  - "Limpieza de arroyos al sur de la ciudad - DOP00003"
+  - ... (hasta DOP00013)
+
+**Sección 2: Datos del Titular o Interesado**
+- **Folio generado**: Formato DOP-{PUO}-#####-XXXX/YY (esquina superior derecha)
+- **Fecha de creación**: Timestamp de la solicitud
+- **Tabla con información personal**:
+  - Nombre completo
+  - Apellido paterno
+  - Apellido materno
+  - Fecha de nacimiento
+  - Teléfono (formato E164 +52XXXXXXXXXX)
+  - CURP (18 caracteres)
+  - Sexo
+  - Dirección completa
+  - Discapacidad (si aplica)
+  - Etnia (si aplica)
+  - Grupo vulnerable (o "No pertenece a un grupo vulnerable")
+
+**Sección 3: Detalles de la Solicitud**
+- **Dirección del problema**: Ubicación específica del reporte
+- **Descripción**: Detalle del problema o necesidad
+- **Información adicional**: Datos complementarios
+- **Fotografía del problema**: Imagen embebida en el PDF (si fue capturada)
+- **Origen del trámite (PUO)**: Texto descriptivo del proceso
+  - Ejemplos: "Oficio", "CRC", "Marca el cambio", "Diputado Local", etc.
+
+**Sección 4: Documentos Adjuntos**
+- Lista de documentos temporales subidos durante el trámite
+- Nombre de cada documento
+- Descripción de cada archivo
+- Referencia a archivos almacenados en `media/documents/`
+
+**Características técnicas**:
+- **Tamaño de página**: Letter (8.5" x 11")
+- **Márgenes**: 2.5cm en todos los lados
+- **Numeración**: Contador de páginas en esquina inferior derecha
+- **Fuente**: Franklin Gothic Medium, Arial Narrow, Arial (fallback: sans-serif)
+- **Colores corporativos**: 
+  - Azul primario: #2974b1
+  - Azul claro: #77C9FF
+  - Fondo de tablas: rgba(187, 255, 241, 0.411)
+- **Bootstrap 5.3.6**: Estilos de tablas striped
+
+**Proceso de generación**:
+```python
+# 1. Obtener datos del ciudadano y solicitud
+datos = get_object_or_404(data, fuuid__uuid=uuid)
+solicitud = soli.objects.filter(data_ID=datos).latest('fecha')
+
+# 2. Generar o recuperar folio
+if solicitud and solicitud.folio:
+    folio = solicitud.folio
+else:
+    puo_txt, folio = gen_folio(uuid_obj, puo)
+
+# 3. Preparar contexto
+context = {
+    "asunto": asunto_descripcion,
+    "datos": {...},  # Info del ciudadano
+    "soli": {...},   # Info de la solicitud
+    "puo": puo_txt,
+    "documentos": SubirDocs.objects.filter(fuuid__uuid=uuid),
+    "folio": folio
+}
+
+# 4. Renderizar HTML y convertir a PDF
+html = render_to_string("documet/document.html", context)
+pdf_out = HTML(string=html, base_url=request.build_absolute_uri('/'))
+final_pdf = pdf_out.write_pdf()
+
+# 5. Servir PDF inline en navegador
+response = HttpResponse(final_pdf, content_type="application/pdf")
+response["Content-Disposition"] = "inline; filename=información_general.pdf"
+```
+
+**Nombre de archivo al guardar**: `VS_{código_asunto}_{nombre}_{apellido}.pdf`  
+**Ubicación en BD**: Modelo `Files`, campo `finalDoc`  
+**Ubicación física**: `media/documents/`
+
+#### 2. PDF de Pago de Licitación (DOP00005)
+
+**Ruta**: `/ageo/document2/`  
+**Vista**: `document2(request)`  
+**Template**: `documet/document2.html`  
+**Uso específico**: Comprobante de pago para participación en licitaciones
+
+**Contenido específico**:
+
+**Sección 1: Encabezado**
+- Similar al documento general
+- Logo y título de Dirección de Obras Públicas
+
+**Sección 2: Titular o Interesado**
+- Datos personales completos del ciudadano (mismo formato que documento general)
+- Sin campos de discapacidad, etnia o grupo vulnerable
+
+**Sección 3: Datos del Pago**
+- **Fecha del pago**: Timestamp de registro
+- **Forma de pago (PFM)**: Método utilizado
+  - Ejemplos: Efectivo, Transferencia, Tarjeta, Cheque
+
+**Características específicas**:
+- Documento más corto (solo 2 secciones principales)
+- Enfocado en comprobante de pago
+- No incluye fotografías ni documentos adjuntos
+- No incluye descripción de problema
+
+**Proceso de generación**:
+```python
+# 1. Obtener datos del pago
+datos = get_object_or_404(data, fuuid__uuid=uuid)
+pago = get_object_or_404(Pagos, data_ID=datos)
+
+# 2. Preparar contexto específico de pago
+context = {
+    "asunto": "Pago de costo de participación en licitaciones - DOP00005",
+    "datos": {...},
+    "pago": {
+        "fecha": pago.fecha,
+        "pfm": pago.pfm  # Forma de pago
+    }
+}
+
+# 3. Generar PDF
+html = render_to_string("documet/document2.html", context)
+# ... resto del proceso igual
+```
+
+#### 3. PDF de Presupuesto Participativo
+
+**Ruta**: `/ageo/pp/document`  
+**Vista**: `pp_document(request)`  
+**Template**: `documet/pp_document.html`  
+**Categorías**: 5 tipos de proyectos con formularios específicos
+
+**Contenido base (todas las categorías)**:
+
+**Encabezado**:
+- Logo municipal
+- Título: "Dirección de Obras Públicas"
+- Título de categoría: "Presupuesto Participativo - {Categoría}"
+
+**Sección 1: Datos del Promovente**
+- Nombre del promovente
+- Teléfono de contacto (formato E164)
+- Dirección del proyecto
+  - Calle
+  - Colonia
+  - Código postal
+- Descripción del proyecto
+- Fecha de propuesta
+- Folio generado: **DOP-CPP-#####-XXXX/YY**
+
+**Sección 2: Evaluación de Instalaciones Existentes**
+
+Tabla con estado de instalaciones básicas del proyecto:
+- **CFE** (Instalación eléctrica)
+- **Agua** (Sistema de agua potable)
+- **Drenaje** (Sistema de drenaje)
+- **Impermeabilización**
+- **Climas** (Aires acondicionados/calefacción)
+- **Alumbrado** (Alumbrado público)
+
+**Estados posibles** (con badges de color):
+- **Bueno** (verde #28a745)
+- **Regular** (amarillo #ffc107)
+- **Malo** (rojo #dc3545)
+- **No existe** (gris)
+
+**Sección 3: Propuesta Específica por Categoría**
+
+**a) Categoría: Parques**
+- **Canchas deportivas**:
+  - Fútbol rápido
+  - Fútbol soccer
+  - Fútbol 7x7
+  - Béisbol
+  - Softbol
+  - Usos múltiples
+  - Otro (especificar)
+  
+- **Alumbrado**:
+  - Rehabilitación de alumbrado existente
+  - Alumbrado nuevo
+  
+- **Juegos**:
+  - Dog park (área canina)
+  - Juegos infantiles
+  - Ejercitadores
+  - Otro tipo
+  
+- **Techumbres**:
+  - Domo
+  - Kiosko
+  
+- **Equipamiento**:
+  - Botes de basura
+  - Bancas
+  - Andadores
+  - Rampas
+
+**b) Categoría: Escuelas**
+- **Nombre de la escuela**
+- **Rehabilitación**:
+  - Baños
+  - Salones
+  - Instalación eléctrica
+  - Gimnasio
+  - Otro tipo
+  
+- **Construcción nueva**:
+  - Domo
+  - Aula
+  
+- **Canchas deportivas**:
+  - Fútbol rápido
+  - Fútbol 7x7
+  - Usos múltiples
+
+**c) Categoría: Centros Comunitarios**
+- **Rehabilitación**:
+  - Baños
+  - Salones
+  - Instalación eléctrica
+  - Gimnasio
+  
+- **Construcción nueva**:
+  - Salón
+  - Domo
+  - Otro tipo
+
+**d) Categoría: Infraestructura**
+- **Obra civil**:
+  - Barda perimetral
+  - Banquetas
+  - Muro de contención
+  - Intervención en camellón
+  - Crucero seguro/cruce peatonal
+  - Ordenamiento vehicular
+  - Escalinatas/rampas
+  - Mejoramiento de imagen vehicular
+  - Paso peatonal
+  - Bayoneta/retorno
+  - Pasos pompeyanos/reductores
+  - Puente vehicular
+  
+- **Pavimentación**:
+  - Asfalto
+  - Concreto hidráulico
+  - Rehabilitación
+  
+- **Señalamiento vial**:
+  - Pintura
+  - Señales verticales
+
+**e) Categoría: Soluciones Pluviales**
+- Muro de contención
+- Canalización de arroyo
+- Puente peatonal sobre arroyo
+- Construcción de vado
+- Puente vehicular
+- Solución de desalojo pluvial
+- Rejillas pluviales
+- Lavaderos (anti-socavación)
+- Rehabilitación de obra hidráulica
+- Reposición de piso de arroyo
+- Protección contra inundaciones
+- Otro (especificar)
+
+**Sección 4: Notas Importantes**
+- Notas generales del proyecto
+- Notas específicas de la categoría
+- Observaciones adicionales
+
+**Características técnicas del PDF PP**:
+- **Folio único**: DOP-CPP-{id:05d}-{uuid[:4]}/{año}
+  - Ejemplo: DOP-CPP-00001-a3f7/25
+- **Almacenamiento**: Modelo `PpFiles` (no `Files`)
+- **Relación**: FK a `PpGeneral` y al modelo específico de categoría
+- **Layout**: Similar a documento general pero con secciones expandidas
+- **Checkboxes**: Representados visualmente en el PDF
+- **Tablas dinámicas**: Se generan según campos seleccionados
+
+**Proceso de generación por categoría**:
+```python
+# 1. Obtener categoría de sesión
+cat = request.session.get('categoria', 'sin categoria')
+
+# 2. Obtener datos generales
+gen_data = get_object_or_404(PpGeneral, fuuid__uuid=uuid)
+
+# 3. Obtener propuesta específica según categoría
+match cat:
+    case "parque":
+        propuesta = PpParque.objects.filter(fk_pp=gen_data).last()
+    case "escuela":
+        propuesta = PpEscuela.objects.filter(fk_pp=gen_data).last()
+    # ... etc
+
+# 4. Generar folio específico PP
+num_folio = gen_pp_folio(gen_data.fuuid)
+
+# 5. Preparar contexto con datos específicos
+context = {
+    "cat": nombre_categoria,
+    "datos": {...},
+    "propuesta": {...},  # Campos específicos de la categoría
+    "notas_{categoria}": propuesta.notas,
+    "folio": num_folio,
+    "instalaciones_dict": dict(PpGeneral.INSTALATION_CHOICES),
+    "estados_dict": dict(PpGeneral.CHOICES_STATE)
+}
+
+# 6. Renderizar y generar PDF
+html = render_to_string("documet/pp_document.html", context)
+# ... generar PDF
+```
+
+### Formatos de Folio
+
+**Trámites de Obra Pública**:
+```
+DOP-{PUO}-{consecutivo:05d}-{uuid[:4]}/{año:02d}
+```
+Ejemplos:
+- `DOP-OFI-00001-a3f7/25` (Oficio)
+- `DOP-CRC-00023-b8e2/25` (CRC)
+- `DOP-MEC-00456-c1d9/25` (Marca el Cambio)
+
+**Presupuesto Participativo**:
+```
+DOP-CPP-{consecutivo:05d}-{uuid[:4]}/{año:02d}
+```
+Ejemplo:
+- `DOP-CPP-00001-a3f7/25`
+
+**Componentes del folio**:
+- **DOP**: Gestión de Obra Pública (prefijo fijo)
+- **PUO**: Tipo de proceso (OFI, CRC, MEC, DLO, DFE, REG, DEA, EVA, PED, VIN, PPA, CPC)
+- **Consecutivo**: Número autoincremental de 5 dígitos
+- **UUID**: Primeros 4 caracteres del UUID de sesión
+- **Año**: Últimos 2 dígitos del año actual
+
+### Modos de Entrega de PDFs
+
+**1. Descarga Inline (visualización en navegador)**
+```python
+response["Content-Disposition"] = "inline; filename=documento.pdf"
+```
+- El PDF se abre directamente en el navegador
+- El usuario puede descargar si lo desea
+- Rutas: `/ageo/nada/`, `/ageo/document2/`
+
+**2. Guardado en Base de Datos**
+```python
+# Guardar archivo físico
+pdf_file = ContentFile(final_pdf)
+file_obj = Files.objects.create(
+    nomDoc=nombre_documento,
+    fuuid=uuid_obj,
+    soli_FK=solicitud,
+    finalDoc=pdf_file
+)
+```
+- El PDF se guarda en `media/documents/`
+- Se crea registro en tabla `Files`
+- Ruta: `/ageo/save/`
+
+**3. Guardado PP en Base de Datos**
+```python
+# Específico para Presupuesto Participativo
+pp_file = PpFiles.objects.create(
+    nomDoc=f"PP_{categoria}_{nombre}",
+    fuuid=uuid_obj,
+    pp_FK=gen_data,
+    finalDoc=pdf_file
+)
+```
+- Se guarda en tabla separada `PpFiles`
+- Ruta: `/ageo/pp/document`
+
+### Tecnologías y Librerías
+
+**WeasyPrint 66.0**:
+- Conversión HTML → PDF
+- Soporte completo de CSS3
+- Renderizado de imágenes (JPEG, PNG)
+- Fuentes personalizadas
+- Paginación automática
+- Headers y footers
+
+**Bootstrap 5.3.6**:
+- Tablas responsivas con clase `table-striped`
+- Grid system para layout
+- Utilidades de spacing y tipografía
+
+**Django Template Engine**:
+- `render_to_string()` para generar HTML
+- Context processor para datos dinámicos
+- Template tags personalizados
+
+**Static Files**:
+- Logo municipal: `static/images/iconChi.png`
+- CSS inline en templates para portabilidad del PDF
+
+### Limitaciones y Consideraciones
+
+**Tamaño de archivo**:
+- PDFs típicos: 50-500 KB (sin fotos)
+- Con fotografías: 500 KB - 5 MB
+- Límite configurado en settings: 50 MB por upload
+
+**Rendimiento**:
+- Generación de PDF: 1-3 segundos por documento
+- Con fotos de alta resolución: hasta 5 segundos
+- WeasyPrint es CPU-intensive
+
+**Compatibilidad**:
+- PDFs generados compatibles con PDF 1.4+
+- Visualización correcta en todos los navegadores modernos
+- Impresión optimizada para tamaño carta
+
+**Seguridad**:
+- PDFs no están encriptados
+- Acceso controlado por autenticación Django
+- Archivos servidos por Nginx en producción con headers de seguridad
+
+### Notas de Rendimiento
+
+- Los reportes grandes (>10,000 registros) pueden tardar varios segundos
+- Se recomienda usar filtros para limitar el conjunto de datos
+- Los archivos Excel generados tienen un límite práctico de ~1 millón de filas
+- Las estadísticas se calculan con queries optimizadas (select_related, prefetch_related)
+- Cache de 30 días para archivos estáticos de reportes
+
+---
+
 ## Flujos de Trabajo
 
 ### Flujo 1: Captura de Trámite (AGEO)
@@ -694,12 +1617,119 @@ curl -X POST http://localhost:8000/api/ageo/soli/ \
 ### Variables Requeridas
 
 ```env
-SECRET_KEY=          # Clave secreta Django
-DEBUG=               # True/False
-ALLOWED_HOSTS=       # Dominios permitidos
-DB_ENGINE=           # Motor de base de datos
-DB_NAME=             # Nombre de BD
-EMAIL_BACKEND=       # Backend de email
+# Django Core
+SECRET_KEY=          # Clave secreta Django (cambiar en producción)
+DEBUG=               # False en producción, True en desarrollo
+ENVIRONMENT=         # production, development, staging
+ALLOWED_HOSTS=       # Dominios permitidos separados por coma
+
+# Base de Datos
+DB_ENGINE=           # django.db.backends.mysql
+DB_NAME=             # Nombre de la base de datos
+DB_USER=             # Usuario de MySQL
+DB_PASSWORD=         # Contraseña de MySQL
+DB_HOST=             # localhost o IP del servidor
+DB_PORT=             # 3306 (default MySQL)
+
+# Redis y Cache
+REDIS_URL=           # redis://localhost:6379/1
+
+# Celery
+CELERY_BROKER_URL=   # redis://localhost:6379/0
+CELERY_RESULT_BACKEND= # redis://localhost:6379/0
+
+# Email
+email=               # Email del sistema
+contra=              # Contraseña de aplicación
+DEFAULT_FROM_EMAIL=  # Email remitente por defecto
+
+# CORS (para APIs)
+CORS_ALLOWED_ORIGINS= # Orígenes permitidos separados por coma
+
+# Sentry (Opcional)
+SENTRY_DSN=          # DSN de Sentry para monitoreo de errores
+SENTRY_TRACES_SAMPLE_RATE= # 0.1 (10% de transacciones)
+
+# HTTPS (Producción)
+USE_HTTPS=           # false en desarrollo, true en producción
+```
+
+### Variables Opcionales
+
+```env
+# Logging
+DJANGO_LOG_LEVEL=    # INFO, DEBUG, WARNING, ERROR
+
+# Session
+SESSION_COOKIE_AGE=  # 3600 (1 hora)
+SESSION_WARNING_TIME= # 300 (5 minutos antes de expirar)
+```
+
+---
+
+## Tareas Asíncronas con Celery
+
+### Configuración
+
+El sistema utiliza Celery con Redis como broker para tareas asíncronas y programadas.
+
+```python
+# civitas/celery.py
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TIMEZONE = 'America/Mexico_City'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+```
+
+### Tareas Implementadas
+
+```python
+# portaldu/desUr/tasks.py
+
+@shared_task
+def cleanup_old_logs():
+    """Limpia logs antiguos (>30 días)"""
+    # Ejecuta diariamente vía Celery Beat
+    
+@shared_task
+def send_notification_email(user_email, subject, message, html_message=None):
+    """Envía emails de notificación de forma asíncrona"""
+    
+@shared_task
+def process_document_upload(document_id):
+    """Procesa documentos subidos (validaciones, OCR, etc.)"""
+    
+@shared_task
+def generate_reports():
+    """Genera reportes periódicos del sistema"""
+    
+@shared_task
+def backup_database():
+    """Crea respaldos automáticos de la base de datos"""
+```
+
+### Ejecución en Desarrollo
+
+```bash
+# Terminal 1: Worker
+celery -A civitas worker -l info
+
+# Terminal 2: Beat (tareas programadas)
+celery -A civitas beat -l info
+
+# Windows (usar scripts incluidos)
+start_celery_worker.bat
+start_celery_beat.bat
+```
+
+### Ejecución en Producción
+
+```bash
+# Configurar como servicios systemd
+sudo systemctl start celery-worker
+sudo systemctl start celery-beat
+sudo systemctl enable celery-worker
+sudo systemctl enable celery-beat
 ```
 
 ---
@@ -708,16 +1738,115 @@ EMAIL_BACKEND=       # Backend de email
 
 ### Checklist de Producción
 
-1. `DEBUG = False`
-2. Configurar `ALLOWED_HOSTS`
-3. Base de datos MySQL
-4. Configurar Nginx
-5. Configurar Gunicorn
-6. HTTPS con certificados SSL (ver con área de sistemas)
-7. Collectstatic
-8. Migraciones actualizadas
-9. Backups automáticos
-10. Monitoring y logs
+**Configuración Django:**
+1. `DEBUG = False` en settings.py
+2. Configurar `ALLOWED_HOSTS` con dominios específicos
+3. Configurar `SECRET_KEY` único y seguro
+4. Configurar `ENVIRONMENT = 'production'`
+
+**Base de Datos:**
+5. Migrar de SQLite a MySQL 8.0+
+6. Ejecutar migraciones: `python manage.py migrate`
+7. Recopilar archivos estáticos: `python manage.py collectstatic --noinput`
+8. Configurar backups automáticos
+
+**Servidor Web:**
+9. Configurar Nginx como proxy inverso
+10. Configurar Gunicorn con archivo gunicorn.conf.py
+11. Crear servicio systemd para auto-inicio
+12. Configurar permisos del socket Unix correctamente
+
+**Seguridad:**
+13. Implementar HTTPS con certificados SSL/TLS
+14. Configurar headers de seguridad en Nginx:
+    - Strict-Transport-Security (HSTS)
+    - X-Frame-Options
+    - X-Content-Type-Options
+    - X-XSS-Protection
+    - Referrer-Policy
+15. Activar `SECURE_SSL_REDIRECT = True`
+16. Configurar `SESSION_COOKIE_SECURE = True`
+17. Configurar `CSRF_COOKIE_SECURE = True`
+
+**Redis y Celery:**
+18. Instalar y configurar Redis
+19. Configurar workers de Celery como servicios
+20. Configurar Celery Beat para tareas programadas
+21. Habilitar django-celery-results para almacenar resultados
+
+**Monitoreo y Logs:**
+22. Configurar Sentry para monitoreo de errores
+23. Configurar rotación de logs
+24. Configurar journald para logs del sistema
+25. Implementar health checks
+
+**Optimización:**
+26. Configurar workers de Gunicorn según CPU (9 workers recomendados)
+27. Habilitar gzip en Nginx
+28. Configurar cache de archivos estáticos (30 días)
+29. Optimizar queries de base de datos
+30. Configurar límites de recursos en systemd
+
+---
+
+## Testing
+
+### Configuración de Tests
+
+El proyecto utiliza pytest y pytest-django para testing:
+
+```bash
+# Instalar dependencias de testing
+pip install pytest pytest-django factory-boy faker coverage
+
+# Ejecutar todos los tests
+pytest
+
+# Ejecutar tests con cobertura
+pytest --cov=portaldu --cov-report=html
+
+# Ejecutar tests de un módulo específico
+pytest portaldu/cmin/tests/
+pytest portaldu/desUr/tests/
+
+# Ver reporte de cobertura
+coverage report
+coverage html  # Genera reporte HTML en htmlcov/
+```
+
+### Estructura de Tests
+
+```
+portaldu/
+├── cmin/
+│   └── tests/
+│       ├── test_models.py      # Tests de modelos CMIN
+│       ├── test_views.py       # Tests de vistas CMIN
+│       ├── test_api.py         # Tests de API REST
+│       └── test_forms.py       # Tests de formularios
+└── desUr/
+    └── tests/
+        ├── test_models.py      # Tests de modelos DesUr
+        ├── test_views.py       # Tests de vistas DesUr
+        ├── test_api.py         # Tests de API REST
+        ├── test_serializers.py # Tests de serializers
+        └── test_services.py    # Tests de servicios
+```
+
+### Factories para Testing
+
+El proyecto usa Factory Boy para generar datos de prueba:
+
+```python
+# Ejemplo de uso
+from portaldu.cmin.tests.factories import UserFactory
+
+# Crear usuario de prueba
+user = UserFactory(rol='administrador')
+
+# Crear múltiples usuarios
+users = UserFactory.create_batch(10)
+```
 
 ---
 
@@ -725,18 +1854,42 @@ EMAIL_BACKEND=       # Backend de email
 
 ### Estado de Documentación
 
-| Módulo | Archivo | Estado |
-|--------|---------|--------|
-| **AGEO** | `views.py` | 100% |
-| **AGEO** | `api_views.py` | 100% |
-| **AGEO** | `serializers.py` | 100% |
-| **AGEO** | `forms.py` | 100% |
-| **AGEO** | `urls.py` | 100% |
-| **AGEO** | `api_urls.py` | 100% |
-| **AGEO** | `auth.py` | 100% |
-| **Principal** | `urls.py` | 100% |
+| Módulo | Archivo | Líneas | Estado |
+|--------|---------|--------|--------|
+| **CMIN** | `models.py` | 904 | 100% |
+| **CMIN** | `views.py` | 1469 | 100% |
+| **CMIN** | `api_views.py` | 567 | 100% |
+| **CMIN** | `serializers.py` | 138 | 100% |
+| **CMIN** | `forms.py` | 538 | 100% |
+| **CMIN** | `urls.py` | 122 | 100% |
+| **CMIN** | `api_urls.py` | 46 | 100% |
+| **AGEO** | `models.py` | 558 | 100% |
+| **AGEO** | `views.py` | ~2000 | 100% |
+| **AGEO** | `api_views.py` | 556 | 100% |
+| **AGEO** | `serializers.py` | 438 | 100% |
+| **AGEO** | `forms.py` | 817 | 100% |
+| **AGEO** | `urls.py` | 300 | 100% |
+| **AGEO** | `api_urls.py` | 198 | 100% |
+| **AGEO** | `auth.py` | 147 | 100% |
+| **AGEO** | `services.py` | 1014 | 100% |
+| **AGEO** | `WSDService.py` | 417 | 100% |
+| **AGEO** | `tasks.py` | 145 | 100% |
+| **AGEO** | `middleware.py` | 50 | 100% |
+| **Principal** | `urls.py` | 336 | 100% |
+| **Principal** | `settings.py` | 436 | 100% |
+| **Principal** | `celery.py` | 35 | 100% |
 
-**Total**: ~6,000 líneas de documentación en 8 archivos principales
+**Total**: ~11,000+ líneas de documentación en 22 archivos principales
+
+### Características de la Documentación
+
+- Docstrings detallados en español para todas las clases y funciones
+- Documentación de parámetros y valores de retorno
+- Ejemplos de uso en código
+- Comentarios inline explicativos
+- Documentación de formato de folios
+- Diagramas de flujo en código
+- Notas de seguridad y producción
 
 ---
 
@@ -748,28 +1901,44 @@ Este proyecto está bajo la licencia **BSD License**.
 
 ## Equipo de Desarrollo
 
-- **Desarrollado por**: Arturo
+- **Desarrollador Principal**: Arturo
 - **Organización**: Dirección de Obras Públicas Municipales
+- **Municipio**: Chihuahua, Chihuahua
 
 ---
 
-## Soporte
+## Soporte y Recursos
 
-- **Documentación**: `/swagger/` y `/redoc/`
+- **Documentación API**: `/swagger/` y `/redoc/`
+- **Panel de Administración**: `/admin/`
+- **Repositorio**: GitHub (privado)
+- **Documentación Técnica**:
+  - `INTEGRACIONES_IMPLEMENTADAS.md` - Detalle de integraciones
+  - `EVALUACION_FINAL_DESPLIEGUE.md` - Checklist de deployment
+  - `Manual_Usuario_CMIN.md` - Manual de usuario CMIN
+  - `Manual_Usuario_DesUr.md` - Manual de usuario AGEO
 
 ---
 
 **Última actualización**: Diciembre 2025  
 **Estado del Proyecto**: Producción  
-**Cobertura de Documentación**: 100% archivos críticos
+**Cobertura de Documentación**: 100% archivos críticos  
+**Versión Django**: 5.0  
+**Versión Python**: 3.11+
 
 ---
 
----
-## Glosario
+## Glosario de Términos
 
-**WIP**: Work In Progress
-**WIP?**: Work In Progress (Consultar)
+**CIVITAS**: Nombre del proyecto
+**CMIN**: Módulo de administradores
+**AGEO**: Sistema de gestión de obra pública (anteriormente DesUr)  
+**DesUr**: (nombre legacy del módulo AGEO)
+**DOP**: Dirección de Obras Públicas (prefijo de folios)
+**PUO**: Proceso Unidad Operativa (tipo de proceso administrativo)  
+**PP**: Presupuesto Participativo  
+**CURP**: Clave Única de Registro de Población
+
 ---
 
 <div align="center">

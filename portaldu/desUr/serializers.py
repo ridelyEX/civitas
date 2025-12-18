@@ -342,7 +342,7 @@ class SolicitudSerializer(serializers.ModelSerializer):
         - descc: Descripción detallada del problema
         - foto: Imagen del problema (campo de archivo)
         - puo: Tipo de proceso/origen de la solicitud
-        - folio: Folio único generado (formato: GOP-XXX-#####-XXXX/YY)
+        - folio: Folio único generado (formato: DOP-XXX-#####-XXXX/YY)
         - fecha: Fecha y hora de creación (auto)
         - processed_by: Empleado que procesó la solicitud (FK)
     """

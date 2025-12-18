@@ -175,7 +175,7 @@ class soli(models.Model):
     foto = models.ImageField(upload_to='fotos', null=True, blank=True)
 
     # === CONTROL ADMINISTRATIVO ===
-    # Folio único generado para el trámite (ej: GOP-OFI-00001-1234/25)
+    # Folio único generado para el trámite (ej: DOP-OFI-00001-1234/25)
     folio = models.CharField(max_length=50, null=True, blank=True)
 
     # Fecha y hora de creación de la solicitud - se asigna automáticamente
