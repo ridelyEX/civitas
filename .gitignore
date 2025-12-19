@@ -10,6 +10,7 @@ VinculacionSocial/
 civitas/portaldu/desUr/static/videos/fondo.mp4
 media/
 .venv/
+manuales_exportados/
 
 # Archivos de desarrollo y pruebas
 analyze_size.py

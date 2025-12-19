@@ -1,9 +1,9 @@
-# AGEO - Sistema Integrado de Gestión de Trámites Ciudadanos
+# AGEO - Atención, gestión inteligente
 
 **Versión**: 1.0.0  
 **Proyecto**: AGEO 2025
 **Framework**: Django 4.2+ | Python 3.11+
-**Estado**: Producción
+**Estado**: Test
 
 ---
 

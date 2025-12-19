@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Script para convertir los manuales de usuario de Markdown a Word y PDF
-Autor: Sistema de Documentación
 Fecha: Agosto 2025
 """
 
@@ -324,7 +323,7 @@ class ManualConverter:
     def convert_all_manuals(self):
         """Convierte todos los manuales encontrados"""
         manual_files = [
-            'REQUERIMIENTOS_SISTEMA.md'
+            'README.md'
         ]
 
         results = {
