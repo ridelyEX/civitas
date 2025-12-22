@@ -391,7 +391,130 @@ server {
 # sudo systemctl reload nginx
 ```
 
-#### 2. Servicio Systemd
+### 2. Servicio Systemd
+
+El sistema AGEO utiliza servicios systemd para gestionar los procesos de Celery (worker y beat) que ejecutan tareas asíncronas y programadas. Esta sección explica cómo configurar, activar y monitorear estos servicios en un entorno de producción Ubuntu 22.04.
+
+#### Arquitectura de servicios
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AGEO - Servicios Systemd                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌──────────────────────┐      ┌──────────────────────┐     │
+│  │   Redis Server       │      │   Django/Gunicorn    │     │
+│  │   (Broker/Backend)   │      │   (Aplicación Web)   │     │
+│  └──────────────────────┘      └──────────────────────┘     │
+│           │                              │                  │
+│           └──────────────┬───────────────┘                  │
+│                          ▼                                  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │               Celery Worker                          │   │
+│  │    (procesa tareas asíncronas en background)         │   │
+│  │    Servicio: celery-worker.service                   │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                          │                                  │
+│                          ▼                                  │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │               Celery Beat                            │   │
+│  │    (scheduler de tareas periódicas)                  │   │
+│  │    Servicio: celery-beat.service                     │   │
+│  │    Depende de: celery-worker.service                 │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+
+# Prerequisitos
+
+## Verificar Redis
+sudo systemctl status redis-server
+
+## Si no está instalado:
+sudo apt update
+sudo apt install redis-server
+sudo systemctl enable redis-server
+sudo systemctl start redis-server
+
+### Configuración de servicios
+
+#### 1. Servicio Celery Worker
+
+Este servicio ejecuta las tareas asíncronas (envío de emails, procesamiento de documentos, etc.).
+
+Crear archivo: `/etc/systemd/system/celery-worker.service`
+
+```ini
+[Unit]
+Description=Celery Worker for AGEO
+After=network.target redis-server.service mysql.service
+Requires=redis-server.service
+
+[Service]
+Type=exec
+User=tstopageo
+Group=www-data
+WorkingDirectory=/home/tstopageo/dev/civitas
+
+Environment="PATH=/home/tstopageo/dev/civitas/venv/bin"
+Environment="PYTHONPATH=/home/tstopageo/dev/civitas"
+
+ExecStart=/home/tstopageo/dev/civitas/venv/bin/celery -A civitas worker \
+    --loglevel=info \
+    --logfile=/home/tstopageo/dev/civitas/logs/celery-worker.log \
+    --pidfile=/run/civitas/celery-worker.pid \
+    --concurrency=4 \
+    --max-tasks-per-child=1000
+
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Parámetros importantes:
+User=tstopageo: Usuario que ejecuta el servicio (cambiar según tu sistema)
+WorkingDirectory: Ruta absoluta al proyecto Django
+--concurrency=4: Número de workers (ajustar según CPU)
+--max-tasks-per-child=1000: Reinicia workers cada 1000 tareas (previene memory leaks)
+
+#### 2. Servicio Celery Beat
+Este servicio programa tareas periódicas (reportes automáticos, limpieza de logs, backups).
+Crear archivo: /etc/systemd/system/celery-beat.service
+
+```ini
+[Unit]
+Description=Celery Beat for AGEO
+After=network.target redis-server.service mysql.service celery-worker.service
+Requires=redis-server.service
+
+[Service]
+Type=exec
+User=tstopageo
+Group=www-data
+WorkingDirectory=/home/tstopageo/dev/civitas
+
+Environment="PATH=/home/tstopageo/dev/civitas/venv/bin"
+Environment="PYTHONPATH=/home/tstopageo/dev/civitas"
+
+ExecStart=/home/tstopageo/dev/civitas/venv/bin/celery -A civitas beat \
+    --logLevel=info \
+    --logfile=/home/tstopageo/dev/civitas/logs/celery-beat.log \
+    --pidfile=/run/civitas/celery-beat.pid \
+    --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+```
+
+Nota importante: celery-beat.service requiere que celery-worker.service esté activo. Si el worker falla, beat también se detendrá (Requires=celery-worker.service).
 
 Crear archivo en `/etc/systemd/system/civitas.service`:
 
@@ -451,6 +574,210 @@ sudo mkdir -p /run/civitas
 sudo chown usuario:www-data /run/civitas
 ```
 
+### Instalación y activación
+
+#### 1. Crear directorios
+
+```bash
+# Directorio de logs
+sudo mkdir -p /home/tstopageo/dev/civitas/logs
+sudo chown -R tstopageo:www-data /home/tstopageo/dev/civitas/logs
+
+# Directorio para PID files (se crea automáticamente por RuntimeDirectory)
+# Pero aseguramos permisos del padre
+sudo mkdir -p /run/civitas
+sudo chown tstopageo:www-data /run/civitas
+```
+
+#### 2. Copiar archivos de servicio
+
+```bash
+# Copiar archivos (o crearlos con nano/vim)
+sudo cp civitas.service /etc/systemd/system/
+sudo cp nginx.service /etc/systemd/system/
+sudo cp celery-worker.service /etc/systemd/system/
+sudo cp celery-beat.service /etc/systemd/system/
+
+# O crear directamente
+sudo nano /etc/systemd/system/civitas.service
+sudo nano /etc/systemd/system/nginx.service
+sudo nano /etc/systemd/system/celery-worker.service
+sudo nano /etc/systemd/system/celery-beat.service
+```
+
+#### 3. Verificar sintaxis y recargar systemd
+
+```bash
+# Verificar sintaxis de archivos
+sudo systemd-analyze verify /etc/systemd/system/celery-worker.service
+sudo systemd-analyze verify /etc/systemd/system/celery-beat.service
+
+# Recargar configuración de systemd
+sudo systemctl daemon-reload
+```
+
+#### 4. Habilitar servicios (auto-inicio en boot)
+
+```bash
+# Habilitar gunicor
+sudo systemctl enable civitas.service
+
+# Habilitar nginx
+sudo systemctl enable nginx.service
+
+# Habilitar worker
+sudo systemctl enable celery-worker.service
+
+# Habilitar beat (automáticamente habilita worker por dependencia)
+sudo systemctl enable celery-beat.service
+
+# Verificar que están habilitados
+systemctl is-enabled civitas
+systemctl is-enabled nginx
+systemctl is-enabled celery-worker
+systemctl is-enabled celery-beat
+```
+
+#### 5. Iniciar servcios
+
+```bash 
+# IMPORTANTE: Iniciar en orden
+# 1. Iniciar gunicorn
+sudo systemctl start civitas.service
+
+# 2. Iniciar el servidor nginx
+sudo systemctl start nginx.service
+
+# 3. Esperar 5 segundos y verificar el servidor
+sleep 5
+sudo systemctl status nginx.service
+
+# 4. Si el servidor está activo, iniciar worker
+sleep 5
+sudo systemctl start celery-worker.service
+
+# 5. Esperar 5 segundos y verificar worker
+sleep 5
+sudo systemctl status celery-worker.service
+
+# 6. Si worker está activo, iniciar beat
+sudo systemctl start celery-beat.service
+
+# 7. Verificar beat
+sudo systemctl status celery-beat.service
+```
+
+### Comandos de gestión
+
+```bash
+# Iniciar servicios
+sudo systemctl start civitas
+sudo systemctl start nginx
+sudo systemctl start celery-worker
+sudo systemctl start celery-beat
+
+# Detener servicios
+sudo systemctl stop civitas        # Detener gunicor
+sudo systemctl stop nginx          # Después el servidor nginx
+sudo systemctl stop celery-beat    # Luego beat 
+sudo systemctl stop celery-worker  # Finalmente worker
+
+# Reiniciar servicios
+sudo systemctl restart civitas
+sudo systemctl restart nginx
+sudo systemctl restart celery-worker
+sudo systemctl restart celery-beat
+
+# Recargar configuración sin detener
+sudo systemctl reload celery-worker  # Envía señal HUP
+```
+
+### Comandos de estado
+
+```bash
+# Ver estado general
+systemctl status civitas
+systemctl status nginx
+systemctl status celery-worker
+systemctl status celery-beat
+
+# Estado con más detalles
+systemctl status celery-worker -l --no-pager
+
+# Ver si están activos
+systemctl is-active civitas
+systemctl is-active nginx
+systemctl is-active celery-worker
+systemctl is-active celery-beat
+
+# Ver si falló
+systemctl is-failed celery-worker
+systemctl is-failed celery-beat
+```
+
+### Comandos de Logs
+
+```bash
+# Ver logs en tiempo real
+sudo journalctl -u civitas -f
+sudo journalctl -u nginx -f
+sudo journalctl -u celery-worker -f
+sudo journalctl -u celery-beat -f
+
+# Ver últimas 50 líneas
+sudo journalctl -u civitas -n 50
+sudo journalctl -u nginx -n 50
+sudo journalctl -u celery-worker -n 50
+sudo journalctl -u celery-beat -n 50
+
+# Ver logs desde hace 1 hora
+sudo journalctl -u celery-worker --since "1 hour ago"
+
+# Ver logs con prioridad (error y crítico)
+sudo journalctl -u celery-worker -p err
+
+# Ver logs de celery- worker/beat
+sudo journalctl -u celery-worker -u celery-beat -f
+```
+
+### Actualización de servicios
+
+```bash
+# 1. Detener servicios
+sudo systemctl stop civitas
+sudo systemctl stop nginx
+sudo systemctl stop celery-beat
+sudo systemctl stop celery-worker
+
+# 2. Actualizar código
+cd /home/tstopageo/dev/civitas
+git pull origin main
+
+# 3. Actualizar dependencias
+source venv/bin/activate
+pip install -r requirements.txt --upgrade
+
+# 4. Ejecutar migraciones
+python manage.py migrate
+
+# 5. Recargar systemd si se modificaron .service
+sudo systemctl daemon-reload
+
+# 6. Reiniciar servicios
+sudo systemctl start civitas
+sleep 5
+sudo systemctl start nginx
+sleep 5
+sudo systemctl start celery-worker
+sleep 5
+sudo systemctl start celery-beat
+
+# 7. Verificar
+sudo systemctl status celery-worker
+sudo systemctl status celery-beat
+sudo systemctl status civitas
+sudo systemctl status nginx
+```
 ---
 
 ## Estructura del Proyecto
