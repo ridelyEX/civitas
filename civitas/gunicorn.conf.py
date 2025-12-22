@@ -31,7 +31,7 @@ user = "tstopageo"
 group = "www-data"
 tmp_upload_dir = None
 
-forwarded_allow_ips = '127.0.0.1'
+forwarded_allow_ips = '127.0.0.1, 10.218.6.95, 10.218.3.153'
 secure_scheme_headers = {
     'X-FORWARDED-PROTOCOL': 'ssl',
     'X-FORWARDED-PROTO': 'https',
