@@ -31,7 +31,9 @@ user = "tstopageo"
 group = "www-data"
 tmp_upload_dir = None
 
-forwarded_allow_ips = '127.0.0.1, 10.218.6.95, 10.218.3.153'
+forwarded_allow_ips = '10.218.6.95'
+proxy_protocol = False
+proxy_allow_ips = '10.218.6.95'
 secure_scheme_headers = {
     'X-FORWARDED-PROTOCOL': 'ssl',
     'X-FORWARDED-PROTO': 'https',
@@ -50,6 +52,18 @@ def when_ready(server):
     """Ejecutado cuando el servidor está listo"""
     server.log.info("Gunicorn listo para aceptar conexiones")
 
+def pre_fork(server, worker):
+    """Ejecutado antes de hacer fork del worker"""
+    pass
+
+def post_fork(server, worker):
+    """Ejecutado después de hacer fork del worker"""
+    server.log.info(f"Worker {worker.pid} iniciado")
+
+def post_worker_init(worker):
+    """Ejecutado después de inicializar el worker"""
+    pass
+
 def on_exit(server):
     """Ejecutado al salir"""
     server.log.info("Cerrando Gunicorn")
@@ -59,4 +73,5 @@ def worker_exit(server, worker):
     server.log.info(f"Worker {worker.pid} saliendo")
 
 # Pre-fork
-preload_app = False
+preload_app = True
+worker_tmp_dir = '/dev/shm'

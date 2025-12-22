@@ -18,7 +18,8 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 
 
 from django.conf.global_settings import AUTH_USER_MODEL, EMAIL_BACKEND, DEFAULT_FROM_EMAIL, AUTHENTICATION_BACKENDS, \
-    FILE_UPLOAD_HANDLERS, DATA_UPLOAD_MAX_MEMORY_SIZE, FILE_UPLOAD_MAX_MEMORY_SIZE, DATA_UPLOAD_MAX_NUMBER_FIELDS
+    FILE_UPLOAD_HANDLERS, DATA_UPLOAD_MAX_MEMORY_SIZE, FILE_UPLOAD_MAX_MEMORY_SIZE, DATA_UPLOAD_MAX_NUMBER_FIELDS, \
+    CSRF_TRUSTED_ORIGINS
 from dotenv import load_dotenv
 import os
 
@@ -419,6 +420,9 @@ SESSION_WARNING_TIME = 300
 # Configuración de cookies CSRF
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    'http://10.218.6.95',
+]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
