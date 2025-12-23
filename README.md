@@ -342,7 +342,7 @@ El proyecto incluye `setup_project.bat` para configuración automática:
 ```bash
 setup_project.bat
 ```
-
+---
 ### Configuración en Servidor Linux
 
 El sistema está diseñado para desplegarse en un servidor Ubuntu 22.04 con Nginx y Gunicorn. Se requieren dos archivos de configuración:
@@ -395,6 +395,8 @@ server {
 
 El sistema AGEO utiliza servicios systemd para gestionar los procesos de Celery (worker y beat) que ejecutan tareas asíncronas y programadas. Esta sección explica cómo configurar, activar y monitorear estos servicios en un entorno de producción Ubuntu 22.04.
 
+---
+
 #### Arquitectura de servicios
 
 ```
@@ -425,7 +427,7 @@ El sistema AGEO utiliza servicios systemd para gestionar los procesos de Celery 
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
-
+---
 
 # Prerequisitos
 
@@ -437,6 +439,7 @@ sudo apt update
 sudo apt install redis-server
 sudo systemctl enable redis-server
 sudo systemctl start redis-server
+---
 
 ### Configuración de servicios
 
@@ -516,6 +519,8 @@ WantedBy=multi-user.target
 
 Nota importante: celery-beat.service requiere que celery-worker.service esté activo. Si el worker falla, beat también se detendrá (Requires=celery-worker.service).
 
+---
+
 Crear archivo en `/etc/systemd/system/civitas.service`:
 
 ```ini
@@ -569,6 +574,9 @@ worker_class = "gthread"
 ```
 
 **Nota**: Crear el directorio para el socket antes de iniciar:
+
+---
+
 ```bash
 sudo mkdir -p /run/civitas
 sudo chown usuario:www-data /run/civitas
@@ -668,6 +676,8 @@ sudo systemctl status celery-beat.service
 ```
 
 ### Comandos de gestión
+
+---
 
 ```bash
 # Iniciar servicios
@@ -779,6 +789,42 @@ sudo systemctl status civitas
 sudo systemctl status nginx
 ```
 ---
+
+# Mantenimiento
+
+### Rotación de Logs
+
+Crear archivo `/etc/logrotate.d/celery`
+/home/tstopageo/dev/civitas/logs/celery-*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 0644 tstopageo www-data
+    sharedscripts
+    postrotate
+        systemctl reload celery-worker > /dev/null 2>&1 || true
+        systemctl reload celery-beat > /dev/null 2>&1 || true
+    endscript
+}
+
+Aplicar:
+```bash
+sudo logrotate -f /etc/logrotate.d/celery
+```
+
+Limpieza manual de logs
+```bash
+# Comprimir logs antiguos
+find /home/tstopageo/dev/civitas/logs/ -name "*.log" -mtime +7 -exec gzip {} \;
+
+# Eliminar logs >30 días
+find /home/tstopageo/dev/civitas/logs/ -name "*.log.gz" -mtime +30 -delete
+```
+
+
 
 ## Estructura del Proyecto
 
