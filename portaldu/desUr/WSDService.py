@@ -1,6 +1,6 @@
 import requests
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-from requests.exceptions import (  # 🆕 Importar excepciones correctamente
+from requests.exceptions import (
     Timeout,
     ConnectionError,
     HTTPError,
