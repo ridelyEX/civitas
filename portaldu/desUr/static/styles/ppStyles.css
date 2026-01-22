@@ -5,7 +5,8 @@
     display: flex;
     gap: 10px;
     align-items: center;
-    width: 100%;
+    width: 100vw;
+    margin-bottom: 3rem;
 }
 
 .check-group label{
@@ -16,8 +17,6 @@
     width: 12rem;
     height: 7rem;
     display: inline-block;
-    
-    
 }
 
 .form-group{
@@ -87,6 +86,7 @@
     border-radius: 4px;
     margin-top: -0.5rem;
     background-color: var(--secondary-color);
+    padding-bottom: 2rem;
 }
 
 .Ibottom {
@@ -96,7 +96,9 @@
     gap: 5rem;
     justify-content: center;
     width: max-content;
-    margin: 0 auto;
+    margin: 3rem auto 2rem;
+    padding-top: 2rem;
+    clear: both;
 }
 
 .form-group .dropdown{
@@ -313,3 +315,4 @@
 .simple-dropdown:hover .simple-toggle::after {
     transform: translateY(-50%) rotate(180deg);
 }
+

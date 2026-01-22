@@ -2554,6 +2554,7 @@ def gen_render(request):
     """Vista principal para datos generales de presupuesto participativo"""
     # Obtener o crear UUID
     uuid_str = request.COOKIES.get('uuid')
+    dir = request.GET.get('dir', '')
     if not uuid_str:
         uuid_str = str(uuid.uuid4())
         uuid_obj = Uuid.objects.create(uuid=uuid_str)
@@ -2571,6 +2572,7 @@ def gen_render(request):
         post_data['fuuid'] = uuid_obj.pk  # Agregar el fuuid al formulario
 
         form = GeneralRender(post_data)  # Usar el POST data modificado
+
         categoria = request.POST.get('categoria')
         cat_values = ['parque', 'cs', 'escuela', 'infraestructura', 'pluviales']
 
@@ -2613,7 +2615,12 @@ def gen_render(request):
     else:
         form = GeneralRender(initial={'fuuid': uuid_obj.pk})  # Inicializar con fuuid
 
-    response = render(request, 'pp/datos_generales.html', {'form': form, 'uuid': uuid_str})
+    context = {
+        'form': form,
+        'uuid': uuid_str,
+        'dir': dir
+    }
+    response = render(request, 'pp/datos_generales.html', context)
     response.set_cookie('uuid', uuid_str, max_age=3600)
     return response
 

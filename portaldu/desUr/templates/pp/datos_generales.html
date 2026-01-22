@@ -4,8 +4,6 @@
 
 {% block head %}
 {% load django_bootstrap5 %}
-    {% bootstrap_css %}
-    {% bootstrap_javascript %}
 <link rel="stylesheet" href="{% static 'styles/ppStyles.css' %}?=v1">
 {% endblock %}
 
@@ -37,7 +35,20 @@
                 </select>
             <br>
                 <label for="id_direccion_proyecto" class="label">DIRECCIÓN DEL PROYECTO:</label>
-                {{form.direccion_proyecto}}
+                {{ form.direccion_proyecto }}
+                    <div class="plus">
+                        <button
+                                type="button"
+                                class="addbtn"
+                                id="ubi"
+                                data-bs-toggle="modal"
+                                data-bs-target="#buscarDireccionModal"
+                        >
+                            <span class="addicon">
+                                <img src="{% static 'images/addw.png' %}" alt="add" class="add" /></span>
+                        <span class="txt">Añadir dirección</span>
+                        </button>
+                    </div>
             <br>
                 <label for="id_desc_p" class="label">DESCRIPCIÓN DEL ESTADO ACTUAL DE LA INSTALACIÓN</label>
                 {{form.desc_p}}
@@ -69,7 +80,6 @@
                     {{form.alumbrado}}
                 </div>
             </div>
-
         </div>
         <div class="Ibottom">
             <div class="lBtn">
@@ -80,7 +90,7 @@
             </div>
         </div>
     </form>
-
+{% include 'modals/buscar_direccion.html' %}
 </main>
 
 {% endblock %}
@@ -105,6 +115,7 @@
         });
     });
 </script>
+<script src="{% static 'sripts/modals.js' %}"></script>
 
 <script src="{% static 'sripts/btnScripts.js' %}"></script>
 

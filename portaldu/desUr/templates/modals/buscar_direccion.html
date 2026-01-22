@@ -358,13 +358,15 @@ document.addEventListener('DOMContentLoaded', function() {
     btnAplicar.addEventListener('click', function() {
         const direccionCompleta = `${inputCalle.value} ${selectNumero.value}, ${inputColonia.value}`;
 
-        const inputDireccion = document.querySelector('input[name="dir"]');
+        const inputDireccion = document.querySelector('input[name="direccion_proyecto"]') ||
+                                document.querySelector('input[name="dir"]');
+
         if (inputDireccion) {
             inputDireccion.value = direccionCompleta;
 
             // Mostrar confirmación
             const confirmMsg = document.createElement('div');
-            confirmMsg.innerHTML = `✅ Dirección aplicada: ${direccionCompleta}`;
+            confirmMsg.innerHTML = `Dirección aplicada: ${direccionCompleta}`;
             confirmMsg.style.cssText = `
                 position: fixed; top: 20px; right: 20px;
                 background: #4CAF50; color: white;
